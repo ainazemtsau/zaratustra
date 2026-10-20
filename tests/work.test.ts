@@ -31,8 +31,9 @@ function setup() {
     ops: unknown[],
     ids: string[] = [],
     claim_tokens: string[] = [],
-  ) =>
-    core.commit({
+    approve = false,
+  ) => {
+    const request = {
       request_id: "operation-" + ++n,
       reason: "Synthetic invariant test.",
       source_handles: [source],
@@ -42,7 +43,27 @@ function setup() {
       })),
       ops,
       claim_tokens,
+    };
+    if (!approve) return core.commit(request);
+    const p = core.prepareCommit(
+      request,
+      "Synthetic exact plan/lifecycle decision",
+      "Keep the existing Work unchanged",
+    );
+    const shown = core.approvals.present(p.request_id);
+    core.approvals.answer(shown.token, true, {
+      source_ref: "synthetic-dialog",
+      transport: "native-dialog",
+      channel_identity: "registered-mechanical-controller",
+      stage: "pi-confirm-return",
     });
+    return core.commit({ ...request, preview_ref: p.request_id });
+  };
+  const approved = (
+    ops: unknown[],
+    ids: string[] = [],
+    tokens: string[] = [],
+  ) => send(ops, ids, tokens, true);
   const evidence = send([
     {
       op: "import_evidence",
@@ -107,6 +128,7 @@ function setup() {
     row,
     work,
     send,
+    approved,
     evidence,
     create,
     update,
@@ -741,7 +763,7 @@ test("required child/step conditions, grounded completion, cancellation is not s
     ],
     [c],
   );
-  f.send(
+  f.approved(
     [
       {
         op: "transition_work",
@@ -1086,7 +1108,7 @@ test("manual handoff retains original plan and external authorship; partial/late
     [id],
   );
   assert.equal(f.work(id).waits[0].status, "partial");
-  f.send(
+  f.approved(
     [
       f.update(id, {
         ...f.work(id),
@@ -1107,7 +1129,7 @@ test("manual handoff retains original plan and external authorship; partial/late
     () => f.send([receive("bad", "accepted")], [id]),
     /late\/unrelated/,
   );
-  f.send(
+  f.approved(
     [
       {
         op: "transition_work",
@@ -1356,7 +1378,10 @@ test("ancestor revisions invalidate child claims and parent-goal changes make re
   ).created.h;
   assert.equal(f.core.handoff(h).data.plan_snapshot.length, 2);
   const stale = f.claim(c);
-  f.send([f.update(p, { ...f.work(p), objective: "New parent goal" })], [p]);
+  f.approved(
+    [f.update(p, { ...f.work(p), objective: "New parent goal" })],
+    [p],
+  );
   assert.throws(
     () =>
       f.send(

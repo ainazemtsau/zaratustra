@@ -73,13 +73,16 @@ const wait = z.strictObject({
 });
 export const ActivityData = z.strictObject({
   purpose: text,
-  status: z.enum(["active", "paused", "closed"]),
+  status: z.enum(["active", "paused", "closed", "merged"]),
+  redirect_to: Ref.optional(),
+  aliases: z.array(text).max(30).optional(),
 });
 export const WorkData = z.strictObject({
   activity_id: Ref.nullable(),
   parent_work_id: Ref.nullable(),
   required_for_parent: z.boolean().optional(),
   objective: text,
+  priority: text.optional(),
   acceptance: z.array(acceptance).min(1).max(10),
   status: WorkStatus,
   current_state: text,
@@ -174,7 +177,8 @@ export const ConceptData = z.strictObject({
   definition: text,
   aliases: z.array(text).max(30),
   broader_ids: z.array(Ref).max(20),
-  status: z.enum(["active", "retired"]),
+  status: z.enum(["active", "merged", "retired"]),
+  redirect_to: Ref.optional(),
   boundary_notes: text.optional(),
 });
 export const EntityData = z.strictObject({
@@ -190,7 +194,8 @@ export const EntityData = z.strictObject({
   aliases: z.array(text).max(30),
   disambiguation: text,
   external_ids: z.record(z.string().min(1).max(80), text).optional(),
-  status: z.enum(["active", "retired"]),
+  status: z.enum(["active", "merged", "retired"]),
+  redirect_to: Ref.optional(),
 });
 export const MethodData = z.strictObject({
   applicability: text,
@@ -398,6 +403,7 @@ const create = z.discriminatedUnion("kind", [
   }),
 ]);
 export const CommitSchema = z.strictObject({
+  preview_ref: text.optional(),
   request_id: z.string().min(1).max(160),
   reason: text,
   source_handles: z.array(text).min(1).max(10),
@@ -415,6 +421,31 @@ export const CommitSchema = z.strictObject({
       z.union([
         create,
         ...ExperienceOps,
+        z.strictObject({
+          op: z.literal("merge_activity"),
+          from_ref: z.strictObject({ id: text }),
+          to_ref: z.strictObject({ id: text }),
+          moved_work_refs: z.array(z.strictObject({ id: text })).max(10),
+        }),
+        z.strictObject({
+          op: z.literal("merge_identity"),
+          from_ref: z.strictObject({ id: text }),
+          to_ref: z.strictObject({ id: text }),
+        }),
+        z.strictObject({
+          op: z.literal("reorganize_catalog"),
+          changes: z
+            .array(
+              z.strictObject({
+                ref: z.strictObject({ id: text }),
+                title: text.optional(),
+                broader_ids: z.array(Ref).max(20).optional(),
+                concept_ids: z.array(Ref).max(30).optional(),
+              }),
+            )
+            .min(1)
+            .max(10),
+        }),
         z.strictObject({
           op: z.literal("import_evidence"),
           client_ref: text,
@@ -566,6 +597,8 @@ export interface RecordRow {
   origin_activity_id: { id: string } | null;
 }
 export interface Source {
+  workspace_id: string;
+  epoch: string;
   handle: string;
   source_ref: string;
   text: string;
@@ -631,6 +664,8 @@ export interface CallContext {
     caller_identity: string;
   };
   environment?: JsonObject;
+  policy_revision?: string;
+  approval_principal?: string;
 }
 export interface SupportingRow extends Omit<RecordRow, "kind"> {
   kind:

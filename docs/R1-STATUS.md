@@ -12,11 +12,11 @@ First block 27a74fd remains separately accepted. Full R1 and personal trial T31 
 D is independently scope-qualified technical PASS and separately owner-accepted on
 `1b742a6e774eaa14826c036977ae2a42ff1ca46a`, per the E1 assignment. Its review's large
 corpus checks were mechanical; reviewer live scenarios were small. Those limits remain.
-E1 development/public delivery is now authorized; authorization “принимаю” is not
-acceptance of its future result. Methods/Runs/Evaluations/Signals are implemented and
-qualified by the executor on installed code 6659f4c, with all candidate-attributed
-M/L evidence and limitations in E1-VALIDATION.md. No independent E1 verdict or owner
-acceptance is assigned. E2/E3 and complete E/R1/T31 remain open.
+E1 is independently limited technical PASS and coordinator-accepted under explicit owner
+delegation on 0b45c0853d7ee0c2f3c294b9bc4dd9803117462a. Its actual owner-usefulness/T31
+is not established. E2 is authorized and implemented as a candidate; installed M/L and
+terminal handback qualification are in progress. No independent E2 verdict is assigned.
+E3 and complete E/R1/T31 remain open.
 Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1b742a6.md.
 `partial` never discharges a full release criterion; all later obligations remain.
 
@@ -34,7 +34,7 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 | T10 | —       | passed  | —       | D 17–18: Sunday exclusion, friend same-name resource and wish to buy do not become available/owned resources.                                                                                                      |
 | T11 | —       | passed  | —       | D 14: fictional personal interpretation retracted; Entity clarified; no invented opposite fact; exact prior revision retained.                                                                                     |
 | T12 | passed  | passed  | —       | D faults/history/index/snapshot M; actual 23 supersedes old access/code, revises Work and next model snapshot; scoped-state-proof exact.                                                                           |
-| T13 | partial | —       | —       | Stable IDs/revisions and current reference correction retained. Real merges/redirects await E bound approvals and remain unavailable.                                                                              |
+| T13 | partial | —       | —       | Stable IDs/revisions and current reference correction retained. E2 candidate adds bound merge/redirect and finite catalog/Activity operations; final installed qualification in progress.                          |
 | T14 | passed  | —       | —       | Work/Concept plus E1 Method direct/final-batch cycles fail atomically; exact full selected dependency closure and dynamic ancestry checked.                                                                        |
 | T15 | —       | passed  | —       | E1 Q02 unknown-title discovery/application on 7b06465; final 6659f4c Q13 repeats fresh-process/cwd discovery and actual 3.8 g calculation. Synthetic RPC profile only.                                             |
 | T16 | passed  | partial | —       | E1 final M exact historical Method/dependency versions, dynamic selection, local variants and ordinary-update guards. L v1/v2/v3 and read-only controls; composed dependencies exercised mechanically.             |
@@ -42,7 +42,7 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 | T18 | —       | passed  | —       | C 07–11 and 16–19 on fixed 55fac: partial/late external reply, changed goal/paused/cancelled plan, ambiguity clarified; original/current versions retained.                                                        |
 | T19 | partial | —       | —       | Same-ID receipt replay, payload conflict, intents and Changes for first-block ops.                                                                                                                                 |
 | T20 | passed  | —       | —       | B/C/D and E1 new results/support/versions/links/index/Change/receipt fault boundaries commit all or none; no arbitrary external-effect guarantee.                                                                  |
-| T21 | not_run | not_run | —       | E2 controlled native file actions, exact confirmations and unknown-result recovery remain unimplemented.                                                                                                           |
+| T21 | not_run | not_run | —       | E2 candidate implements controlled native file effects/recovery; final installed M/L in progress.                                                                                                                  |
 | T22 | partial | —       | —       | Revision conflict, one writer and local Work/step/handoff claims tested in outcome C; external effects remain E.                                                                                                   |
 | T23 | partial | partial | —       | Mechanical corrupt/missing/read-only/full; live unavailable-store honesty (10).                                                                                                                                    |
 | T24 | partial | —       | —       | TXT/PDF/EPUB import staging/rename/async abort faults leave no committed unfinished blob; GC/backup pins remain E.                                                                                                 |
@@ -61,7 +61,7 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 | T37 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                         |
 | T38 | passed  | —       | —       | Final E1 extends managed access to support/history/relations/bundles/counts/diagnostics and guessed IDs; exact historical protected refs propagate. Native installed controls pass; no OS isolation claim.         |
 | T39 | passed  | partial | —       | E1 native SDK M: 12 source/profile cases, four modifier negatives, zero dispatch. L synthetic RPC/caller/quote/stage retained, never Anton. Genuine interactive owner feedback was not exercised.                  |
-| T40 | not_run | not_run | —       | E2 exact preview-bound owner confirmation and invalidation by changed payload/recipient/revision/restore epoch remain unimplemented.                                                                               |
+| T40 | not_run | not_run | —       | E2 candidate implements native preview-bound confirmation; synthetic SDK M does not establish real owner approval. Installed L in progress.                                                                        |
 | T41 | partial | partial | —       | Lost reply, no old ID, actual receipt/targets; distinct/ambiguous cases (8,9,16,7,11). Restore lineage support outstanding.                                                                                        |
 | T42 | partial | partial | —       | Historical native package lifecycle retained; actual installed D schema3 to final E1 schema4 preserves all old data/materials/receipt replay; old writer refuses4. User restore/full lifecycle still open.         |
 | T43 | passed  | passed  | —       | D English working text and literal/name channels; original Russian preserved; actual 21–22 cross-language discovery plus 16 lexical fallback. Scope/profile and every failure disclosed.                           |
@@ -70,10 +70,10 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 M = mechanical; L = actual Pi/model; O = owner usefulness. A dash means no claim
 for that layer in this handoff, not a waiver. Platform/material profiles beyond the
 declared qualified profiles need their own qualification. Accepted C implemented Work/materials; its version-attributed evidence is tracked in
-[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). E1 is the current
+[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). E2 is the current
 authorized block; its separate executor evidence is in [E1-VALIDATION](E1-VALIDATION.md).
-The first subsequent unimplemented outcome is E2: exact preview-bound confirmations,
-controlled actions/unknown-result recovery and managed SKILL.md export/drift. E3 retains
+E2 implementation/qualification is in progress: exact confirmations, controlled native
+actions/recovery, finite merges and textual export/drift. E3 retains
 user backup/quarantine restore, archive/delete/retention and the restore epoch barrier.
 Real identity merges/bulk reorganization await E2. Codex and R2 Sleep remain separate.
 The full roadmap remains specification §25.8, with full requirements §24.

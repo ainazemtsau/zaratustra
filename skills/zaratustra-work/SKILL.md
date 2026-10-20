@@ -203,3 +203,17 @@ Browse runs/invocations/evaluations/signals/signal_reviews/environments, optiona
 record_id, for bounded routing cards. Read supporting IDs using normal zara_read. Use
 projection:history with id, limit/cursor for version headers, then read exact revision.
 The snapshot routes to open Signals. All managed access restrictions still apply.
+
+E2 exact decisions: substantive objective/acceptance/priority changes, moved Work and
+cancellation need an immutable zara_preview over the exact request and a real zara_confirm
+native dialog. Explain consequences and alternatives in the user's language. Then commit
+the unchanged request plus preview_ref. A raw old input decision is not bound permission.
+Finite Activity merge lists every moved Work (<=10) with merge_activity; split by creating
+an Activity and explicitly moving chosen Work in one bound transaction. Preserve past Runs.
+Controlled file work uses zara_file_preview, native confirmation and ordinary write/edit,
+not a new executor. Recover through operations and zara_file_inspect without repeating a
+possibly dispatched action. Missing receipts or matching bytes do not prove non-execution
+or authorship. Opaque commands have no deduplication guarantee. A risky repeat needs a
+separate bound decision linked by retry_of/retry_risk; automatic recovery never loops.
+Future restore must stop every resumed potentially effectful step, including steps with
+no restored intent or receipt. E2 epoch bindings prepare for E3; they do not perform restore.

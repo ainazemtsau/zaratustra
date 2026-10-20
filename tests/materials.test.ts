@@ -341,7 +341,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
       "DROP TABLE claims; DROP TABLE handoffs; DROP TABLE migrations; PRAGMA user_version=1;",
     );
     f.disk.exec(
-      "DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object;",
+      "DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object;",
     );
     writeFileSync(
       join(f.home, "workspace.json"),
@@ -365,7 +365,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
       /interruption/,
     );
     const recovered = new DiskStorage(f.home);
-    assert.equal(recovered.workspace.schema_version, 4);
+    assert.equal(recovered.workspace.schema_version, 5);
     assert.deepEqual(
       tables.map((t) => recovered.all("SELECT * FROM " + t)),
       before,
@@ -382,7 +382,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
     assert.equal(digest(readFileSync(info.backup)), info.backup_sha256);
     recovered.close();
     const again = new DiskStorage(f.home);
-    assert.equal(again.workspace.schema_version, 4);
+    assert.equal(again.workspace.schema_version, 5);
     again.close();
   }
 });

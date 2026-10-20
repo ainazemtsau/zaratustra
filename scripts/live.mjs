@@ -6,7 +6,7 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
@@ -19,6 +19,8 @@ for (const path of [agentDir, cwd, output])
   mkdirSync(path, { recursive: true });
 process.env.PI_CODING_AGENT_DIR = agentDir;
 process.env.ZARATUSTRA_HOME = home;
+if (config.outputRoot) process.env.ZARATUSTRA_OUTPUT_ROOT = config.outputRoot;
+else delete process.env.ZARATUSTRA_OUTPUT_ROOT;
 process.env.ZARATUSTRA_IMPORT_ROOTS = JSON.stringify(config.importRoots ?? []);
 if (config.scopes !== undefined) {
   if (
@@ -82,6 +84,8 @@ log("identity", {
   prompt,
 });
 let dropped = false;
+let materialChanged = false;
+const dialogReplies = [...(config.dialogReplies ?? [])];
 const observer = (pi) => {
   pi.on("context_with_system", (event) => {
     const snapshots = event.messages.filter(
@@ -119,7 +123,71 @@ const observer = (pi) => {
     ++budget.requests;
     saveLedger(budget);
   });
+  pi.on("tool_call", (event) => {
+    if (
+      config.changeFileBeforeDispatch &&
+      !materialChanged &&
+      ["write", "edit"].includes(event.toolName) &&
+      resolve(cwd, event.input.path).toLowerCase() ===
+        resolve(config.changeFileBeforeDispatch.path).toLowerCase()
+    ) {
+      const db = new DatabaseSync(join(home, "zara.sqlite"), {
+        readOnly: true,
+      });
+      const pending = db
+        .prepare(
+          "SELECT json FROM intents WHERE json_extract(json,'$.kind')='preview' AND json_extract(json,'$.status')='approved-transient' AND json_extract(json,'$.payload.action')='managed_file'",
+        )
+        .all()
+        .some(
+          (r) =>
+            resolve(JSON.parse(r.json).payload.exact.target).toLowerCase() ===
+            resolve(config.changeFileBeforeDispatch.path).toLowerCase(),
+        );
+      db.close();
+      if (!pending) return;
+      const before = readFileSync(event.input.path, "utf8");
+      writeFileSync(
+        event.input.path,
+        config.changeFileBeforeDispatch.content,
+        "utf8",
+      );
+      materialChanged = true;
+      log("faults", {
+        point: "material-bytes-changed-after-confirmation-before-dispatch",
+        path: event.input.path,
+        before,
+        after: config.changeFileBeforeDispatch.content,
+      });
+    }
+  });
   pi.on("tool_result", (event, ctx) => {
+    if (
+      config.dropNativeResult &&
+      !dropped &&
+      ["write", "edit"].includes(event.toolName) &&
+      !event.isError
+    ) {
+      const db = new DatabaseSync(join(home, "zara.sqlite"), {
+        readOnly: true,
+      });
+      const attempt = db
+        .prepare(
+          "SELECT json FROM intents WHERE json_extract(json,'$.kind')='managed_file' AND json_extract(json,'$.tool_call_id')=?",
+        )
+        .get(event.toolCallId);
+      db.close();
+      if (attempt) {
+        dropped = true;
+        log("faults", {
+          point: "real-native-write-before-adapter-tool-result-receipt",
+          call_id: event.toolCallId,
+          attempt: JSON.parse(attempt.json),
+          native_result: event.content,
+        });
+        process.exit(86);
+      }
+    }
     if (
       config.dropCommitResponse &&
       !dropped &&
@@ -150,6 +218,17 @@ const loader = new DefaultResourceLoader({
   agentDir,
   settingsManager,
   extensionFactories: [observer],
+  // Fault observer precedes product result capture; normal tools remain native Pi tools.
+  extensionsOverride: (base) =>
+    config.dropNativeResult || config.changeFileBeforeDispatch
+      ? {
+          ...base,
+          extensions: [
+            ...base.extensions.filter((e) => !e.tools.has("zara_map")),
+            ...base.extensions.filter((e) => e.tools.has("zara_map")),
+          ],
+        }
+      : base,
 });
 await loader.reload();
 const ext = loader.getExtensions();
@@ -173,6 +252,46 @@ const { session } = await createAgentSession({
   resourceLoader: loader,
 });
 await session.bindExtensions({});
+if (config.dialogReplies) {
+  const runner = session.extensionRunner;
+  runner.setUIContext(
+    {
+      ...runner.getUIContext(),
+      confirm: async (title, message) => {
+        if (!dialogReplies.length) {
+          log("dialogs", {
+            title,
+            message,
+            answer: false,
+            unplanned: true,
+            principal: "isolated-synthetic-sdk-controller",
+          });
+          return false;
+        }
+        const reply = dialogReplies.shift();
+        const matches =
+          typeof reply !== "object" ||
+          (reply.expected ?? []).every((fragment) =>
+            message.includes(fragment),
+          );
+        const answer =
+          matches && (typeof reply === "boolean" ? reply : reply.answer);
+        log("dialogs", {
+          title,
+          message,
+          answer,
+          note: typeof reply === "object" ? reply.note : null,
+          matches_expected_consequence: matches,
+          principal: "isolated-synthetic-sdk-controller",
+          stage: "native-sdk-confirm-callback-not-owner",
+        });
+        return answer;
+      },
+      notify: (message, type) => log("notifications", { message, type }),
+    },
+    "rpc",
+  );
+}
 log("startup", {
   messages_before_prompt: session.messages,
   active_tools: session.getActiveToolNames(),
@@ -248,6 +367,8 @@ try {
     response,
     settled,
     dropped,
+    materialChanged,
+    remaining_dialog_replies: dialogReplies.length,
     permanent_snapshot_count: ownSnapshots.length,
     database,
     budget: ledger(),

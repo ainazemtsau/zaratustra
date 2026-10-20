@@ -28,6 +28,7 @@ import {
   requireThat,
   MemorySchemaSQL,
   ExperienceSchemaSQL,
+  ApprovalSchemaSQL,
   refreshMemory,
   validateMemory,
   validateWorks,
@@ -120,7 +121,7 @@ export class DiskStorage implements StoragePort {
         this.workspace = {
           workspace_id: randomUUID(),
           epoch: randomUUID(),
-          schema_version: 4,
+          schema_version: 5,
         };
         this.db.exec(`BEGIN IMMEDIATE;
           CREATE TABLE meta(json TEXT NOT NULL);
@@ -137,7 +138,8 @@ export class DiskStorage implements StoragePort {
           CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);
           ${MemorySchemaSQL}
           ${ExperienceSchemaSQL}
-          PRAGMA user_version=4;`);
+          ${ApprovalSchemaSQL}
+          PRAGMA user_version=5;`);
         this.db
           .prepare("INSERT INTO meta(json) VALUES(?)")
           .run(JSON.stringify(this.workspace));
@@ -151,6 +153,25 @@ export class DiskStorage implements StoragePort {
         const version = this.get<{ user_version: number }>(
           "PRAGMA user_version",
         )?.user_version;
+        if (
+          version === 5 &&
+          this.workspace.schema_version === 4 &&
+          !this.readonly
+        ) {
+          const receipt = this.get<{ json: string }>(
+            "SELECT json FROM migrations WHERE version=5",
+          );
+          const m = receipt ? JSON.parse(receipt.json) : null;
+          requireThat(
+            m &&
+              m.before === JSON.stringify(this.workspace) &&
+              m.after === meta?.json,
+            "STORE_UNAVAILABLE",
+            "Unrecognized interrupted approval migration; preserve store.",
+          );
+          this.replaceManifest(meta!.json);
+          this.workspace = JSON.parse(meta!.json);
+        }
         // A crash after the schema transaction may precede the manifest rename.
         // Only our exact retained migration receipt permits this narrow repair.
         if (
@@ -216,7 +237,8 @@ export class DiskStorage implements StoragePort {
             (this.workspace.schema_version === 1 ||
               this.workspace.schema_version === 2 ||
               this.workspace.schema_version === 3 ||
-              this.workspace.schema_version === 4) &&
+              this.workspace.schema_version === 4 ||
+              this.workspace.schema_version === 5) &&
             version === this.workspace.schema_version,
           "STORE_UNAVAILABLE",
           "Unknown schema or workspace identity mismatch; no replacement store will be created.",
@@ -231,6 +253,7 @@ export class DiskStorage implements StoragePort {
       if (this.workspace.schema_version === 1) this.migrate();
       if (this.workspace.schema_version === 2) this.migrateMemory();
       if (this.workspace.schema_version === 3) this.migrateMemory(4);
+      if (this.workspace.schema_version === 4) this.migrateMemory(5);
       if (!this.readonly) {
         mkdirSync(join(home, "materials"), { recursive: true });
         mkdirSync(join(home, "staging"), { recursive: true });
@@ -344,12 +367,19 @@ export class DiskStorage implements StoragePort {
     } finally {
       check.close();
     }
-    const faultPrefix = target === 3 ? "memory" : "experience";
+    const faultPrefix =
+      target === 3 ? "memory" : target === 4 ? "experience" : "approval";
     this.migrationFault?.(faultPrefix + "_after_backup");
     const after = JSON.stringify({ ...this.workspace, schema_version: target });
     this.exec("BEGIN IMMEDIATE");
     try {
-      this.exec(target === 3 ? MemorySchemaSQL : ExperienceSchemaSQL);
+      this.exec(
+        target === 3
+          ? MemorySchemaSQL
+          : target === 4
+            ? ExperienceSchemaSQL
+            : ApprovalSchemaSQL,
+      );
       refreshMemory(this, true);
       this.run(
         "INSERT INTO migrations VALUES(?,?)",
@@ -739,3 +769,4 @@ export class DiskStorage implements StoragePort {
   }
 }
 export { CoreError };
+export { OutputBoundary } from "./output.ts";

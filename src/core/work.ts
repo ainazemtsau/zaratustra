@@ -5,6 +5,8 @@ export const terminal = (s: string) => s === "done" || s === "cancelled";
 export const refId = (r: unknown) => (r as { id?: string } | null)?.id ?? "";
 export const plan = (w: Work) => ({
   objective: w.objective,
+  activity_id: w.activity_id,
+  priority: w.priority,
   acceptance: w.acceptance,
   parent_work_id: w.parent_work_id,
   required_for_parent: w.required_for_parent ?? true,

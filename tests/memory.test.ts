@@ -789,7 +789,7 @@ test("D schema-2 migration faults preserve filled canonical rows, original mater
     f.disk.workspace.schema_version = 2;
     f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
     f.disk.exec(
-      "DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
+      "DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
     );
     writeFileSync(
       join(f.home, "workspace.json"),
@@ -805,7 +805,7 @@ test("D schema-2 migration faults preserve filled canonical rows, original mater
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 4);
+    assert.equal(recovered.workspace.schema_version, 5);
     assert.equal(
       JSON.stringify(tables.map((t) => recovered.all("SELECT * FROM " + t))),
       before,
@@ -875,7 +875,7 @@ test("D memory migration rejects a broken legacy Work graph without replacing or
   f.disk.workspace.schema_version = 2;
   f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
   f.disk.exec(
-    "DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
+    "DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
   );
   writeFileSync(
     join(f.home, "workspace.json"),

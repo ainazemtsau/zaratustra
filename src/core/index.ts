@@ -44,6 +44,12 @@ import type {
   Receipt,
   AddressedRow,
 } from "./contracts.ts";
+import { Approvals } from "./approval.ts";
+import { Effects, FileEffectSchema } from "./effects.ts";
+import type { FileEffect } from "./effects.ts";
+export { ApprovalSchemaSQL, APPROVAL_POLICY } from "./approval.ts";
+export { NativeArguments, FileEffectSchema } from "./effects.ts";
+export type { FileEffect } from "./effects.ts";
 export * from "./contracts.ts";
 export { validateWorks } from "./work.ts";
 export { ExperienceSchemaSQL, validateMethods } from "./experience.ts";
@@ -61,6 +67,456 @@ const id = (prefix: string) => prefix + "-" + randomUUID();
 const unpack = (row: { json: string }) => JSON.parse(row.json) as RecordRow;
 export class Core {
   private sources = new Map<string, Source>();
+  private _approvals?: Approvals;
+  get approvals() {
+    this.authorize();
+    return (this._approvals ??= new Approvals(
+      this.storage,
+      this.context,
+      (v) => this.memory.technical(v),
+      (id) => this.addressed(id).revision,
+    ));
+  }
+  private get effects() {
+    return new Effects(this.storage, this.context, this.approvals, (v) =>
+      this.memory.technical(v),
+    );
+  }
+  private previewExact(
+    request: ReturnType<typeof CommitSchema.parse>,
+    bindings?: Record<string, string>,
+  ) {
+    const exact = JSON.parse(JSON.stringify(request)) as JsonObject;
+    delete exact.preview_ref;
+    const stable = (h: string) => {
+      const s = this.sources.get(h);
+      return s &&
+        s.workspace_id === this.context.workspace_id &&
+        s.epoch === this.context.epoch
+        ? s.source_ref
+        : bindings?.[h];
+    };
+    exact.source_handles = request.source_handles
+      .map((h) => {
+        const ref = stable(h);
+        requireThat(
+          ref,
+          "SOURCE_EXPIRED",
+          "Preview needs current exact captured sources.",
+        );
+        return ref;
+      })
+      .sort();
+    const walk = (v: unknown): unknown => {
+      if (Array.isArray(v)) return v.map(walk);
+      if (v && typeof v === "object")
+        return Object.fromEntries(
+          Object.entries(v).map(([k, x]) => [
+            k,
+            ["source_handle", "decision_source_handle"].includes(k) &&
+            typeof x === "string"
+              ? (stable(x) ?? null)
+              : walk(x),
+          ]),
+        );
+      return v;
+    };
+    exact.ops = walk(request.ops);
+    return exact;
+  }
+  private previewAccess(before: { id: string }[]) {
+    return before.map((r) => ({
+      id: r.id,
+      restricted: !!this.storage.get<{ n: number }>(
+        "SELECT max(restricted) AS n FROM memory_docs WHERE id=?",
+        r.id,
+      )?.n,
+    }));
+  }
+  prepareCommit(
+    input: unknown,
+    consequence: string,
+    alternatives: string,
+    seconds?: number,
+  ) {
+    this.authorize(true);
+    this.memory.barrier();
+    const request = CommitSchema.parse(input);
+    const dependencies = new Map<string, number>();
+    for (const ref of addressedRefs(request)) {
+      if (
+        this.storage.get("SELECT id FROM addressed_current WHERE id=?", ref.id)
+      ) {
+        const row = this.addressed(ref.id, ref.revision);
+        dependencies.set(ref.id, this.addressed(ref.id).revision);
+        requireThat(
+          !ref.content_version ||
+            row.data.content_version === ref.content_version,
+          "REFERENCE_TYPE_MISMATCH",
+          "Method version mismatch.",
+        );
+      } else
+        requireThat(
+          false,
+          "REFERENCE_NOT_FOUND",
+          "Preview target unavailable.",
+        );
+    }
+    for (const g of request.guards)
+      requireThat(
+        dependencies.get(g.ref.id) === g.expected_revision,
+        "REVISION_CONFLICT",
+        "Preview guard changed.",
+      );
+    const before = [...dependencies].map(([id, revision]) =>
+      this.addressed(id, revision),
+    );
+    const exact = this.previewExact(request);
+    // Exact before values and rights are immutable, and are also independently checked at consumption.
+    exact.before = before;
+    exact.effective_access = this.previewAccess(before);
+    exact.assigned_method_versions = request.ops
+      .filter(
+        (op) =>
+          op.op === "revise_method" ||
+          (op.op === "update_record" &&
+            this.record(op.ref.id).kind === "method"),
+      )
+      .map((op) => {
+        const update = op as {
+          ref: { id: string };
+          data: JsonObject;
+          body?: string | null;
+        };
+        const row = this.record(update.ref.id);
+        return {
+          id: row.id,
+          content_version: methodUpdate(
+            row,
+            update.data,
+            update.body === undefined ? row.body : update.body,
+          ).content_version,
+        };
+      });
+    return this.approvals.draft(
+      "commit",
+      exact,
+      [...dependencies].map(([id, revision]) => ({ id, revision })),
+      consequence,
+      alternatives,
+      seconds,
+    );
+  }
+  prepareFile(
+    input: unknown,
+    consequence: string,
+    alternatives: string,
+    seconds?: number,
+  ) {
+    this.authorize(true);
+    const e = FileEffectSchema.parse(input);
+    requireThat(
+      e.work_ref ? !e.independent_basis : !!e.independent_basis,
+      "VALIDATION_ERROR",
+      "Bind a Work/step or explain why this is an independent new action.",
+    );
+    requireThat(
+      digest(e.final_text) === e.final_hash &&
+        Buffer.byteLength(e.final_text) === e.final_length,
+      "VALIDATION_ERROR",
+      "Final native bytes/digest mismatch.",
+    );
+    requireThat(
+      !this.storage.get(
+        "SELECT request_id FROM intents WHERE request_id=?",
+        e.request_id,
+      ),
+      "UNKNOWN_EFFECT",
+      "Attempt exists; inspect the operation and current bytes before any new decision.",
+    );
+    requireThat(
+      e.work_ref || !e.step_id,
+      "VALIDATION_ERROR",
+      "A step association requires its Work.",
+    );
+    const deps = [e.work_ref, e.method_export?.method_ref]
+      .filter(Boolean)
+      .map((r) => {
+        const row = this.record(r!.id, r!.revision);
+        return { id: row.id, revision: this.record(row.id).revision };
+      });
+    for (const g of e.material_guards ?? []) {
+      const row = this.addressed(g.ref.id);
+      requireThat(
+        row.revision === g.expected_revision,
+        "REVISION_CONFLICT",
+        "File material guard changed.",
+      );
+      if (!deps.some((d) => d.id === row.id))
+        deps.push({ id: row.id, revision: row.revision });
+    }
+    if (e.work_ref) {
+      const w = this.record(e.work_ref.id);
+      requireThat(
+        w.kind === "work" && w.revision === e.work_ref.revision,
+        "REVISION_CONFLICT",
+        "Managed file Work premise changed.",
+      );
+      const foreign = this.storage
+        .all<{ json: string }>("SELECT json FROM claims WHERE work_id=?", w.id)
+        .map((r) => JSON.parse(r.json))
+        .some(
+          (c) =>
+            c.state === "active" &&
+            (c.runtime_id !== this.context.runtime_id ||
+              c.session_id !== this.context.session_id),
+        );
+      requireThat(
+        !foreign,
+        "WORK_IN_USE",
+        "A different runtime has an unresolved Work claim; inspect and reconcile it before a new managed effect.",
+      );
+      e.work_snapshot = {
+        title: w.title,
+        objective: w.data.objective as string,
+        plan_version: (w.data.plan_version as number) ?? 1,
+        step_intent: e.step_id
+          ? (WorkData.parse(w.data).steps.find((s) => s.step_id === e.step_id)
+              ?.intent ?? null)
+          : null,
+      };
+      requireThat(
+        w.data.status === "active",
+        "INVALID_TRANSITION",
+        "Activate/reconsider Work before a managed file effect.",
+      );
+      if (e.step_id)
+        requireThat(
+          WorkData.parse(w.data).steps.find((s) => s.step_id === e.step_id)
+            ?.status === "running",
+          "INVALID_TRANSITION",
+          "Start the claimed step with satisfied dependencies before its native file action.",
+        );
+      for (const ref of WorkData.parse(w.data).context_refs) {
+        if ("id" in ref) {
+          const current = this.addressed(ref.id);
+          if (!deps.some((d) => d.id === current.id))
+            deps.push({ id: current.id, revision: current.revision });
+        }
+      }
+      this.assertExecutable(w.id);
+      requireThat(
+        !e.step_id ||
+          WorkData.parse(w.data).steps.some((s) => s.step_id === e.step_id),
+        "REFERENCE_NOT_FOUND",
+        "Step unavailable.",
+      );
+      for (const g of this.assertExecutable(w.id)) {
+        if (!deps.some((d) => d.id === g.id)) deps.push(g);
+        const activity = this.record(g.id).data.activity_id as {
+          id: string;
+        } | null;
+        if (activity && !deps.some((d) => d.id === activity.id))
+          deps.push({
+            id: activity.id,
+            revision: this.record(activity.id).revision,
+          });
+      }
+    }
+    if (e.method_export) {
+      const m = this.record(
+        e.method_export.method_ref.id,
+        e.method_export.method_ref.revision,
+        false,
+        e.method_export.method_ref.content_version,
+      );
+      e.method_snapshot = {
+        title: m.title,
+        body: m.body,
+        data: MethodData.parse(m.data),
+      };
+      requireThat(
+        m.kind === "method" &&
+          e.method_export.content_hash === digest(canonical(m.data)) &&
+          e.method_export.export_hash === e.final_hash &&
+          e.tool === "write",
+        "VALIDATION_ERROR",
+        "Textual export must bind exact canonical Method content and native final bytes.",
+      );
+    }
+    if (e.retry_of) {
+      const prior = this.effects.read(e.retry_of);
+      requireThat(
+        e.retry_risk && prior.payload.target === e.target,
+        "UNKNOWN_EFFECT",
+        "Risky repeat requires a linked prior target and explicit consequence.",
+      );
+    }
+    return this.approvals.draft(
+      "managed_file",
+      e,
+      deps,
+      consequence,
+      alternatives,
+      seconds,
+    );
+  }
+  interruptFiles(reason: string, previousRuntime = false) {
+    this.authorize(true);
+    this.effects.interrupt(reason, previousRuntime);
+  }
+  fileReplay(
+    requestId: string,
+    tool: string,
+    args: unknown,
+    declared?: JsonObject,
+  ) {
+    this.authorize();
+    if (
+      !this.storage.get(
+        "SELECT request_id FROM intents WHERE request_id=?",
+        requestId,
+      )
+    )
+      return null;
+    const e = this.effects.read(requestId);
+    requireThat(
+      e.payload.tool === tool &&
+        canonical(e.payload.arguments) === canonical(args),
+      "IDEMPOTENCY_CONFLICT",
+      "Attempt ID belongs to different native arguments.",
+    );
+    if (declared)
+      for (const [key, value] of Object.entries(declared))
+        requireThat(
+          canonical(
+            (e.payload as unknown as JsonObject)[key] ??
+              (key === "material_guards" ? [] : null),
+          ) === canonical(value ?? null),
+          "IDEMPOTENCY_CONFLICT",
+          "Attempt ID belongs to a different target, Work/step or material binding.",
+        );
+    return { replayed: true, dispatch: false, ...e };
+  }
+  dispatchFile(effect: FileEffect, preview: string, call: string) {
+    this.authorize(true);
+    return this.effects.dispatch(effect, preview, call);
+  }
+  inspectFile(request: string) {
+    this.authorize();
+    return this.effects.read(request);
+  }
+  observeFile(
+    request: string,
+    observation: JsonObject,
+    call?: { id: string; runtime_id: string; is_error: boolean },
+  ) {
+    this.authorize(true);
+    return this.effects.observe(request, observation, call);
+  }
+  private requiresApproval(request: ReturnType<typeof CommitSchema.parse>) {
+    const catalogUpdates = request.ops.filter(
+      (op) =>
+        op.op === "update_record" &&
+        (op.concept_ids !== undefined ||
+          (this.record(op.ref.id).kind === "concept" &&
+            canonical(this.record(op.ref.id).data.broader_ids) !==
+              canonical((op.data as JsonObject).broader_ids))),
+    );
+    if (catalogUpdates.length > 1) return true;
+    return request.ops.some((op) => {
+      if (
+        ["merge_identity", "merge_activity", "reorganize_catalog"].includes(
+          op.op,
+        )
+      )
+        return true;
+      if (
+        op.op === "revise_method" &&
+        request.source_handles.some(
+          (h) => this.sources.get(h)?.transport === "file",
+        )
+      )
+        return true;
+      if (op.op === "transition_work" && op.status === "cancelled") return true;
+      if (op.op === "update_record") {
+        const r = this.record(op.ref.id);
+        if (r.kind === "activity")
+          return canonical(r.data) !== canonical(op.data);
+        if (r.kind === "work")
+          return [
+            "objective",
+            "priority",
+            "acceptance",
+            "activity_id",
+            "parent_work_id",
+            "required_for_parent",
+          ].some(
+            (k) =>
+              canonical(r.data[k] ?? null) !==
+              canonical((op.data as JsonObject)[k] ?? null),
+          );
+      }
+      return false;
+    });
+  }
+  methodExport(recordId: string, contentVersion?: number, revision?: number) {
+    this.authorize();
+    const m = this.record(recordId, revision, false, contentVersion);
+    requireThat(
+      m.kind === "method",
+      "REFERENCE_TYPE_MISMATCH",
+      "Only textual Methods can be exported.",
+    );
+    const ref = {
+      id: m.id,
+      revision: m.revision,
+      content_version: m.data.content_version as number,
+    };
+    const content_hash = digest(canonical(m.data));
+    const text = `---\nname: zara-${m.id}\ndescription: ${JSON.stringify(m.title)}\nzaratustra_method_ref: ${canonical(ref)}\nzaratustra_content_sha256: ${content_hash}\n---\n\n# ${m.title}\n\nDerived textual export. Core remains canonical. External edits are drift; explicitly import as a new version or regenerate with a new bound decision. No executable installation or authority is granted.\n\n${m.body ?? ""}\n\n${Object.entries(
+      m.data,
+    )
+      .map(([k, v]) => `## ${k}\n\n${typeof v === "string" ? v : canonical(v)}`)
+      .join("\n\n")}\n`;
+    requireThat(
+      Buffer.byteLength(text) <= 64000,
+      "VALIDATION_ERROR",
+      "Textual export exceeds the controlled file bound.",
+    );
+    return { method_ref: ref, content_hash, export_hash: digest(text), text };
+  }
+  skillExportStatus(target: string, observedHash: string | null) {
+    this.authorize();
+    const r = this.storage.get<{ json: string }>(
+      `SELECT t.json FROM intents t WHERE json_extract(t.json,'$.kind')='managed_file' AND json_extract(t.json,'$.payload.target')=? AND json_extract(t.json,'$.payload.method_export') IS NOT NULL AND ${this.memory.technicalSQL("t")} ORDER BY t.rowid DESC LIMIT 1`,
+      target,
+    );
+    requireThat(
+      r,
+      "REFERENCE_NOT_FOUND",
+      "No accessible managed textual export for this target.",
+    );
+    const e = JSON.parse(r.json);
+    return {
+      export_request_id: e.request_id,
+      method_export: e.payload.method_export,
+      drift: observedHash !== e.payload.final_hash,
+      observed_hash: observedHash,
+      expected_hash: e.payload.final_hash,
+      attempt_state: e.status,
+      canonical_method_changed:
+        digest(
+          canonical(this.record(e.payload.method_export.method_ref.id).data),
+        ) !== e.payload.method_export.content_hash,
+      export_current:
+        e.status === "confirmed" &&
+        observedHash === e.payload.final_hash &&
+        digest(
+          canonical(this.record(e.payload.method_export.method_ref.id).data),
+        ) === e.payload.method_export.content_hash,
+    };
+  }
   private cursors = new Map<string, CursorState>();
   private get memory() {
     return new Memory(this.storage, this.context, this.cursors);
@@ -118,6 +574,8 @@ export class Core {
       "Source exceeds its observed-input or extracted-text bound.",
     );
     const source: Source = {
+      workspace_id: this.context.workspace_id,
+      epoch: this.context.epoch,
       handle: id("source"),
       source_ref: id("observed"),
       text,
@@ -164,6 +622,7 @@ export class Core {
   }
   expireSources() {
     this.sources.clear();
+    this._approvals?.invalidate();
   }
   sequence() {
     this.authorize();
@@ -622,10 +1081,15 @@ export class Core {
   }
   operation(requestId: string) {
     this.authorize();
-    const row = this.storage.get<{ json: string }>(
-      "SELECT json FROM intents WHERE request_id=?",
-      requestId,
-    );
+    const row =
+      this.storage.get<{ json: string }>(
+        "SELECT json FROM intents WHERE request_id=?",
+        requestId,
+      ) ??
+      this.storage.get<{ json: string }>(
+        "SELECT t.json FROM intents t WHERE json_extract(t.json,'$.kind')='managed_file' AND EXISTS(SELECT 1 FROM json_each(t.json,'$.receipt_history') r WHERE json_extract(r.value,'$.receipt_id')=?)",
+        requestId,
+      );
     requireThat(row, "REFERENCE_NOT_FOUND", "Operation not found.");
     requireThat(
       this.memory.technical(JSON.parse(row.json)),
@@ -683,6 +1147,8 @@ export class Core {
     requireThat(
       s &&
         (!handles || handles.includes(handle!)) &&
+        s.workspace_id === this.context.workspace_id &&
+        s.epoch === this.context.epoch &&
         s.runtime_id === this.context.runtime_id &&
         s.session_id === this.context.session_id &&
         (s.transport === "interactive" ||
@@ -902,6 +1368,9 @@ export class Core {
           must_read: true,
         };
       }),
+      operations_selector: { view: "operations" },
+      restore_compatibility:
+        "Future restore must reconcile EVERY resumed potentially effectful Work/step, even without an attempt or receipt. E2 does not implement restore.",
       open_signals_has_more: openSignals.length > 5,
       open_signals_selector: { view: "signals" },
       must_read: [...new Set(must_read)],
@@ -1058,10 +1527,26 @@ export class Core {
     }
     for (const handle of request.source_handles)
       requireThat(
-        this.sources.has(handle),
+        this.sources.get(handle)?.workspace_id === this.context.workspace_id &&
+          this.sources.get(handle)?.epoch === this.context.epoch &&
+          this.sources.get(handle)?.runtime_id === this.context.runtime_id &&
+          this.sources.get(handle)?.session_id === this.context.session_id,
         "SOURCE_EXPIRED",
         "New commits require current exact source handles.",
       );
+    if (request.preview_ref || this.requiresApproval(request)) {
+      const exact = this.previewExact(request, bindings);
+      const preview = request.preview_ref
+        ? this.approvals.read(request.preview_ref)
+        : null;
+      exact.before = preview?.payload.exact.before;
+      exact.effective_access = this.previewAccess(
+        (preview?.payload.exact.before ?? []) as RecordRow[],
+      );
+      exact.assigned_method_versions =
+        preview?.payload.exact.assigned_method_versions;
+      this.approvals.verify(request.preview_ref, "commit", exact);
+    }
     const intent = {
       request_id: request.request_id,
       operation_digest: hash,
@@ -1092,6 +1577,24 @@ export class Core {
     this.storage.exec("BEGIN IMMEDIATE");
     try {
       this.authorize(true);
+      if (request.preview_ref || this.requiresApproval(request)) {
+        const exact = this.previewExact(request, bindings);
+        const preview = request.preview_ref
+          ? this.approvals.read(request.preview_ref)
+          : null;
+        exact.before = preview?.payload.exact.before;
+        exact.effective_access = this.previewAccess(
+          (preview?.payload.exact.before ?? []) as RecordRow[],
+        );
+        exact.assigned_method_versions =
+          preview?.payload.exact.assigned_method_versions;
+        this.approvals.consume(
+          request.preview_ref,
+          "commit",
+          exact,
+          request.request_id,
+        );
+      }
       requireThat(
         !this.storage.get(
           "SELECT request_id FROM receipts WHERE request_id=?",
@@ -1111,7 +1614,9 @@ export class Core {
       }[] = [];
       const consumed = new Set<string>();
       const checkDecision = (handle?: string) =>
-        this.decision(handle, request.source_handles);
+        request.preview_ref
+          ? this.approvals.read(request.preview_ref).answer?.source_ref
+          : this.decision(handle, request.source_handles);
       const guarded = (recordId: string) => {
         const current = this.record(recordId);
         requireThat(
@@ -1309,6 +1814,133 @@ export class Core {
       for (const raw of request.ops) {
         const op = resolve(raw) as typeof raw;
         if (experience.apply(op)) continue;
+        if (op.op === "merge_activity") {
+          const from = guarded(op.from_ref.id),
+            to = guarded(op.to_ref.id);
+          requireThat(
+            from.kind === "activity" &&
+              to.kind === "activity" &&
+              from.id !== to.id &&
+              ["active", "paused"].includes(from.data.status as string) &&
+              to.data.status === "active",
+            "VALIDATION_ERROR",
+            "Activity merge needs distinct open source and active target.",
+          );
+          const members = this.storage
+            .all<{
+              id: string;
+            }>(
+              "SELECT id FROM records WHERE kind='work' AND activity_id=? ORDER BY id",
+              from.id,
+            )
+            .map((r) => r.id);
+          requireThat(
+            canonical(members) ===
+              canonical(op.moved_work_refs.map((r) => r.id).sort()),
+            "VALIDATION_ERROR",
+            "Finite Activity merge must explicitly include every moved Work; incomplete or oversized merges are unavailable.",
+          );
+          for (const id of members) {
+            const w = guarded(id);
+            requireThat(
+              !changed.has(id),
+              "VALIDATION_ERROR",
+              "Moved Work target duplicated.",
+            );
+            stage(w, {
+              ...w.data,
+              activity_id: { id: to.id },
+              plan_version: ((w.data.plan_version as number) ?? 1) + 1,
+            });
+          }
+          const aliases = [
+            ...new Set([
+              ...((to.data.aliases as string[]) ?? []),
+              from.title,
+              ...((from.data.aliases as string[]) ?? []),
+            ]),
+          ];
+          requireThat(
+            aliases.length <= 30,
+            "VALIDATION_ERROR",
+            "Activity alias bound exceeded.",
+          );
+          stage(to, { ...to.data, aliases });
+          if (this.previewAccess([from, to]).some((a) => a.restricted))
+            changed.get(to.id)!.visibility = "restricted";
+          stage(from, {
+            ...from.data,
+            status: "merged",
+            redirect_to: { id: to.id },
+          });
+          continue;
+        }
+        if (op.op === "merge_identity") {
+          const from = guarded(op.from_ref.id),
+            to = guarded(op.to_ref.id);
+          requireThat(
+            from.id !== to.id &&
+              from.kind === to.kind &&
+              ["concept", "entity"].includes(from.kind) &&
+              from.data.status === "active" &&
+              to.data.status === "active",
+            "VALIDATION_ERROR",
+            "Merge needs two distinct active identities of the same supported kind.",
+          );
+          if (from.kind === "entity")
+            requireThat(
+              from.data.entity_kind === to.data.entity_kind,
+              "REFERENCE_TYPE_MISMATCH",
+              "Entity types differ.",
+            );
+          const aliases = [
+            ...new Set([
+              ...(to.data.aliases as string[]),
+              from.title,
+              ...(from.data.aliases as string[]),
+            ]),
+          ];
+          requireThat(
+            aliases.length <= 30,
+            "VALIDATION_ERROR",
+            "Merged alias limit exceeded; choose a smaller explicit proposal.",
+          );
+          stage(to, { ...to.data, aliases });
+          if (this.previewAccess([from, to]).some((a) => a.restricted))
+            changed.get(to.id)!.visibility = "restricted";
+          stage(from, {
+            ...from.data,
+            status: "merged",
+            redirect_to: { id: to.id },
+            ...(from.kind === "concept" ? { broader_ids: [] } : {}),
+          });
+          continue;
+        }
+        if (op.op === "reorganize_catalog") {
+          requireThat(
+            new Set(op.changes.map((c) => c.ref.id)).size === op.changes.length,
+            "VALIDATION_ERROR",
+            "Catalog targets must be unique.",
+          );
+          for (const c of op.changes) {
+            const current = guarded(c.ref.id);
+            requireThat(
+              !changed.has(current.id) &&
+                (!c.broader_ids || current.kind === "concept"),
+              "VALIDATION_ERROR",
+              "Catalog target is duplicated or has wrong kind.",
+            );
+            stage(current, {
+              ...current.data,
+              ...(c.broader_ids ? { broader_ids: c.broader_ids } : {}),
+            });
+            const row = changed.get(current.id)!;
+            row.title = c.title ?? row.title;
+            row.concept_ids = (c.concept_ids ??
+              row.concept_ids) as RecordRow["concept_ids"];
+          }
+          continue;
+        }
         if (op.op === "put_relation") {
           relations.push({
             id: created[op.client_ref],
@@ -1511,6 +2143,15 @@ export class Core {
             "Every updated record requires its exact revision guard.",
           );
           before[current.id] = current.revision;
+          if (["concept", "entity", "activity"].includes(current.kind))
+            requireThat(
+              canonical(current.data.redirect_to ?? null) ===
+                canonical((op.data as JsonObject).redirect_to ?? null) &&
+                current.data.status !== "merged" &&
+                (op.data as JsonObject).status !== "merged",
+              "APPROVAL_REQUIRED",
+              "Use an exact merge proposal; merged historical identities cannot be reassigned.",
+            );
           if (current.kind === "method")
             op.data = methodUpdate(
               current,
@@ -1559,6 +2200,16 @@ export class Core {
             op.op !== "create_record"
           )
             throw new CoreError("VALIDATION_ERROR", "Unsupported operation.");
+          if (
+            op.op === "create_record" &&
+            ["concept", "entity", "activity"].includes(op.kind)
+          )
+            requireThat(
+              (op.data as JsonObject).status !== "merged" &&
+                !(op.data as JsonObject).redirect_to,
+              "APPROVAL_REQUIRED",
+              "New identities cannot start as redirects.",
+            );
           const recordId = created[op.client_ref];
           before[recordId] = null;
           let data: JsonObject;
@@ -1705,7 +2356,7 @@ export class Core {
                 const derivative: RecordRow = {
                   id: derivativeId,
                   kind: "evidence",
-                  title: op.title + " — extracted text",
+                  title: op.title + " â€” extracted text",
                   body: "Parser-derived text; consult extraction limitations and original source.",
                   revision: 1,
                   created_at: now,

@@ -113,7 +113,26 @@ export function validateMemory(
       );
       concepts.set(r.id, parents);
     }
-    if (r.kind === "entity") EntityData.parse(r.data);
+    if (["concept", "entity", "activity"].includes(r.kind)) {
+      if (r.kind === "entity") EntityData.parse(r.data);
+      requireThat(
+        (r.data.status === "merged") === !!r.data.redirect_to,
+        "VALIDATION_ERROR",
+        "Only merged identities have a redirect.",
+      );
+      const seen = new Set<string>([r.id]);
+      let next = r.data.redirect_to;
+      while (next) {
+        const target = get(next, r.kind);
+        requireThat(
+          !seen.has(target.id),
+          "GRAPH_CYCLE",
+          "Identity redirect cycle.",
+        );
+        seen.add(target.id);
+        next = target.data.redirect_to;
+      }
+    }
     if (r.kind === "knowledge") {
       const k = KnowledgeData.parse(r.data);
       requireThat(
@@ -494,6 +513,7 @@ export class Memory {
     return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE (secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1))`;
   }
   technical(value: unknown) {
+    if (this.restricted) return true;
     const serialized = JSON.stringify(value);
     if (!this.restricted && /"visibility"\s*:\s*"restricted"/.test(serialized))
       return false;
@@ -708,6 +728,37 @@ export class Memory {
             };
           if (view === "operations") {
             const { payload, ...header } = value;
+            if (value.kind === "managed_file") {
+              const p = payload as JsonObject;
+              return {
+                request_id: value.request_id,
+                kind: value.kind,
+                status: value.status,
+                target: p.target,
+                action: p.tool,
+                work_ref: p.work_ref,
+                step_id: p.step_id,
+                receipt_id:
+                  (value.receipt as JsonObject | null)?.receipt_id ?? null,
+                observation_count: (value.observations as unknown[]).length,
+                payload_omitted: true,
+                must_read_operation: value.request_id,
+              };
+            }
+            if (value.kind === "preview") {
+              const p = payload as JsonObject;
+              return {
+                request_id: value.request_id,
+                kind: value.kind,
+                status: value.status,
+                action: p.action,
+                consequence: String(p.consequence).slice(0, 400),
+                explanation_truncated: String(p.consequence).length > 400,
+                expires_at: p.expires_at,
+                payload_omitted: true,
+                must_read_operation: value.request_id,
+              };
+            }
             return {
               ...header,
               payload_omitted: !!payload,
@@ -738,7 +789,7 @@ export class Memory {
         "current_claims needs an addressed record.",
       );
       where.push(
-        "r.kind='knowledge' AND json_extract(r.json,'$.data.state') IN ('current','tentative','contested') AND (json_extract(r.json,'$.data.subject_ref.id')=? OR json_extract(r.json,'$.data.object_ref.id')=?)",
+        "r.kind='knowledge' AND json_extract(r.json,'$.data.state') IN ('current','tentative','contested') AND (json_extract(r.json,'$.data.subject_ref.id') IN (WITH RECURSIVE aliases(id) AS (SELECT ? UNION SELECT a.id FROM records a JOIN aliases b ON json_extract(a.json,'$.data.redirect_to.id')=b.id) SELECT id FROM aliases) OR json_extract(r.json,'$.data.object_ref.id') IN (WITH RECURSIVE aliases(id) AS (SELECT ? UNION SELECT a.id FROM records a JOIN aliases b ON json_extract(a.json,'$.data.redirect_to.id')=b.id) SELECT id FROM aliases))",
       );
       params.push(recordId, recordId);
     } else if (
@@ -757,7 +808,7 @@ export class Memory {
       const selected = JSON.parse(selectedRow.json) as RecordRow;
       if (selected.kind === "concept") {
         where.push(
-          "(EXISTS(SELECT 1 FROM concept_parents p WHERE p.parent_id=? AND p.child_id=r.id) OR EXISTS(SELECT 1 FROM memberships m WHERE m.concept_id=? AND m.record_id=r.id))",
+          "(EXISTS(SELECT 1 FROM concept_parents p WHERE p.parent_id IN (WITH RECURSIVE aliases(id) AS (SELECT ? UNION SELECT a.id FROM records a JOIN aliases b ON json_extract(a.json,'$.data.redirect_to.id')=b.id) SELECT id FROM aliases) AND p.child_id=r.id) OR EXISTS(SELECT 1 FROM memberships m WHERE m.concept_id IN (WITH RECURSIVE aliases(id) AS (SELECT ? UNION SELECT a.id FROM records a JOIN aliases b ON json_extract(a.json,'$.data.redirect_to.id')=b.id) SELECT id FROM aliases) AND m.record_id=r.id))",
         );
         params.push(recordId, recordId);
       } else {
