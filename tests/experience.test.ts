@@ -957,6 +957,75 @@ test("E1 open-Signal snapshot routes a bounded prefix with an explicit catalog c
   assert.equal(new Set(ids).size, 8);
 });
 
+test("E1 correction Run outcomes can pin changed Method and review versions; invocation outputs remain Evidence", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const mid = f.commit([method("m")]).created.m,
+    run = f.run();
+  const signal = f.commit([
+    {
+      op: "open_signal",
+      client_ref: "signal",
+      kind: "correction",
+      subject_refs: [{ id: mid, content_version: 1 }],
+      evidence_refs: [{ id: f.origin }],
+      description: "A bounded textual correction",
+      next_check: null,
+      visibility: "workspace",
+    },
+  ]).created.signal;
+  const review = f.commit(
+    [
+      {
+        op: "revise_method",
+        ref: { id: mid },
+        data: {
+          ...f.read(mid).data,
+          instructions: "Clarified preflight without evidence of improvement",
+        },
+      },
+      {
+        op: "review_signal",
+        client_ref: "review",
+        ref: { id: signal },
+        problem_state: "observing",
+        assessment: "Changed content; verification still pending",
+        evidence_refs: [{ id: f.origin }],
+        applied_change_ref: { id: mid, content_version: 2 },
+        next_check: "Next relevant case",
+        grounds: null,
+        dismissal_reason: null,
+      },
+    ],
+    [mid, signal],
+  ).created.review;
+  f.commit(
+    [
+      {
+        op: "finish_run",
+        ref: { id: run },
+        execution: "completed",
+        summary: "Correction episode ended; no application or benefit asserted",
+        result_refs: [
+          { id: mid, content_version: 2 },
+          { id: review, revision: 1 },
+        ],
+      },
+    ],
+    [run],
+  );
+  const refs = f.read(run).data.result_refs as {
+    id: string;
+    revision: number;
+    content_version?: number;
+  }[];
+  assert.equal(refs[0].content_version, 2);
+  assert.equal(refs[1].id, review);
+  assert.equal(f.read(signal).data.problem_state, "observing");
+  error(() => f.core.browse("records", review), "VALIDATION_ERROR");
+  assert.equal(f.read(review).kind, "signal_review");
+});
+
 test("E1 stale guards, invocation output types, complete selection and start replay are enforced", (t) => {
   const f = fixture();
   t.after(() => f.disk.close());

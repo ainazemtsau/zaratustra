@@ -745,12 +745,16 @@ export class Memory {
       recordId &&
       ["topics", "concepts", "entities", "records"].includes(view)
     ) {
-      const selected = JSON.parse(
-        this.db.get<{ json: string }>(
-          "SELECT json FROM records WHERE id=?",
-          recordId,
-        )!.json,
-      ) as RecordRow;
+      const selectedRow = this.db.get<{ json: string }>(
+        "SELECT json FROM records WHERE id=?",
+        recordId,
+      );
+      requireThat(
+        selectedRow,
+        "VALIDATION_ERROR",
+        "Supporting rows use addressed read or their registered experience view, not primary-record neighborhood expansion.",
+      );
+      const selected = JSON.parse(selectedRow.json) as RecordRow;
       if (selected.kind === "concept") {
         where.push(
           "(EXISTS(SELECT 1 FROM concept_parents p WHERE p.parent_id=? AND p.child_id=r.id) OR EXISTS(SELECT 1 FROM memberships m WHERE m.concept_id=? AND m.record_id=r.id))",

@@ -413,7 +413,11 @@ export class ExperienceTransaction {
           ...r.data,
           execution: op.execution,
           summary: op.summary,
-          result_refs: op.result_refs.map((ref) => this.evidence(ref)),
+          result_refs: op.result_refs.map((ref) =>
+            this.address(ref).kind === "evidence"
+              ? this.evidence(ref)
+              : this.pin(ref),
+          ),
           ended_at: this.now,
           local_metrics: op.local_metrics ?? [],
         }),
