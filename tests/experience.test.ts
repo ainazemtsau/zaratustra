@@ -1026,6 +1026,168 @@ test("E1 correction Run outcomes can pin changed Method and review versions; inv
   assert.equal(f.read(review).kind, "signal_review");
 });
 
+test("E1 navigation links resolve exact Method and supporting review refs with guards and access; typed derivation is not duplicated", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const mid = f.commit([method("m")]).created.m,
+    run = f.run(),
+    out = f.result(run);
+  const signal = f.commit([
+    {
+      op: "open_signal",
+      client_ref: "signal",
+      kind: "problem",
+      subject_refs: [{ id: out }],
+      evidence_refs: [{ id: f.origin }],
+      description: "A grounded open issue",
+      next_check: null,
+      visibility: "workspace",
+    },
+  ]).created.signal;
+  const review = f.commit(
+    [
+      {
+        op: "review_signal",
+        client_ref: "review",
+        ref: { id: signal },
+        problem_state: "open",
+        assessment: "Considered, still open",
+        evidence_refs: [{ id: f.origin }],
+        applied_change_ref: null,
+        next_check: "Await actual grounds",
+        grounds: null,
+        dismissal_reason: null,
+      },
+    ],
+    [signal],
+  ).created.review;
+  const receipt = f.commit(
+    [
+      {
+        op: "put_relation",
+        client_ref: "method",
+        relation: "derived_from",
+        from_ref: { id: out },
+        to_ref: { id: mid, content_version: 1 },
+        reason: "Summary cites the exact recipe, not an application claim",
+      },
+      {
+        op: "put_relation",
+        client_ref: "review",
+        relation: "related",
+        from_ref: { id: out },
+        to_ref: { id: review, revision: 1 },
+        reason: "Directly open the existing consideration",
+      },
+    ],
+    [out, mid, review],
+  );
+  const links = f.core.browse("relations", out).data.cards as unknown as {
+    to_ref: { id: string; revision: number; content_version?: number };
+  }[];
+  assert.equal(links.length, 2);
+  assert.equal(
+    links.find((v) => v.to_ref.id === mid)!.to_ref.content_version,
+    1,
+  );
+  assert.equal(links.find((v) => v.to_ref.id === review)!.to_ref.revision, 1);
+  f.commit(
+    [
+      { op: "remove_relation", relation_id: receipt.created.method },
+      { op: "remove_relation", relation_id: receipt.created.review },
+    ],
+    [out, mid, review],
+  );
+  assert.equal(f.core.browse("relations", out).data.cards.length, 0);
+  const local = f.commit([method("local", { derived_from: [{ id: mid }] })])
+    .created.local;
+  error(
+    () =>
+      f.commit(
+        [
+          {
+            op: "put_relation",
+            client_ref: "duplicate",
+            relation: "derived_from",
+            from_ref: { id: local },
+            to_ref: { id: mid },
+            reason: "Must not duplicate canonical lineage",
+          },
+        ],
+        [local, mid],
+      ),
+    "VALIDATION_ERROR",
+  );
+});
+
+test("E1 request-local Work premises route current Method versions without rewriting the historical context", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const mid = f.commit([method("m")]).created.m;
+  const work = f.commit([
+    {
+      op: "create_record",
+      client_ref: "work",
+      kind: "work",
+      title: "Waiting for source",
+      visibility: "workspace",
+      data: {
+        activity_id: null,
+        parent_work_id: null,
+        objective: "Inspect a future supported source",
+        acceptance: [
+          {
+            criterion_id: "result",
+            description: "Grounded result",
+            verification: "Inspect actual output",
+            required: true,
+          },
+        ],
+        status: "waiting",
+        current_state: "Source awaited",
+        next_action: null,
+        steps: [],
+        waits: [
+          {
+            wait_id: "source",
+            kind: "user",
+            target: "work",
+            subject: "Source",
+            satisfied_by: "Readable source received",
+            received_refs: [],
+            question: "Send the source",
+          },
+        ],
+        context_refs: [{ id: mid, revision: 1, content_version: 1 }],
+        completion: null,
+      },
+    },
+  ]).created.work;
+  f.commit(
+    [
+      {
+        op: "revise_method",
+        ref: { id: mid },
+        data: {
+          ...f.read(mid).data,
+          instructions: "Current corrected instructions",
+        },
+      },
+    ],
+    [mid],
+  );
+  const snapshot = f.core.snapshot(),
+    premise = snapshot.context_current.find((ref) => ref.id === mid)!;
+  assert.equal(premise.content_version, 2);
+  assert.equal(premise.historical_content_version, 1);
+  assert.equal(premise.must_read, true);
+  assert.equal(
+    (f.read(work).data.context_refs as { content_version: number }[])[0]
+      .content_version,
+    1,
+  );
+});
+
 test("E1 stale guards, invocation output types, complete selection and start replay are enforced", (t) => {
   const f = fixture();
   t.after(() => f.disk.close());

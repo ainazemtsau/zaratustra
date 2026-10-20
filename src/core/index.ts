@@ -838,6 +838,8 @@ export class Core {
       revision: number;
       state: unknown;
       historical_revision: number | null;
+      content_version?: number;
+      historical_content_version?: number | null;
       must_read: boolean;
     }[] = [];
     for (const r of rows.slice(0, 20)) {
@@ -855,16 +857,23 @@ export class Core {
         for (const ref of r.data.context_refs as {
           id: string;
           revision?: number;
+          content_version?: number;
         }[]) {
           if (!this.memory.allowed(ref.id)) continue;
           const current = this.record(ref.id);
-          if (current.kind === "knowledge") {
+          if (current.kind === "knowledge" || current.kind === "method") {
             if (context_current.length < 20)
               context_current.push({
                 id: current.id,
                 revision: current.revision,
                 state: current.data.state,
                 historical_revision: ref.revision ?? null,
+                ...(current.kind === "method"
+                  ? {
+                      content_version: current.data.content_version as number,
+                      historical_content_version: ref.content_version ?? null,
+                    }
+                  : {}),
                 must_read: true,
               });
             else must_read.push(r.id);
@@ -1115,6 +1124,18 @@ export class Core {
         );
         return current;
       };
+      const guardedAddress = (recordId: string) => {
+        const current = this.addressed(recordId);
+        requireThat(
+          request.guards.some(
+            (g) =>
+              g.ref.id === recordId && g.expected_revision === current.revision,
+          ),
+          "REVISION_CONFLICT",
+          "Relation premises require their exact current revision guards.",
+        );
+        return current;
+      };
       const requireClaim = (
         workId: string,
         stepId: string | null,
@@ -1312,8 +1333,8 @@ export class Core {
             "Relation not found.",
           );
           const relation = JSON.parse(row.json);
-          guarded(relation.from_ref.id);
-          guarded(relation.to_ref.id);
+          guardedAddress(relation.from_ref.id);
+          guardedAddress(relation.to_ref.id);
           relations.push({
             id: op.relation_id,
             json: null,
@@ -1850,8 +1871,8 @@ export class Core {
       for (const relation of relations)
         if (relation.json) {
           const rel = JSON.parse(relation.json),
-            from = get(rel.from_ref),
-            to = get(rel.to_ref);
+            from = experience.address(rel.from_ref),
+            to = experience.address(rel.to_ref);
           requireThat(
             from.id !== to.id,
             "VALIDATION_ERROR",
@@ -1879,24 +1900,35 @@ export class Core {
             );
           if (rel.relation === "derived_from") {
             requireThat(
-              ["evidence", "knowledge"].includes(from.kind) &&
-                ["evidence", "knowledge"].includes(to.kind),
+              ["evidence", "knowledge", "method"].includes(from.kind) &&
+                ["evidence", "knowledge", "method", "run"].includes(to.kind),
               "REFERENCE_TYPE_MISMATCH",
-              "derived_from connects Evidence/Knowledge.",
+              "derived_from connects Evidence/Knowledge/Method to retained source content or a Run; it does not prove execution or causality.",
             );
             const typed = (from.data.derived_from ??
               (from.data.representation as { source_ref?: unknown } | undefined)
-                ?.source_ref) as { id?: string } | undefined;
+                ?.source_ref) as
+              | { id?: string }
+              | { id?: string }[]
+              | undefined;
             requireThat(
-              typed?.id !== to.id,
+              !(Array.isArray(typed) ? typed : typed ? [typed] : []).some(
+                (ref) => ref.id === to.id,
+              ),
               "VALIDATION_ERROR",
               "Do not duplicate typed derivation through a relation.",
             );
           }
-          guardedIfExisting(from.id);
-          guardedIfExisting(to.id);
-          rel.from_ref = { id: from.id, revision: from.revision };
-          rel.to_ref = { id: to.id, revision: to.revision };
+          for (const target of [from, to])
+            if (
+              this.storage.get(
+                "SELECT id FROM addressed_current WHERE id=?",
+                target.id,
+              )
+            )
+              guardedAddress(target.id);
+          rel.from_ref = exactRef(from);
+          rel.to_ref = exactRef(to);
           rel.symmetric = rel.relation === "related";
           relation.json = JSON.stringify(rel);
         }
