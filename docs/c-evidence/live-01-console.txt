@@ -1,0 +1,25 @@
+(node:109180) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранено:\n- Исходный запрос: «Создай работу; часть материалов пришлю позже».\n- Полученная часть материала — оригинальный Markdown-файл; его сохранённый текст доступен.\n- Работа с целью прочитать оставшийся материал и подготовить обоснованный разбор.\n\n**Чего не хватает:** остальной части материала. Работа находится в состоянии ожидания; завершение и итоговый разбор не зафиксированы.\n\nНичего не менял. Сохранность проверил, но весь материал сейчас не перечитывал.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 1,
+    "requests": 9,
+    "input": 101395,
+    "output": 490,
+    "cache_read": 53248,
+    "estimated_usd": 0.10651880000000001,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

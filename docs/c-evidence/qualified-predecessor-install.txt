@@ -1,0 +1,28 @@
+Installing git:github.com/ainazemtsau/zaratustra@27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f...
+Cloning into '<C_EVIDENCE_ROOT>\qualified-upgrade-config\git\github.com\ainazemtsau\zaratustra'...
+Note: switching to '27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 27a74fd Record installed P2 validation, attempts and exact-SHA reproduction
+
+added 1 package, and audited 2 packages in 2s
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f

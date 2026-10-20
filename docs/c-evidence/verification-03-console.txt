@@ -1,0 +1,1 @@
+{"verified_attempts": 19, "requests": 138, "estimated_usd": 2.5311667999999985, "work": true, "materials": true, "output": "verification-03.json"}

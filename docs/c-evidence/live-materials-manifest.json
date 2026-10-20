@@ -1,0 +1,100 @@
+{
+  "synthetic": true,
+  "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+  "source_copies_removed": true,
+  "materials": [
+    {
+      "name": "field-notebook.pdf",
+      "source_sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "source_bytes": 1266,
+      "original_ref": {
+        "id": "evidence-ad3f73c1-a912-4aa5-b4bb-2d4f6be8ca67",
+        "revision": 1
+      },
+      "derived_ref": {
+        "id": "evidence-4d47a2e3-04ab-4930-bfc3-b45aad3b8f2d",
+        "revision": 1
+      },
+      "text_sha256": "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4",
+      "sections": [
+        {
+          "locator": "page:1",
+          "label": "Page 1",
+          "start": 0,
+          "end": 57,
+          "available": true
+        },
+        {
+          "locator": "page:2",
+          "label": "Page 2",
+          "start": 57,
+          "end": 132,
+          "available": true
+        },
+        {
+          "locator": "page:3",
+          "label": "Page 3",
+          "start": 132,
+          "end": 187,
+          "available": true
+        }
+      ],
+      "managed_original_exact": true
+    },
+    {
+      "name": "field-manual.epub",
+      "source_sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+      "source_bytes": 1068,
+      "original_ref": {
+        "id": "evidence-fc6fbe93-f04f-4295-83aa-7bc8ade74515",
+        "revision": 1
+      },
+      "derived_ref": {
+        "id": "evidence-e8f60bb2-12ed-4d62-b5e0-3e722491df66",
+        "revision": 1
+      },
+      "text_sha256": "1ed530c9fbb2b1d21160dbe083836aa1fbeb7c6a3f00fc47551c4923b751f604",
+      "sections": [
+        {
+          "locator": "chapter:1:OPS/one.xhtml",
+          "label": "OPS/one.xhtml",
+          "start": 0,
+          "end": 12615,
+          "available": true
+        },
+        {
+          "locator": "chapter:2:OPS/two.xhtml",
+          "label": "OPS/two.xhtml",
+          "start": 12615,
+          "end": 12726,
+          "available": true
+        }
+      ],
+      "managed_original_exact": true
+    },
+    {
+      "name": "field-notes.md",
+      "source_sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54",
+      "source_bytes": 14049,
+      "original_ref": {
+        "id": "evidence-01e49e0c-7938-4312-a95c-48441679ea5d",
+        "revision": 1
+      },
+      "derived_ref": {
+        "id": "evidence-9bde9b2d-dcdb-4f0e-8a94-d1e9b9cc942d",
+        "revision": 1
+      },
+      "text_sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54",
+      "sections": [
+        {
+          "locator": "text:1",
+          "label": "Text",
+          "start": 0,
+          "end": 11047,
+          "available": true
+        }
+      ],
+      "managed_original_exact": true
+    }
+  ]
+}

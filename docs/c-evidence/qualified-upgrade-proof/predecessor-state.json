@@ -1,0 +1,213 @@
+{
+  "head": "27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f",
+  "workspace": {
+    "workspace_id": "19b4fcee-af48-48c3-9d83-e50962eea542",
+    "epoch": "dd6222f1-1bef-40c0-86e9-fd4e875a50cb",
+    "schema_version": 1
+  },
+  "tables": {
+    "records": [
+      {
+        "id": "evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\",\"kind\":\"evidence\",\"title\":\"Pre-upgrade material\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"imported_file\",\"source_locator\":\"<C_EVIDENCE_ROOT>\\\\qualified-upgrade-proof\\\\original-inputs\\\\retained.md\",\"captured_at\":\"2026-10-19T17:53:05.211Z\",\"content_hash\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"retained_excerpt\":null,\"blob_ref\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"byte_length\":12660,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"content_hash\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"transport\":\"file\",\"channel_identity\":null,\"session_id\":\"upgrade-synthetic\",\"runtime_id\":\"upgrade-synthetic\",\"captured_at\":\"2026-10-19T17:53:05.211Z\",\"capture_stage\":\"validated-file-bytes\",\"original_keystrokes\":false,\"byte_length\":12660,\"blob_ref\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"locator\":\"<C_EVIDENCE_ROOT>\\\\qualified-upgrade-proof\\\\original-inputs\\\\retained.md\"},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "evidence-18481b20-0bfa-4623-93d8-e8424c993767",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\",\"kind\":\"evidence\",\"title\":\"Original Russian request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\",\"captured_at\":\"2026-10-19T17:53:05.213Z\",\"content_hash\":\"88a0657588def777fd5dd9e6228ec26958af0176c823570531dd7f0999a73c94\",\"retained_excerpt\":\"Создай работу; часть материалов пришлю позже.\",\"blob_ref\":null,\"byte_length\":83,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\",\"content_hash\":\"88a0657588def777fd5dd9e6228ec26958af0176c823570531dd7f0999a73c94\",\"transport\":\"rpc\",\"channel_identity\":\"trusted-synthetic-upgrade-controller\",\"session_id\":\"upgrade-synthetic\",\"runtime_id\":\"upgrade-synthetic\",\"captured_at\":\"2026-10-19T17:53:05.213Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":83},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-16ffab18-1c98-4f56-bb4a-918a948fe97f",
+        "kind": "activity",
+        "activity_id": null,
+        "json": "{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\",\"kind\":\"activity\",\"title\":\"Upgrade continuity\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Preserve exact existing state across migration\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f",
+        "kind": "work",
+        "activity_id": "activity-16ffab18-1c98-4f56-bb4a-918a948fe97f",
+        "json": "{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\",\"kind\":\"work\",\"title\":\"Waiting pre-upgrade Work\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.227Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\"},\"parent_work_id\":null,\"objective\":\"Read the remaining material when received\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Grounded review\",\"verification\":\"Retained source and result\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"An exact excerpt is retained; the whole remaining material is still missing\",\"next_action\":\"Ask for remaining material\",\"steps\":[],\"waits\":[{\"wait_id\":\"remaining\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Remaining material\",\"satisfied_by\":\"Full remaining material received\",\"received_refs\":[{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"question\":\"Send the remaining material\"}],\"context_refs\":[{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\"},{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"completion\":null}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\",\"kind\":\"evidence\",\"title\":\"Pre-upgrade material\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"imported_file\",\"source_locator\":\"<C_EVIDENCE_ROOT>\\\\qualified-upgrade-proof\\\\original-inputs\\\\retained.md\",\"captured_at\":\"2026-10-19T17:53:05.211Z\",\"content_hash\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"retained_excerpt\":null,\"blob_ref\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"byte_length\":12660,\"availability\":\"retained\",\"source_language\":\"en\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"content_hash\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"transport\":\"file\",\"channel_identity\":null,\"session_id\":\"upgrade-synthetic\",\"runtime_id\":\"upgrade-synthetic\",\"captured_at\":\"2026-10-19T17:53:05.211Z\",\"capture_stage\":\"validated-file-bytes\",\"original_keystrokes\":false,\"byte_length\":12660,\"blob_ref\":\"d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d\",\"locator\":\"<C_EVIDENCE_ROOT>\\\\qualified-upgrade-proof\\\\original-inputs\\\\retained.md\"},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "evidence-18481b20-0bfa-4623-93d8-e8424c993767",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\",\"kind\":\"evidence\",\"title\":\"Original Russian request\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\",\"captured_at\":\"2026-10-19T17:53:05.213Z\",\"content_hash\":\"88a0657588def777fd5dd9e6228ec26958af0176c823570531dd7f0999a73c94\",\"retained_excerpt\":\"Создай работу; часть материалов пришлю позже.\",\"blob_ref\":null,\"byte_length\":83,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"source_ref\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\",\"content_hash\":\"88a0657588def777fd5dd9e6228ec26958af0176c823570531dd7f0999a73c94\",\"transport\":\"rpc\",\"channel_identity\":\"trusted-synthetic-upgrade-controller\",\"session_id\":\"upgrade-synthetic\",\"runtime_id\":\"upgrade-synthetic\",\"captured_at\":\"2026-10-19T17:53:05.213Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"byte_length\":83},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "activity-16ffab18-1c98-4f56-bb4a-918a948fe97f",
+        "revision": 1,
+        "json": "{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\",\"kind\":\"activity\",\"title\":\"Upgrade continuity\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"purpose\":\"Preserve exact existing state across migration\",\"status\":\"active\"}}"
+      },
+      {
+        "id": "work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f",
+        "revision": 1,
+        "json": "{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\",\"kind\":\"work\",\"title\":\"Waiting pre-upgrade Work\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.220Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\"},\"parent_work_id\":null,\"objective\":\"Read the remaining material when received\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Grounded review\",\"verification\":\"Retained source and result\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"Initial excerpt received; remaining material missing\",\"next_action\":\"Ask for remaining material\",\"steps\":[],\"waits\":[{\"wait_id\":\"remaining\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Remaining material\",\"satisfied_by\":\"Full remaining material received\",\"received_refs\":[{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"question\":\"Send the remaining material\"}],\"context_refs\":[{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\"},{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"completion\":null}}"
+      },
+      {
+        "id": "work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f",
+        "revision": 2,
+        "json": "{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\",\"kind\":\"work\",\"title\":\"Waiting pre-upgrade Work\",\"body\":null,\"revision\":2,\"created_at\":\"2026-10-19T17:53:05.220Z\",\"updated_at\":\"2026-10-19T17:53:05.227Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\"},\"parent_work_id\":null,\"objective\":\"Read the remaining material when received\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Grounded review\",\"verification\":\"Retained source and result\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"An exact excerpt is retained; the whole remaining material is still missing\",\"next_action\":\"Ask for remaining material\",\"steps\":[],\"waits\":[{\"wait_id\":\"remaining\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Remaining material\",\"satisfied_by\":\"Full remaining material received\",\"received_refs\":[{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"question\":\"Send the remaining material\"}],\"context_refs\":[{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\"},{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"completion\":null}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-3b4ccfdb-2f2f-4b7e-aee9-18ff60c5343a\",\"request_id\":\"predecessor-create\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\",\"before_revision\":null,\"after_revision\":1}],\"actor\":\"trusted-personal\",\"session_id\":\"upgrade-synthetic\",\"reason\":\"Retain accepted first-block synthetic state before actual upgrade\",\"caused_by\":[\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"observed-8edbc378-1013-4c29-b705-452069e340a2\"],\"recorded_at\":\"2026-10-19T17:53:05.220Z\"}"
+      },
+      {
+        "seq": 2,
+        "json": "{\"transaction_id\":\"txn-147e002a-537b-401f-bda3-09d105ab20ba\",\"request_id\":\"predecessor-revision\",\"change_seq\":2,\"changed_refs\":[{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\",\"before_revision\":1,\"after_revision\":2}],\"actor\":\"trusted-personal\",\"session_id\":\"upgrade-synthetic\",\"reason\":\"Retain a second existing Work revision\",\"caused_by\":[\"observed-8edbc378-1013-4c29-b705-452069e340a2\"],\"recorded_at\":\"2026-10-19T17:53:05.227Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "predecessor-create",
+        "hash": "d280ca34311a00eee1990d4de259124fd1972281be684e0babfe8d6781225c2f",
+        "json": "{\"request_id\":\"predecessor-create\",\"operation_digest\":\"d280ca34311a00eee1990d4de259124fd1972281be684e0babfe8d6781225c2f\",\"source_refs\":[\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"observed-8edbc378-1013-4c29-b705-452069e340a2\"],\"session_id\":\"upgrade-synthetic\",\"epoch\":\"dd6222f1-1bef-40c0-86e9-fd4e875a50cb\",\"status\":\"committed\",\"reason\":\"Retain accepted first-block synthetic state before actual upgrade\",\"payload\":{\"request_id\":\"predecessor-create\",\"reason\":\"Retain accepted first-block synthetic state before actual upgrade\",\"source_handles\":[\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"observed-8edbc378-1013-4c29-b705-452069e340a2\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"original\",\"source_handle\":\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"title\":\"Pre-upgrade material\",\"source_language\":\"en\"},{\"op\":\"import_evidence\",\"client_ref\":\"input\",\"source_handle\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\",\"title\":\"Original Russian request\",\"source_language\":\"ru\"},{\"op\":\"create_record\",\"client_ref\":\"activity\",\"title\":\"Upgrade continuity\",\"visibility\":\"workspace\",\"kind\":\"activity\",\"data\":{\"purpose\":\"Preserve exact existing state across migration\",\"status\":\"active\"}},{\"op\":\"create_record\",\"client_ref\":\"work\",\"title\":\"Waiting pre-upgrade Work\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":{\"client_ref\":\"activity\"},\"parent_work_id\":null,\"objective\":\"Read the remaining material when received\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Grounded review\",\"verification\":\"Retained source and result\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"Initial excerpt received; remaining material missing\",\"next_action\":\"Ask for remaining material\",\"steps\":[],\"waits\":[{\"wait_id\":\"remaining\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Remaining material\",\"satisfied_by\":\"Full remaining material received\",\"received_refs\":[{\"client_ref\":\"original\"}],\"question\":\"Send the remaining material\"}],\"context_refs\":[{\"client_ref\":\"input\"},{\"client_ref\":\"original\"}],\"completion\":null}}]},\"receipt\":{\"ok\":true,\"request_id\":\"predecessor-create\",\"workspace_id\":\"19b4fcee-af48-48c3-9d83-e50962eea542\",\"schema_version\":1,\"snapshot_seq\":1,\"transaction_id\":\"txn-3b4ccfdb-2f2f-4b7e-aee9-18ff60c5343a\",\"committed\":true,\"created\":{\"original\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\",\"input\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\",\"activity\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\",\"work\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\"},\"new_revisions\":{\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\":1,\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\":1,\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\":1,\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\":1},\"warnings\":[]}}"
+      },
+      {
+        "request_id": "predecessor-revision",
+        "hash": "71efa89489d64d311320e23c5e017ded1f406e29dd1da7ae0c59e00b6262e340",
+        "json": "{\"request_id\":\"predecessor-revision\",\"operation_digest\":\"71efa89489d64d311320e23c5e017ded1f406e29dd1da7ae0c59e00b6262e340\",\"source_refs\":[\"observed-8edbc378-1013-4c29-b705-452069e340a2\"],\"session_id\":\"upgrade-synthetic\",\"epoch\":\"dd6222f1-1bef-40c0-86e9-fd4e875a50cb\",\"status\":\"committed\",\"reason\":\"Retain a second existing Work revision\",\"payload\":{\"request_id\":\"predecessor-revision\",\"reason\":\"Retain a second existing Work revision\",\"source_handles\":[\"observed-8edbc378-1013-4c29-b705-452069e340a2\"],\"guards\":[{\"ref\":{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\"},\"expected_revision\":1}],\"ops\":[{\"op\":\"update_record\",\"ref\":{\"id\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\"},\"data\":{\"activity_id\":{\"id\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\"},\"parent_work_id\":null,\"objective\":\"Read the remaining material when received\",\"acceptance\":[{\"criterion_id\":\"review\",\"description\":\"Grounded review\",\"verification\":\"Retained source and result\",\"required\":true}],\"status\":\"waiting\",\"current_state\":\"An exact excerpt is retained; the whole remaining material is still missing\",\"next_action\":\"Ask for remaining material\",\"steps\":[],\"waits\":[{\"wait_id\":\"remaining\",\"kind\":\"user\",\"target\":\"work\",\"subject\":\"Remaining material\",\"satisfied_by\":\"Full remaining material received\",\"received_refs\":[{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"question\":\"Send the remaining material\"}],\"context_refs\":[{\"id\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\"},{\"id\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\"}],\"completion\":null}}]},\"receipt\":{\"ok\":true,\"request_id\":\"predecessor-revision\",\"workspace_id\":\"19b4fcee-af48-48c3-9d83-e50962eea542\",\"schema_version\":1,\"snapshot_seq\":2,\"transaction_id\":\"txn-147e002a-537b-401f-bda3-09d105ab20ba\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\":2},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "predecessor-create",
+        "hash": "d280ca34311a00eee1990d4de259124fd1972281be684e0babfe8d6781225c2f",
+        "json": "{\"ok\":true,\"request_id\":\"predecessor-create\",\"workspace_id\":\"19b4fcee-af48-48c3-9d83-e50962eea542\",\"schema_version\":1,\"snapshot_seq\":1,\"transaction_id\":\"txn-3b4ccfdb-2f2f-4b7e-aee9-18ff60c5343a\",\"committed\":true,\"created\":{\"original\":\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\",\"input\":\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\",\"activity\":\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\",\"work\":\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\"},\"new_revisions\":{\"evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3\":1,\"evidence-18481b20-0bfa-4623-93d8-e8424c993767\":1,\"activity-16ffab18-1c98-4f56-bb4a-918a948fe97f\":1,\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\":1},\"warnings\":[]}",
+        "bindings": "{\"source-5553580d-4d80-4b59-9031-4840d1def4f5\":\"observed-460433dc-dca4-410b-9672-a495dfa14fe9\",\"source-c047f752-516a-4bde-ae8d-5f9524906d38\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\"}"
+      },
+      {
+        "request_id": "predecessor-revision",
+        "hash": "71efa89489d64d311320e23c5e017ded1f406e29dd1da7ae0c59e00b6262e340",
+        "json": "{\"ok\":true,\"request_id\":\"predecessor-revision\",\"workspace_id\":\"19b4fcee-af48-48c3-9d83-e50962eea542\",\"schema_version\":1,\"snapshot_seq\":2,\"transaction_id\":\"txn-147e002a-537b-401f-bda3-09d105ab20ba\",\"committed\":true,\"created\":{},\"new_revisions\":{\"work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f\":2},\"warnings\":[]}",
+        "bindings": "{\"source-c047f752-516a-4bde-ae8d-5f9524906d38\":\"observed-8edbc378-1013-4c29-b705-452069e340a2\"}"
+      }
+    ],
+    "focus": []
+  },
+  "materials": {
+    "d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d": "d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d"
+  },
+  "payload": {
+    "request_id": "predecessor-create",
+    "reason": "Retain accepted first-block synthetic state before actual upgrade",
+    "source_handles": [
+      "source-5553580d-4d80-4b59-9031-4840d1def4f5",
+      "source-c047f752-516a-4bde-ae8d-5f9524906d38"
+    ],
+    "guards": [],
+    "ops": [
+      {
+        "op": "import_evidence",
+        "client_ref": "original",
+        "source_handle": "source-5553580d-4d80-4b59-9031-4840d1def4f5",
+        "title": "Pre-upgrade material",
+        "source_language": "en"
+      },
+      {
+        "op": "import_evidence",
+        "client_ref": "input",
+        "source_handle": "source-c047f752-516a-4bde-ae8d-5f9524906d38",
+        "title": "Original Russian request",
+        "source_language": "ru"
+      },
+      {
+        "op": "create_record",
+        "client_ref": "activity",
+        "kind": "activity",
+        "title": "Upgrade continuity",
+        "visibility": "workspace",
+        "data": {
+          "purpose": "Preserve exact existing state across migration",
+          "status": "active"
+        }
+      },
+      {
+        "op": "create_record",
+        "client_ref": "work",
+        "kind": "work",
+        "title": "Waiting pre-upgrade Work",
+        "visibility": "workspace",
+        "data": {
+          "activity_id": {
+            "client_ref": "activity"
+          },
+          "parent_work_id": null,
+          "objective": "Read the remaining material when received",
+          "acceptance": [
+            {
+              "criterion_id": "review",
+              "description": "Grounded review",
+              "verification": "Retained source and result",
+              "required": true
+            }
+          ],
+          "status": "waiting",
+          "current_state": "Initial excerpt received; remaining material missing",
+          "next_action": "Ask for remaining material",
+          "steps": [],
+          "waits": [
+            {
+              "wait_id": "remaining",
+              "kind": "user",
+              "target": "work",
+              "subject": "Remaining material",
+              "satisfied_by": "Full remaining material received",
+              "received_refs": [
+                {
+                  "client_ref": "original"
+                }
+              ],
+              "question": "Send the remaining material"
+            }
+          ],
+          "context_refs": [
+            {
+              "client_ref": "input"
+            },
+            {
+              "client_ref": "original"
+            }
+          ],
+          "completion": null
+        }
+      }
+    ]
+  },
+  "receipt": {
+    "ok": true,
+    "request_id": "predecessor-create",
+    "workspace_id": "19b4fcee-af48-48c3-9d83-e50962eea542",
+    "schema_version": 1,
+    "snapshot_seq": 1,
+    "transaction_id": "txn-3b4ccfdb-2f2f-4b7e-aee9-18ff60c5343a",
+    "committed": true,
+    "created": {
+      "original": "evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3",
+      "input": "evidence-18481b20-0bfa-4623-93d8-e8424c993767",
+      "activity": "activity-16ffab18-1c98-4f56-bb4a-918a948fe97f",
+      "work": "work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f"
+    },
+    "new_revisions": {
+      "evidence-a998395c-2fb4-48e9-bdbf-72a48b5642c3": 1,
+      "evidence-18481b20-0bfa-4623-93d8-e8424c993767": 1,
+      "activity-16ffab18-1c98-4f56-bb4a-918a948fe97f": 1,
+      "work-e46622bf-cda7-44ac-89fb-aa81d64a5d2f": 1
+    },
+    "warnings": []
+  },
+  "original_sha256": "d2512dec1af6bde0188ff0f007692cf1413bbe4f658b496f91bb6ee4b8205b6d",
+  "text": "﻿# Pre-upgrade original\r\nContext 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. Context 🦉. \r\nTail: keep slot V-29 exactly.\r\n"
+}

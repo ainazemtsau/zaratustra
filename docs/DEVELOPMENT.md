@@ -49,6 +49,8 @@ Unicode code points of extracted text, 45 seconds per worker, 256 MiB worker old
 The heap limit is not an OS memory sandbox. Truncated text is partial with unavailable
 sections; encrypted/damaged/scanned-or-blank/unsupported/limit outcomes are explicit.
 Blank PDF pages cannot be distinguished reliably from scanned pages without OCR.
+Image-only/blank EPUB chapters are unavailable; all-blank books use scanned and mixed
+books partial. This classifier does not prove that an image came from scanning.
 EPUB UTF-8 and BOM-marked UTF-16 XML are decoded; missing/unsupported sections remain
 visible. Text order is the parser's reading order; complex layouts, images, equations and
 interactive content are not promised faithful. Original files remain inspectable bytes.

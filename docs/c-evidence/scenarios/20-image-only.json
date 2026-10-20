@@ -1,0 +1,11 @@
+{
+  "home": "<C_EVIDENCE_ROOT>\\final-code-live-home",
+  "agentDir": "<C_EVIDENCE_ROOT>\\final-code-config",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\image-only-fixture"
+  ],
+  "prompt": "Сохрани для дальнейшего чтения EPUB по пути <C_EVIDENCE_ROOT>\\image-only-fixture\\image-only.epub. Проверь, доступен ли в нём текст. Если читать нечего, честно скажи об этом. Новую работу пока не создавай.",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-20-image-only",
+  "output": "<C_EVIDENCE_ROOT>\\live\\20-image-only"
+}

@@ -1,0 +1,8 @@
+Collecting pypdf==6.1.3
+  Downloading pypdf-6.1.3-py3-none-any.whl.metadata (7.1 kB)
+Downloading pypdf-6.1.3-py3-none-any.whl (323 kB)
+Installing collected packages: pypdf
+Successfully installed pypdf-6.1.3
+
+[notice] A new release of pip is available: 25.2 -> 26.2.1
+[notice] To update, run: python.exe -m pip install --upgrade pip

@@ -1,0 +1,3 @@
+(node:110868) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Native asynchronous revoke: PASS, no publication and zero provider requests

@@ -1,0 +1,11 @@
+{
+  "agentDir": "<C_EVIDENCE_ROOT>\\qualified-config",
+  "home": "<C_EVIDENCE_ROOT>\\qualified-story-home",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-13-reopen",
+  "output": "<C_EVIDENCE_ROOT>\\live\\13-reopen",
+  "prompt": "Вернём именно завершённую работу «Правило наблюдения» в работу, чтобы я позже уточнил формулировку. Старое завершение и прежний текст должны остаться в истории. Пока новую версию не пиши и повторно работу не закрывай. Покажи прежний сохранённый вариант и текущий статус.",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\live-inputs"
+  ]
+}

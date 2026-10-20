@@ -1,0 +1,14 @@
+{
+  "base": "27a74fdb9e7bd826f07a9c9f1e2e3775d54f5c1f",
+  "independent_verdict": "PASS only first installed block with both P2 corrections",
+  "owner_first_block_verdict": "да",
+  "owner_second_block_scope_approval": "ок",
+  "owner_words_source": "Current explicit owner assignment; not synthetic RPC or reviewer inference",
+  "full_R1_accepted": false,
+  "T31_personal_trial": false,
+  "original_report_hashes": {
+    "REVIEW.txt": "d73826c49b4fed0fa76153d4ef529e79027d0327d1945910ed86ec5ff1d93307",
+    "live-verification.json": "20fda03276d347b2bd9dc38f5bdde767adb8c2ba3ce0ea76e413bda317cedbf2",
+    "evidence-manifest.json": "970683bf0e4ee287d29b7ae96ef4af6a598a59af741d8f0f6e389460bdbdab7e"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "pending_before_switch": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"ok\":false,\"code\":\"STORE_UNAVAILABLE\",\"message\":\"Storage operation failed; inspect current operations before retrying any uncertain commit.\",\"retryable\":false}"
+      }
+    ],
+    "details": {
+      "ok": false,
+      "code": "STORE_UNAVAILABLE",
+      "message": "Storage operation failed; inspect current operations before retrying any uncertain commit.",
+      "retryable": false
+    },
+    "isError": true
+  },
+  "provider_requests": 0,
+  "no_material_or_handle": true,
+  "domain_unchanged": true,
+  "initial_model": "gpt-6.1-sol",
+  "changed_model": "gpt-5.3-codex-spark"
+}

@@ -1,0 +1,24 @@
+{
+  "captured_json": {
+    "errors": [],
+    "extensions": [
+      {
+        "path": "<C_EVIDENCE_ROOT>\\final-code-config\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts",
+        "tools": [
+          "zara_map",
+          "zara_browse",
+          "zara_read",
+          "zara_import",
+          "zara_claim",
+          "zara_commit",
+          "zara_doctor"
+        ]
+      }
+    ],
+    "skills": [
+      "zaratustra-work",
+      "zaratustra-memory"
+    ]
+  },
+  "captured_trailing_stderr": "(node:66028) ExperimentalWarning: SQLite is an experimental feature and might change at any time\r\n(Use `node --trace-warnings ...` to show where the warning was created)"
+}

@@ -1,0 +1,25 @@
+(node:125120) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "План сверён и сохранён:\n\n- Подготовка для обеих карточек завершена.\n- «Север» ждёт недостающей части разбора; частичный ответ сохранён.\n- «Юг» ждёт отдельного ответа, которого пока нет.\n\nПовторных запросов не создавал, ничего не отправлял.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 19,
+    "requests": 138,
+    "input": 1783835,
+    "output": 39254,
+    "cache_read": 752128,
+    "estimated_usd": 2.5311667999999985,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

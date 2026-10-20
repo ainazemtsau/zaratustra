@@ -1,0 +1,20 @@
+{
+  "ghsa_id": "GHSA-vfj7-8cjw-p6xm",
+  "cve_id": "CVE-2026-93687",
+  "html_url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+  "summary": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+  "severity": "high",
+  "vulnerabilities": [
+    {
+      "package": {
+        "ecosystem": "npm",
+        "name": "braces"
+      },
+      "vulnerable_version_range": "<= 3.0.3",
+      "first_patched_version": null,
+      "vulnerable_functions": []
+    }
+  ],
+  "published_at": "2026-09-18T18:31:41Z",
+  "updated_at": "2026-10-02T22:36:34Z"
+}

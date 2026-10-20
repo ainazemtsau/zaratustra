@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3 -> FETCH_HEAD
+HEAD is now at d3dc6c3 Compare installed migration rows without SQLite row prototype differences
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3

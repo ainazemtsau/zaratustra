@@ -1,0 +1,155 @@
+{
+  "synthetic": true,
+  "model_requests": 0,
+  "old_head": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+  "new_head": "334c572691df179cbf37d9a6582e69effc8a4aed",
+  "changed_paths": [
+    "scripts/c-fixtures.py",
+    "src/storage/parser-worker.mjs",
+    "tests/fixtures/c/image-only.epub",
+    "tests/materials.test.ts"
+  ],
+  "core_adapter_manifest_skills_and_other_runtime_bytes_unchanged": true,
+  "fixtures": [
+    {
+      "name": "blank.pdf",
+      "source_sha256": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064",
+      "before_status": "scanned",
+      "after_status": "scanned",
+      "before_result_sha256": "e411d41a915191dc5ca6001052b12ecfb6dae0a441e59d03f703b9857218e994",
+      "after_result_sha256": "e411d41a915191dc5ca6001052b12ecfb6dae0a441e59d03f703b9857218e994",
+      "identical": true,
+      "after_characters": 2
+    },
+    {
+      "name": "book.epub",
+      "source_sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+      "before_status": "readable",
+      "after_status": "readable",
+      "before_result_sha256": "04dd351fd6bba82d4fadc84e4f4d31ae12722ee49e5b0717fe8cde9262150825",
+      "after_result_sha256": "04dd351fd6bba82d4fadc84e4f4d31ae12722ee49e5b0717fe8cde9262150825",
+      "identical": true,
+      "after_characters": 12726
+    },
+    {
+      "name": "book.pdf",
+      "source_sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "before_status": "readable",
+      "after_status": "readable",
+      "before_result_sha256": "177bcd92714fe9a30fefdd67df03797e3830a89519a290ef4f6af6ea42266d35",
+      "after_result_sha256": "177bcd92714fe9a30fefdd67df03797e3830a89519a290ef4f6af6ea42266d35",
+      "identical": true,
+      "after_characters": 187
+    },
+    {
+      "name": "damaged.pdf",
+      "source_sha256": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76",
+      "before_status": "damaged",
+      "after_status": "damaged",
+      "before_result_sha256": "3e91c94db4f32f05c8940c3a2f137953f7571b2eda5feb88c5ce4939d2f1fc73",
+      "after_result_sha256": "3e91c94db4f32f05c8940c3a2f137953f7571b2eda5feb88c5ce4939d2f1fc73",
+      "identical": true,
+      "after_characters": 0
+    },
+    {
+      "name": "encrypted.epub",
+      "source_sha256": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970",
+      "before_status": "encrypted",
+      "after_status": "encrypted",
+      "before_result_sha256": "552d6b2fe43fe3dd8411236edb20f833c7c87887a27abf94c3c97208b625ea17",
+      "after_result_sha256": "552d6b2fe43fe3dd8411236edb20f833c7c87887a27abf94c3c97208b625ea17",
+      "identical": true,
+      "after_characters": 0
+    },
+    {
+      "name": "encrypted.pdf",
+      "source_sha256": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879",
+      "before_status": "encrypted",
+      "after_status": "encrypted",
+      "before_result_sha256": "a3c081b825fc129dbfc5d26803f06eb5bdbb408851fe75c8ddb5ff000f26bd0a",
+      "after_result_sha256": "a3c081b825fc129dbfc5d26803f06eb5bdbb408851fe75c8ddb5ff000f26bd0a",
+      "identical": true,
+      "after_characters": 0
+    },
+    {
+      "name": "entities.epub",
+      "source_sha256": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23",
+      "before_status": "partial",
+      "after_status": "partial",
+      "before_result_sha256": "cfa0e2d11c425a987dba20eea0cf86756adcf8145177d0d5e4b6477f9e39bad7",
+      "after_result_sha256": "cfa0e2d11c425a987dba20eea0cf86756adcf8145177d0d5e4b6477f9e39bad7",
+      "identical": true,
+      "after_characters": 12615
+    },
+    {
+      "name": "image-only.epub",
+      "source_sha256": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990",
+      "before_status": "readable",
+      "after_status": "scanned",
+      "before_result_sha256": "7809f38a6bac8048808c0f9c4bd936c19c8df13ee8c16f870f1803c9d2aae93d",
+      "after_result_sha256": "5f4a19e9b07268a88d29900520e267fa2beed7ee1b18a95baddfdf211010914e",
+      "identical": false,
+      "after_characters": 2
+    },
+    {
+      "name": "large.pdf",
+      "source_sha256": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7",
+      "before_status": "readable",
+      "after_status": "readable",
+      "before_result_sha256": "738237a0e3af525ef81e1dd7ccb45bc0e8ad5e3ddc35fa913082feea6426b323",
+      "after_result_sha256": "738237a0e3af525ef81e1dd7ccb45bc0e8ad5e3ddc35fa913082feea6426b323",
+      "identical": true,
+      "after_characters": 68600
+    },
+    {
+      "name": "output-limit.epub",
+      "source_sha256": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171",
+      "before_status": "partial",
+      "after_status": "partial",
+      "before_result_sha256": "8bfdb80f398488839fbde9e589de54bf6db9b56e4d0034d5b9451700aa37a45a",
+      "after_result_sha256": "8bfdb80f398488839fbde9e589de54bf6db9b56e4d0034d5b9451700aa37a45a",
+      "identical": true,
+      "after_characters": 8000000
+    },
+    {
+      "name": "partial.epub",
+      "source_sha256": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468",
+      "before_status": "partial",
+      "after_status": "partial",
+      "before_result_sha256": "27b8804df174f29d3ba1d6220444db05eb62e728ff6cd97961123410d3614035",
+      "after_result_sha256": "27b8804df174f29d3ba1d6220444db05eb62e728ff6cd97961123410d3614035",
+      "identical": true,
+      "after_characters": 12615
+    },
+    {
+      "name": "remote.epub",
+      "source_sha256": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b",
+      "before_status": "readable",
+      "after_status": "readable",
+      "before_result_sha256": "9267282b7f85a3c71f481befce5eeeea0fc82ecb146afb1eb6b34e0e9d6bd230",
+      "after_result_sha256": "9267282b7f85a3c71f481befce5eeeea0fc82ecb146afb1eb6b34e0e9d6bd230",
+      "identical": true,
+      "after_characters": 12635
+    },
+    {
+      "name": "traversal.epub",
+      "source_sha256": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c",
+      "before_status": "damaged",
+      "after_status": "damaged",
+      "before_result_sha256": "8af1b6bc80d41179b9dbd83b6e4f7ae6ccd2ce38ff51aa967592cbcb14db19a9",
+      "after_result_sha256": "8af1b6bc80d41179b9dbd83b6e4f7ae6ccd2ce38ff51aa967592cbcb14db19a9",
+      "identical": true,
+      "after_characters": 0
+    },
+    {
+      "name": "zip-limit.epub",
+      "source_sha256": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce",
+      "before_status": "limit_exceeded",
+      "after_status": "limit_exceeded",
+      "before_result_sha256": "2a8be3071cc8ba8f9a37d07aaa8ad3a4cd4887913d9b8f3af41070c186d0d308",
+      "after_result_sha256": "2a8be3071cc8ba8f9a37d07aaa8ad3a4cd4887913d9b8f3af41070c186d0d308",
+      "identical": true,
+      "after_characters": 0
+    }
+  ]
+}

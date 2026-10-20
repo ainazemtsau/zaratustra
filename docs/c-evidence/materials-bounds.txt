@@ -1,0 +1,48 @@
+TAP version 13
+# (node:106960) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+ok 1 - TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+  ---
+  duration_ms: 731.0349
+  type: 'test'
+  ...
+# Subtest: scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+ok 2 - scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+  ---
+  duration_ms: 1943.3309
+  type: 'test'
+  ...
+# Subtest: every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+ok 3 - every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+  ---
+  duration_ms: 1292.4001
+  type: 'test'
+  ...
+# Subtest: book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+ok 4 - book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+  ---
+  duration_ms: 1691.9374
+  type: 'test'
+  ...
+# Subtest: new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+ok 5 - new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+  ---
+  duration_ms: 902.0326
+  type: 'test'
+  ...
+# Subtest: schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+ok 6 - schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+  ---
+  duration_ms: 314.4892
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7179.4107

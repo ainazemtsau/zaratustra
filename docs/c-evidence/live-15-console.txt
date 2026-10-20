@@ -1,0 +1,25 @@
+(node:70532) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "По сохранённым текстам:\n\n- **PDF `field-notebook.pdf`, стр. 2:** призму нужно оставить **в шкафу цвета индиго, в ящике L-42**. На **стр. 3** указан проверочный код: **QUARTZ-6815**.\n- **EPUB `field-manual.epub`, глава 2** (`OPS/two.xhtml`): маяк хранится **в медном алькове, в нише M-73**. Проверочная фраза: **LICHEN-2948**.\n- **Самый хвост Markdown `field-notes.md`:** «Tail: archive drawer R-17» — **архивный ящик R-17**.\n\nИспользованы сохранённые извлечённые тексты, исходные файлы не требовались.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 15,
+    "requests": 107,
+    "input": 1369524,
+    "output": 31483,
+    "cache_read": 572416,
+    "estimated_usd": 1.9662875999999987,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

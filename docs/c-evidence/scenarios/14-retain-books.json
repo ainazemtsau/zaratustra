@@ -1,0 +1,11 @@
+{
+  "agentDir": "<C_EVIDENCE_ROOT>\\qualified-upgrade-config",
+  "home": "<C_EVIDENCE_ROOT>\\qualified-upgrade-home",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-14-retain-books",
+  "output": "<C_EVIDENCE_ROOT>\\live\\14-retain-books",
+  "prompt": "Сохрани две синтетические книги в библиотеке: PDF по пути <C_EVIDENCE_ROOT>\\live-inputs\\field-notebook.pdf и EPUB по пути <C_EVIDENCE_ROOT>\\live-inputs\\field-manual.epub. Это самостоятельные материалы: существующую ожидающую работу не меняй и новую задачу ради хранения не создавай. Пока содержание книг не читай и не пересказывай; я задам вопрос позднее. Также сохрани Markdown-заметку из последнего набора по пути <C_EVIDENCE_ROOT>\\live-inputs\\field-notes.md с теми же условиями: отдельный материал, без новой работы и без чтения содержания сейчас.",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\live-inputs"
+  ]
+}

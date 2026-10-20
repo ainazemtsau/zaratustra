@@ -1,0 +1,128 @@
+
+> zaratustra@0.1.0-dev.1 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# (node:116224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+ok 1 - disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+  ---
+  duration_ms: 71.581
+  type: 'test'
+  ...
+# Subtest: faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+ok 2 - faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+  ---
+  duration_ms: 238.5529
+  type: 'test'
+  ...
+# Subtest: similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+ok 3 - similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+  ---
+  duration_ms: 74.7618
+  type: 'test'
+  ...
+# Subtest: source expiry, forged fields and unsupported kinds do not mutate domain state
+ok 4 - source expiry, forged fields and unsupported kinds do not mutate domain state
+  ---
+  duration_ms: 45.8147
+  type: 'test'
+  ...
+# Subtest: one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+ok 5 - one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+  ---
+  duration_ms: 53.6776
+  type: 'test'
+  ...
+# Subtest: retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+ok 6 - retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+  ---
+  duration_ms: 62.8225
+  type: 'test'
+  ...
+# Subtest: bounded catalog cursors reject changed generation and permissions apply to reads
+ok 7 - bounded catalog cursors reject changed generation and permissions apply to reads
+  ---
+  duration_ms: 48.9181
+  type: 'test'
+  ...
+# Subtest: SQLite disk-full fault leaves no domain records or committed receipt
+ok 8 - SQLite disk-full fault leaves no domain records or committed receipt
+  ---
+  duration_ms: 35.4457
+  type: 'test'
+  ...
+# Subtest: workspace aliases resolve before any future directory is created
+ok 9 - workspace aliases resolve before any future directory is created
+  ---
+  duration_ms: 35.5802
+  type: 'test'
+  ...
+# (node:103832) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: snapshot replacement preserves system, tool, user and unrelated extension data by identity
+ok 10 - snapshot replacement preserves system, tool, user and unrelated extension data by identity
+  ---
+  duration_ms: 1.0952
+  type: 'test'
+  ...
+# (node:111872) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+ok 11 - retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 58.7273
+  type: 'test'
+  ...
+# Subtest: retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+ok 12 - retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 51.6782
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+ok 13 - retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 52.2256
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+ok 14 - retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 45.0352
+  type: 'test'
+  ...
+# Subtest: import preflight uses Core processing, identity and write authority
+ok 15 - import preflight uses Core processing, identity and write authority
+  ---
+  duration_ms: 46.601
+  type: 'test'
+  ...
+# Subtest: historical excerpt ranges use the requested revision, not current text
+ok 16 - historical excerpt ranges use the requested revision, not current text
+  ---
+  duration_ms: 59.2311
+  type: 'test'
+  ...
+# Subtest: authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+ok 17 - authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+  ---
+  duration_ms: 63.9329
+  type: 'test'
+  ...
+# Subtest: retained excerpt ranges keep explicit invalid-range errors
+ok 18 - retained excerpt ranges keep explicit invalid-range errors
+  ---
+  duration_ms: 51.8791
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2450.0733

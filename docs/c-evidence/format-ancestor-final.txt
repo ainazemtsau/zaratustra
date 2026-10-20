@@ -1,0 +1,6 @@
+src/core/index.ts 212ms (unchanged)
+src/core/work.ts 35ms
+tests/work.test.ts 82ms (unchanged)
+skills/zaratustra-work/SKILL.md 68ms
+docs/DEVELOPMENT.md 23ms
+docs/C-ATTEMPTS.md 12ms

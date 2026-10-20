@@ -1,0 +1,25 @@
+(node:104628) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Проект «Лесная выставка» создан. Обзор — отдельная обязательная подзадача, ожидающая две части материала. Итоговая заметка остаётся незавершённой.\n\n**Приглашение подготовлено и сохранено:**\n\nПриглашаем вас на «Лесную выставку» в субботу в 15:00. Вход свободный!\n\nПрисылайте первую часть материала.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 2,
+    "requests": 18,
+    "input": 210340,
+    "output": 3229,
+    "cache_read": 106496,
+    "estimated_usd": 0.25062759999999995,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

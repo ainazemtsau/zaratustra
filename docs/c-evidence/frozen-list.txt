@@ -1,0 +1,3 @@
+User packages:
+  git:github.com/ainazemtsau/zaratustra@fe8271d41228dc67cdcd12fc1e9d8a04ac36c40b
+    <C_EVIDENCE_ROOT>\frozen-config\git\github.com\ainazemtsau\zaratustra

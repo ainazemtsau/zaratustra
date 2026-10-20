@@ -1,0 +1,3 @@
+User packages:
+  git:github.com/ainazemtsau/zaratustra@d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3
+    <C_EVIDENCE_ROOT>\live-config\git\github.com\ainazemtsau\zaratustra

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<C_EVIDENCE_ROOT>\export-evidence.py", line 64, in <module>
+    assert not re.search(r'"encrypted_content"|"type"\s*:\s*"(?:thinking|redactedThinking|reasoning)"',text),row['derivative_path']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: export-02-console.txt

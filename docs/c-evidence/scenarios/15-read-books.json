@@ -1,0 +1,11 @@
+{
+  "agentDir": "<C_EVIDENCE_ROOT>\\qualified-upgrade-config",
+  "home": "<C_EVIDENCE_ROOT>\\qualified-upgrade-home",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-15-read-books",
+  "output": "<C_EVIDENCE_ROOT>\\live\\15-read-books",
+  "prompt": "По сохранённым книгам ответь по-русски: куда по PDF нужно оставить призму, а где по EPUB хранится маяк и какая там проверочная фраза? Исходных файлов больше нет; используй сохранённые материалы. Укажи страницы и главу, откуда взяты ответы. Ещё скажи, какое указание записано в самом хвосте Markdown-заметки из последнего сохранённого набора.",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\live-inputs"
+  ]
+}

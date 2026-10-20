@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "<C_EVIDENCE_ROOT>\export-evidence.py", line 62, in <module>
+    assert not re.search(r'\bsk-[A-Za-z0-9_-]{20,}\b|"encrypted_content"|"type"\s*:\s*"(?:thinking|redactedThinking|reasoning)"',text),row['derivative_path']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: tools/export-evidence.py

@@ -1,0 +1,25 @@
+(node:59420) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Этот ответ относится к карточке «Север» или «Юг»? Для обеих подготовлен одинаковый запрос, а в ответе нет пометки. Пока не привязываю его, чтобы не сохранить к неверной работе.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 17,
+    "requests": 119,
+    "input": 1509023,
+    "output": 33747,
+    "cache_read": 638976,
+    "estimated_usd": 2.141461599999999,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

@@ -1,0 +1,634 @@
+{
+  "synthetic": true,
+  "mechanical_verification_of_actual_model_runs": true,
+  "final_execution_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+  "attempts": [
+    {
+      "name": "01-upgrade",
+      "public_candidate": "d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3",
+      "pid": 109180,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 9,
+      "usage": {
+        "prompts": 1,
+        "requests": 9,
+        "estimated_usd": 0.10651880000000001,
+        "input": 101395,
+        "output": 490,
+        "cache_read": 53248
+      },
+      "tool_errors": [],
+      "response": "Сохранено:\n- Исходный запрос: «Создай работу; часть материалов пришлю позже».\n- Полученная часть материала — оригинальный Markdown-файл; его сохранённый текст доступен.\n- Работа с целью прочитать оставшийся материал и подготовить обоснованный разбор.\n\n**Чего не хватает:** остальной части материала. Работа находится в состоянии ожидания; завершение и итоговый разбор не зафиксированы.\n\nНичего не менял. Сохранность проверил, но весь материал сейчас не перечитывал.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "02-plan",
+      "public_candidate": "d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3",
+      "pid": 104628,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 9,
+      "usage": {
+        "prompts": 1,
+        "requests": 9,
+        "estimated_usd": 0.14410879999999993,
+        "input": 108945,
+        "output": 2739,
+        "cache_read": 53248
+      },
+      "tool_errors": [
+        {
+          "type": "tool_execution_end",
+          "toolCallId": "call_5ea772c1f6674914b84cd600a2043bf5|fc_08f0817d4fdd9f86016ad6563fa5fc8191b27cf825ebe9cefe",
+          "toolName": "zara_commit",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"ok\":false,\"code\":\"INVALID_TRANSITION\",\"message\":\"Waiting Work needs an addressed pending wait.\",\"retryable\":false}"
+              }
+            ],
+            "details": {
+              "ok": false,
+              "code": "INVALID_TRANSITION",
+              "message": "Waiting Work needs an addressed pending wait.",
+              "retryable": false
+            },
+            "isError": true
+          },
+          "isError": true,
+          "durationMs": 6
+        },
+        {
+          "type": "tool_execution_end",
+          "toolCallId": "call_af50ebca709b4a97bc7b7df75c7f9bc1|fc_08f0817d4fdd9f86016ad6564b50208191bf274e33bc880a68",
+          "toolName": "zara_commit",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"ok\":false,\"code\":\"INVALID_TRANSITION\",\"message\":\"Transition must change Work state.\",\"retryable\":false}"
+              }
+            ],
+            "details": {
+              "ok": false,
+              "code": "INVALID_TRANSITION",
+              "message": "Transition must change Work state.",
+              "retryable": false
+            },
+            "isError": true
+          },
+          "isError": true,
+          "durationMs": 5
+        }
+      ],
+      "response": "Проект «Лесная выставка» создан. Обзор — отдельная обязательная подзадача, ожидающая две части материала. Итоговая заметка остаётся незавершённой.\n\n**Приглашение подготовлено и сохранено:**\n\nПриглашаем вас на «Лесную выставку» в субботу в 15:00. Вход свободный!\n\nПрисылайте первую часть материала.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "03-partial-handoff",
+      "public_candidate": "d3dc6c38b02ba6e91c1037bdf1ed074b9be3c3b3",
+      "pid": 98188,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 8,
+      "usage": {
+        "prompts": 1,
+        "requests": 8,
+        "estimated_usd": 0.14406359999999996,
+        "input": 100651,
+        "output": 1864,
+        "cache_read": 39936
+      },
+      "tool_errors": [],
+      "response": "Первый фрагмент сохранён. Вторая часть остаётся в ожидании; весь материал не считаю полученным. Ничего не отправлял.\n\n**Сообщение для ручного переноса:**\n\n> Проверь, пожалуйста, ясность первой части материала для «Лесной выставки»:\n>\n> «На стенде представлены три учебных образца: сосновая шишка, берёзовый лист и кусочек коры. Их собрали с земли, живые растения не повреждали».\n>\n> 1. Понятно ли описание всех трёх образцов? Если нужны правки, предложи их без добавления новых фактов.\n> 2. Отдельно предложи заголовок для этого фрагмента.\n>\n> Вторая часть ещё не готова — не составляй полный материал и не додумывай продолжение. Можно ответить частями: отдельно по ясности и отдельно по заголовку.\n\nОтветы будем учитывать отдельно, сохраняя ожидание второй части.\n\nСсылка для сопоставления ответа: `handoff-ac549ce1-1a76-47b2-bf05-f30912ef7aad`.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "04-frozen-plan",
+      "public_candidate": "fe8271d41228dc67cdcd12fc1e9d8a04ac36c40b",
+      "pid": 104216,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 13,
+      "usage": {
+        "prompts": 1,
+        "requests": 13,
+        "estimated_usd": 0.2453635999999999,
+        "input": 177072,
+        "output": 3033,
+        "cache_read": 73216
+      },
+      "tool_errors": [],
+      "response": "Проект «Лесная выставка» создан и оставлен открытым. Первая часть сохранена; обязательная подзадача обзора ждёт вторую часть.\n\n**Приглашение подготовлено и сохранено:**\n> Приглашаем на «Лесную выставку» в субботу в 15:00. Вход свободный.\n\n**Сообщение для ручного переноса:**\n> Проверь ясность первой части текста: «На стенде представлены сосновая шишка, берёзовый лист и кусочек коры. Их собрали с земли, живые растения не повреждали». Ответь двумя пунктами: 1) оценка ясности; 2) отдельно — предлагаемый заголовок. Второй части пока нет, ничего не додумывай.\n\nСсылка для сопоставления ответа: `handoff-d5a06bc2-5d96-4435-a6c8-9a0fb28596fe`.\n\nНичего в другой чат не отправлял.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "05-partial-reply",
+      "public_candidate": "fe8271d41228dc67cdcd12fc1e9d8a04ac36c40b",
+      "pid": 106916,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 7,
+      "usage": {
+        "prompts": 1,
+        "requests": 7,
+        "estimated_usd": 0.11586960000000002,
+        "input": 88534,
+        "output": 1468,
+        "cache_read": 39936
+      },
+      "tool_errors": [],
+      "response": "Сохранил замечание как **частичный внешний ответ**: описание трёх образцов понятно; короткую фразу «собраны с земли» следует оставить, чтобы не создавалось впечатления повреждения растений.\n\n**Уже готово:**\n- сохранена первая часть материала;\n- сохранено замечание из другого чата;\n- подготовлено и сохранено приглашение из двух предложений.\n\n**Ещё ждём:**\n- предложенный заголовок из другого чата — его задание не закрыто;\n- вторую часть исходного материала от вас.\n\nПолный обзор и итоговая заметка пока не готовы; общее задание остаётся открытым.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "06-qualified-plan",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 125276,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 11,
+      "usage": {
+        "prompts": 1,
+        "requests": 11,
+        "estimated_usd": 0.22172040000000015,
+        "input": 151949,
+        "output": 3164,
+        "cache_read": 59904
+      },
+      "tool_errors": [],
+      "response": "Проект «Лесная выставка» создан и сохранён. Обзор — отдельная обязательная подзадача: первая часть сохранена, ждём вторую. Итоговая работа остаётся открытой.\n\n**Приглашение подготовлено и сохранено:**\n> Приглашаем на выставку «Лесная выставка» в субботу в 15:00. Вход свободный.\n\n**Сообщение для ручного переноса:**\n> Проверь ясность первой части для проекта «Лесная выставка»: «На стенде представлены сосновая шишка, берёзовый лист и кусочек коры. Их собрали с земли, живые растения не повреждали». Ответь отдельно: 1) оценка ясности; 2) предложенный заголовок. Вторую часть не придумывай.\n\nСсылка для сопоставления ответа: `handoff-69714c87-2af5-44fc-b640-b84709b2f938`.\n\nНичего в другой чат не отправлял.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "07-qualified-partial",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 98836,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 4,
+      "usage": {
+        "prompts": 1,
+        "requests": 4,
+        "estimated_usd": 0.06870279999999984,
+        "input": 47196,
+        "output": 1225,
+        "cache_read": 19968
+      },
+      "tool_errors": [],
+      "response": "Сохранил замечание как **частичный внешний ответ**, не как выполнение всего задания другому чату.\n\n**Готово:**\n- Проверка ясности: описание трёх образцов понятно.\n- Сохранена рекомендация оставить фразу «образцы собраны с земли», чтобы не создавать впечатления повреждения растений.\n- Отдельное приглашение из двух предложений уже готово и сохранено.\n\n**Ещё ждём:**\n- Предложенный заголовок от другого чата.\n- Вторую часть исходного материала от вас.\n\nОбзор и итоговая заметка пока не завершены; общее задание остаётся открытым.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "08-pause-goal",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 92956,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 5,
+      "usage": {
+        "prompts": 1,
+        "requests": 5,
+        "estimated_usd": 0.10432239999999982,
+        "input": 62434,
+        "output": 3004,
+        "cache_read": 26624
+      },
+      "tool_errors": [
+        {
+          "type": "tool_execution_end",
+          "toolCallId": "call_65c7e823cffa4e3da3b752997b2d7fc2|fc_05bd31c1d6b6c2eb016ad659badbc881918e03bbacc25e3fa9",
+          "toolName": "zara_commit",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"ok\":false,\"code\":\"INVALID_TRANSITION\",\"message\":\"Use a new Work for a new goal or explicitly reopen before revising a terminal plan.\",\"retryable\":false}"
+              }
+            ],
+            "details": {
+              "ok": false,
+              "code": "INVALID_TRANSITION",
+              "message": "Use a new Work for a new goal or explicitly reopen before revising a terminal plan.",
+              "retryable": false
+            },
+            "isError": true
+          },
+          "isError": true,
+          "durationMs": 16
+        }
+      ],
+      "response": "Сохранено: весь проект «Лесная выставка» приостановлен.\n\n- Новая цель — только нейтральная учебная карточка об образцах, без приглашения.\n- Готовое приглашение сохранено как история.\n- Состояния подзадач не изменены: обзор по-прежнему ждёт продолжение.\n\nБез вашей явной команды ничего по проекту не продолжу.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "09-late-paused",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 43144,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 5,
+      "usage": {
+        "prompts": 1,
+        "requests": 5,
+        "estimated_usd": 0.11471719999999963,
+        "input": 62085,
+        "output": 1584,
+        "cache_read": 13312
+      },
+      "tool_errors": [],
+      "response": "Сохранил ответ как запоздалый.\n\n- «Лесные находки без вреда природе» — подходящий вариант заголовка для новой учебной карточки, пока не окончательный.\n- Упоминание 15:00 относится к старому приглашению и в карточку не включается.\n\nПауза сохранена: ничего не возобновлял, старую цель не возвращал.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "10-explicit-resume",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 33340,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 6,
+      "usage": {
+        "prompts": 1,
+        "requests": 6,
+        "estimated_usd": 0.1651419999999999,
+        "input": 84867,
+        "output": 5864,
+        "cache_read": 33280
+      },
+      "tool_errors": [
+        {
+          "type": "tool_execution_end",
+          "toolCallId": "call_3529985869bd401094181c2c22831bb2|fc_02e4dedb43d5c386016ad65a54927c81918ee7549434ad830a",
+          "toolName": "zara_commit",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"ok\":false,\"code\":\"INVALID_TRANSITION\",\"message\":\"Waiting Work needs an addressed pending wait.\",\"retryable\":false}"
+              }
+            ],
+            "details": {
+              "ok": false,
+              "code": "INVALID_TRANSITION",
+              "message": "Waiting Work needs an addressed pending wait.",
+              "retryable": false
+            },
+            "isError": true
+          },
+          "isError": true,
+          "durationMs": 17
+        },
+        {
+          "type": "tool_execution_end",
+          "toolCallId": "call_770c6dada41f4fbab8ecd7b0f956abba|fc_02e4dedb43d5c386016ad65a69fb888191b597afe9c483d1a0",
+          "toolName": "zara_commit",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"ok\":false,\"code\":\"INVALID_TRANSITION\",\"message\":\"An independent step is available; the whole Work cannot be waiting.\",\"retryable\":false}"
+              }
+            ],
+            "details": {
+              "ok": false,
+              "code": "INVALID_TRANSITION",
+              "message": "An independent step is available; the whole Work cannot be waiting.",
+              "retryable": false
+            },
+            "isError": true
+          },
+          "isError": true,
+          "durationMs": 13
+        }
+      ],
+      "response": "Родительский проект «Лесная выставка» возобновлён; изменение сохранено. Цель — нейтральная учебная карточка об образцах, **без приглашения**.\n\nПроверены текущие условия:\n- обзор не завершён: вторая часть материала отсутствует;\n- первая часть и замечания сохранены;\n- прежнее приглашение остаётся только в истории, повторно делать его не нужно.\n\n**Ближайший шаг — прислать вторую часть материала.** После этого можно завершить обзор и на его основе подготовить карточку, сохранив указание о сборе без вреда природе. Повторно возобновлять проект не потребуется.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "11-cancel-late",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 111468,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 5,
+      "usage": {
+        "prompts": 1,
+        "requests": 5,
+        "estimated_usd": 0.11004239999999998,
+        "input": 67784,
+        "output": 2506,
+        "cache_read": 26624
+      },
+      "tool_errors": [],
+      "response": "Проект «Лесная выставка» отменён целиком. Причина сохранена: карточку больше не готовим, второй части материала не будет.\n\nНезавершённый обзор отменён, а не отмечен выполненным; ожидание второй части снято. Ранее сохранённые материалы остаются в истории.\n\nЗапоздалый комментарий о различии наблюдения и вывода сохранён как внешний материал для возможного будущего текста. Отменённый план не восстановлен.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "12-complete",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 125516,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 9,
+      "usage": {
+        "prompts": 1,
+        "requests": 9,
+        "estimated_usd": 0.20486119999999963,
+        "input": 134428,
+        "output": 2453,
+        "cache_read": 46592
+      },
+      "tool_errors": [],
+      "response": "**Правило наблюдения**\n\nНаблюдение описывает то, что непосредственно замечено. Вывод предлагает объяснение наблюдаемого. Если подтверждений недостаточно, это объяснение остаётся предположением.\n\nТекст сохранён. Обе обязательные подзадачи завершены отдельно; затем завершена родительская работа: все три критерия выполнены. Отменённая выставка не восстановлена.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "13-reopen",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 72656,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 4,
+      "usage": {
+        "prompts": 1,
+        "requests": 4,
+        "estimated_usd": 0.0712368000000001,
+        "input": 51843,
+        "output": 549,
+        "cache_read": 19968
+      },
+      "tool_errors": [],
+      "response": "«Правило наблюдения» возвращено в работу. **Текущий статус: активна**, ожидает вашего уточнения формулировки.\n\nПрежний сохранённый вариант:\n\n> Наблюдение описывает то, что непосредственно замечено. Вывод предлагает объяснение наблюдаемого. Если подтверждений недостаточно, это объяснение остаётся предположением.\n\nСтарое завершение и прежний текст сохранены в истории. Новую версию не писал, повторно работу не закрывал.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "14-retain-books",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 35784,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 6,
+      "usage": {
+        "prompts": 1,
+        "requests": 6,
+        "estimated_usd": 0.06984199999999974,
+        "input": 61952,
+        "output": 917,
+        "cache_read": 33280
+      },
+      "tool_errors": [],
+      "response": "Сохранены три отдельных материала: `field-notebook.pdf`, `field-manual.epub` и `field-notes.md`.\n\nОригиналы и автоматически извлечённые тексты доступны для будущих вопросов. Содержание не читал и не пересказывал. Существующую ожидающую работу не менял, новых задач не создавал.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "15-read-books",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 70532,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 6,
+      "usage": {
+        "prompts": 1,
+        "requests": 6,
+        "estimated_usd": 0.07977600000000007,
+        "input": 68389,
+        "output": 623,
+        "cache_read": 33280
+      },
+      "tool_errors": [],
+      "response": "По сохранённым текстам:\n\n- **PDF `field-notebook.pdf`, стр. 2:** призму нужно оставить **в шкафу цвета индиго, в ящике L-42**. На **стр. 3** указан проверочный код: **QUARTZ-6815**.\n- **EPUB `field-manual.epub`, глава 2** (`OPS/two.xhtml`): маяк хранится **в медном алькове, в нише M-73**. Проверочная фраза: **LICHEN-2948**.\n- **Самый хвост Markdown `field-notes.md`:** «Tail: archive drawer R-17» — **архивный ящик R-17**.\n\nИспользованы сохранённые извлечённые тексты, исходные файлы не требовались.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "16-ambiguous-prepare",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 41364,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 9,
+      "usage": {
+        "prompts": 1,
+        "requests": 9,
+        "estimated_usd": 0.13532880000000014,
+        "input": 107665,
+        "output": 2117,
+        "cache_read": 53248
+      },
+      "tool_errors": [],
+      "response": "Сохранены две отдельные работы и два запроса. Ничего не отправлено.\n\n### «Север»\n> Карточка «Север». Проверь формулировку: «Записывай наблюдение отдельно от объяснения».\n> 1. Понятна ли она? Кратко объясни, как ты её понимаешь и есть ли неоднозначность.\n> 2. Предложи отредактированный вариант.\n> В ответе сохрани пометку «Север».\n\nСсылка запроса: `handoff-4a176448-9375-4bb3-8b22-f4e0cdb24ab6`\n\n### «Юг»\n> Карточка «Юг». Проверь формулировку: «Записывай наблюдение отдельно от объяснения».\n> 1. Понятна ли она? Кратко объясни, как ты её понимаешь и есть ли неоднозначность.\n> 2. Предложи отредактированный вариант.\n> В ответе сохрани пометку «Юг».\n\nСсылка запроса: `handoff-71d4646a-26aa-4976-b8ef-fb9db0e87510`\n\nОтветы можно принести сюда с пометкой соответствующей карточки.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "17-ambiguous-return",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 59420,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 3,
+      "usage": {
+        "prompts": 1,
+        "requests": 3,
+        "estimated_usd": 0.03984520000000025,
+        "input": 31834,
+        "output": 147,
+        "cache_read": 13312
+      },
+      "tool_errors": [],
+      "response": "Этот ответ относится к карточке «Север» или «Юг»? Для обеих подготовлен одинаковый запрос, а в ответе нет пометки. Пока не привязываю его, чтобы не сохранить к неверной работе.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "18-clarified-return",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 22792,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 7,
+      "usage": {
+        "prompts": 1,
+        "requests": 7,
+        "estimated_usd": 0.13039559999999994,
+        "input": 88947,
+        "output": 2838,
+        "cache_read": 39936
+      },
+      "tool_errors": [
+        {
+          "type": "tool_execution_end",
+          "toolCallId": "call_e17356bb47c7427e979b4b4810c53d8e|fc_090dad315ef03f28016ad65e7fb97c81919559385021d6093b",
+          "toolName": "zara_commit",
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"ok\":false,\"code\":\"INVALID_TRANSITION\",\"message\":\"An independent step is available; the whole Work cannot be waiting.\",\"retryable\":false}"
+              }
+            ],
+            "details": {
+              "ok": false,
+              "code": "INVALID_TRANSITION",
+              "message": "An independent step is available; the whole Work cannot be waiting.",
+              "retryable": false
+            },
+            "isError": true
+          },
+          "isError": true,
+          "durationMs": 16
+        }
+      ],
+      "response": "Сохранил для «Севера»: «Формулировка понятна, правки не нужны» — как уточнение прежнего ответа, не новую независимую проверку. «Юг» по-прежнему ждёт своего отдельного ответа.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "19-reconcile-preparation",
+      "public_candidate": "55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33",
+      "pid": 125120,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 12,
+      "usage": {
+        "prompts": 1,
+        "requests": 12,
+        "estimated_usd": 0.2593095999999995,
+        "input": 185865,
+        "output": 2669,
+        "cache_read": 73216
+      },
+      "tool_errors": [],
+      "response": "План сверён и сохранён:\n\n- Подготовка для обеих карточек завершена.\n- «Север» ждёт недостающей части разбора; частичный ответ сохранён.\n- «Юг» ждёт отдельного ответа, которого пока нет.\n\nПовторных запросов не создавал, ничего не отправлял.",
+      "permanent_snapshots": 0,
+      "aborted_by_budget": false,
+      "blocked_payloads_not_sent": 0
+    },
+    {
+      "name": "20-image-only",
+      "public_candidate": "334c572691df179cbf37d9a6582e69effc8a4aed",
+      "pid": 60944,
+      "empty_transcript": true,
+      "os_and_sdk_cwd_match": true,
+      "provider_requests": 2,
+      "usage": {
+        "prompts": 1,
+        "requests": 2,
+        "estimated_usd": 0.02352160000000003,
+        "input": 17659,
+        "output": 85,
+        "cache_read": 6656
+      },
+      "tool_errors": [],
+      "response": null,
+      "permanent_snapshots": 0,
+      "aborted_by_budget": true,
+      "blocked_payloads_not_sent": 1
+    }
+  ],
+  "totals_from_completed_attempts": {
+    "prompts": 20,
+    "requests": 140,
+    "estimated_usd": 2.5546883999999985,
+    "input": 1801494,
+    "output": 39339,
+    "cache_read": 758784
+  },
+  "work_assertions": {
+    "nested_independent_success_while_other_child_waits": true,
+    "partial_reply_keeps_remaining_waits": true,
+    "pause_preserves_child_rows": true,
+    "ancestor_goal_change_makes_reply_late": true,
+    "late_response_does_not_resume": true,
+    "cancelled_is_not_done": true,
+    "required_children_complete_before_grounded_parent_close": true,
+    "explicit_reopen_same_id_with_exact_historical_completion": true
+  },
+  "upgrade_all_original_rows_exact_after_live_new_formats": true,
+  "materials_assertions": {
+    "originals_exact_and_source_paths_gone": true,
+    "separate_addressed_text_and_parser_metadata": true,
+    "actual_model_managed_reads": [
+      {
+        "ref": {
+          "id": "evidence-4d47a2e3-04ab-4930-bfc3-b45aad3b8f2d",
+          "revision": 1
+        },
+        "locator": null,
+        "global_start": 0,
+        "characters": 187,
+        "exact_text_from_managed_derivative": true,
+        "contains": [
+          "L-42",
+          "QUARTZ-6815"
+        ]
+      },
+      {
+        "ref": {
+          "id": "evidence-e8f60bb2-12ed-4d62-b5e0-3e722491df66",
+          "revision": 1
+        },
+        "locator": "chapter:2:OPS/two.xhtml",
+        "global_start": 12615,
+        "characters": 111,
+        "exact_text_from_managed_derivative": true,
+        "contains": [
+          "M-73",
+          "LICHEN-2948"
+        ]
+      },
+      {
+        "ref": {
+          "id": "evidence-9bde9b2d-dcdb-4f0e-8a94-d1e9b9cc942d",
+          "revision": 1
+        },
+        "locator": null,
+        "global_start": 10000,
+        "characters": 1047,
+        "exact_text_from_managed_derivative": true,
+        "contains": [
+          "R-17"
+        ]
+      }
+    ],
+    "answers_absent_question_snapshots_cards_before_reads": true,
+    "provider_answers_arrive_via_actual_zara_read_outputs": true,
+    "all_original_predecessor_rows_preserved": true,
+    "retention_created_no_work": true
+  },
+  "ambiguity_asks_without_target_guess": true
+}

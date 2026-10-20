@@ -40,7 +40,7 @@ $budgetPath = Join-Path $testRoot 'budget.json'
 @{
   provider='openai-codex'; model='gpt-6.1-sol'; prompts=0; requests=0
   input=0; output=0; cache_read=0; estimated_usd=0
-  limits=@{prompts=6; requests=30; input=1500000; output=90000; estimated_usd=5}
+  limits=@{prompts=24; requests=140; input=9007199254740991; output=9007199254740991; estimated_usd=15}
 } | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 $budgetPath
 $scenario = @{
   agentDir=$agentDir; home=$zaraHome; cwd=$cwdA
@@ -125,5 +125,71 @@ for disable, and `pi remove $source; pi install $source` for same-commit reinsta
 Retain a separate observer outside cache before removing a package. Compare managed
 workspace/material bytes. `pi update --extensions` reconciles installed resources;
 bare `pi update` targets the host. Never run lifecycle probes against personal data.
+
+## Outcome C exact-version reproduction
+
+Code pin: `334c572691df179cbf37d9a6582e69effc8a4aed`; main completed live pin:
+`55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33`. Use the exact final public delivery SHA
+from the return message for final installation; it changes docs/evidence only from
+334c572. Never infer that a branch name is the tested executable version.
+
+Use the initial native pi install recipe above outside checkout. The SDK resource
+check below does not prompt a model. Set ZARA_PI_SDK and native ZARA_AUTH_PATH as above;
+the path is passed to Pi, never read/copied by the controller.
+
+```powershell
+node (Join-Path $package 'scripts/c-identity.mjs') $package (Join-Path $testRoot 'identity.json')
+node (Join-Path $package 'scripts/resources.mjs')
+node (Join-Path $package 'scripts/p2-probe.mjs') $package (Join-Path $testRoot 'p2-c') fixed
+& (Join-Path $tools 'node_modules/.bin/tsx.cmd') --test (Join-Path $package 'tests/core.test.ts') (Join-Path $package 'tests/p2.test.ts') (Join-Path $package 'tests/work.test.ts') (Join-Path $package 'tests/materials.test.ts')
+```
+
+Observed native lockfile delta is six removed peer:true flags; c-identity verifies
+that every other tracked byte is exact and rejects any broader lockfile difference.
+It does not call the installed tree clean. For a docs-only final delivery, pass
+334c572691df179cbf37d9a6582e69effc8a4aed as c-identity's last argument to check every
+product input (including scripts/tests/manifests/AGENTS) against the code candidate.
+
+For the accepted-version upgrade, create a second isolated config/home, use native
+pi install at full 27a74fd pin, then seed with the _new candidate's_ developer observer:
+
+```powershell
+$proof = Join-Path $testRoot 'upgrade-proof'
+node (Join-Path $candidatePackage 'scripts/c-upgrade.mjs') seed $oldPackage $upgradeHome $proof
+# In that isolated config, native pi install git:github.com/ainazemtsau/zaratustra@<full-new-SHA>
+node (Join-Path $candidatePackage 'scripts/c-upgrade.mjs') verify $upgradedPackage $upgradeHome $proof
+# A separately installed exact 27a74fd package must now reject this schema-2 home.
+node (Join-Path $candidatePackage 'scripts/c-upgrade.mjs') old-reject $oldReaderPackage $upgradeHome $proof
+```
+
+Variables denote different genuine Pi installations, never a checkout copied into
+package cache. Seed/verify are explicitly synthetic mechanical setup, not model acts.
+Seed preserves 4 records/5 revisions/2 Changes/intents/receipts, long original material
+and two Work revisions. Verify compares all original rows byte-for-byte, original
+material hashes, workspace/epoch, receipt replay and P2 tail; tests also cover migration
+faults, backups, interrupted manifests and unknown schemas.
+
+[All 20 original scenario derivatives](c-evidence/scenarios) and
+[actual conversations](C-CONVERSATIONS.md) are the reproducible live recipes. Replace
+path placeholders with a new isolated synthetic root; preserve the same home across
+related scenarios, use a new cwd/process/output per attempt, and retain one ledger.
+The development ledger is already exhausted at 140 requests: **do not reset it or run
+more development model calls**. A future separately authorized review uses its own
+explicit budget and must not relabel our aborted attempt 20 a PASS.
+
+For 14–15, copy synthetic tests/fixtures/c/book.pdf, book.epub and notes.md into
+permitted importRoots using the scenario filenames. Retain via ordinary model request,
+record original/derivative hashes, delete only those synthetic source copies, then
+start process 15. Do not place hidden facts in prompts/snapshots/cards. The model must
+choose real zara_read ranges. Compare actual provider tool outputs to managed bytes
+and Unicode code-point offsets. Raw provider logs are available as sanitized gzip
+JSONL; decompress with Python gzip or another standard gzip reader.
+
+Parser generation is optional: scripts/c-fixtures.py uses separate fixture-only
+pypdf 6.1.3, not a product dependency. Checked-in synthetic fixtures avoid regenerating
+them for ordinary checks. The c-evidence/tools probes are inspectable mechanical
+observers; they make no model requests. Public derivatives omit reasoning/local paths;
+manifest.json records original and derivative digests and transformations. Original
+managed homes/raw evidence remain in the isolated evidence root, outside Git.
 
 END_OF_FILE: docs/REPRODUCE.md

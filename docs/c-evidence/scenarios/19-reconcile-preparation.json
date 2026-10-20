@@ -1,0 +1,11 @@
+{
+  "agentDir": "<C_EVIDENCE_ROOT>\\qualified-config",
+  "home": "<C_EVIDENCE_ROOT>\\ambiguity-home",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-19-reconcile-preparation",
+  "output": "<C_EVIDENCE_ROOT>\\live\\19-reconcile-preparation",
+  "prompt": "Оба сообщения для «Севера» и «Юга» уже подготовлены и сохранены. Сверь план с этими сохранёнными сообщениями: подготовка для обеих карточек закончена. Приведи состояние плана в соответствие с фактом, не создавая повторных запросов и ничего не отправляя. Полного внешнего разбора для «Севера» ещё нет, для «Юга» ответа совсем нет. Обе работы должны ждать соответствующего продолжения, а не начинать подготовку заново.",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\live-inputs"
+  ]
+}

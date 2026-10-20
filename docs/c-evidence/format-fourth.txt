@@ -1,0 +1,23 @@
+src/core/AGENTS.md 20ms (unchanged)
+src/core/contracts.ts 92ms
+src/core/index.ts 136ms
+src/core/work.ts 27ms (unchanged)
+src/extension/AGENTS.md 2ms (unchanged)
+src/extension/index.ts 21ms (unchanged)
+src/storage/AGENTS.md 2ms (unchanged)
+src/storage/extract.ts 5ms (unchanged)
+src/storage/index.ts 32ms (unchanged)
+src/storage/parser-worker.mjs 42ms (unchanged)
+scripts/c-identity.mjs 6ms (unchanged)
+scripts/c-upgrade.mjs 11ms (unchanged)
+scripts/deliver.mjs 2ms (unchanged)
+scripts/live.mjs 13ms (unchanged)
+scripts/p2-probe.mjs 15ms (unchanged)
+scripts/p2-tail.mjs 4ms (unchanged)
+scripts/resources.mjs 1ms (unchanged)
+skills/zaratustra-memory/SKILL.md 21ms (unchanged)
+skills/zaratustra-work/SKILL.md 14ms
+README.md 6ms
+RESULT.md 3ms
+docs/DEVELOPMENT.md 13ms (unchanged)
+docs/C-VALIDATION.md 3ms (unchanged)

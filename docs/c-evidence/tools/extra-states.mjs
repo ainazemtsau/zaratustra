@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {mkdirSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
+const root=process.argv[2],pkg=join(root,'qualified-config/git/github.com/ainazemtsau/zaratustra'),out=join(root,'state-coverage');mkdirSync(out,{recursive:true});
+const {createJiti}=createRequire(pathToFileURL(process.env.ZARA_PI_SDK))('jiti'),jiti=createJiti(import.meta.url);
+const {Core}=await jiti.import(join(pkg,'src/core/index.ts'));const {DiskStorage}=await jiti.import(join(pkg,'src/storage/index.ts'));
+const disk=new DiskStorage(join(out,'home')),core=new Core(disk,{...disk.workspace,principal:'trusted-personal',session_id:'synthetic-state-table',runtime_id:'synthetic-state-table',can_write:true,processing_allowed:true});
+const source=core.capture('Synthetic explicit lifecycle decisions and result grounds.','rpc','trusted-synthetic-state-table').source_handle;
+let n=0;const row=id=>core.read(id).data;const states=[],steps=[];
+const send=(ops,ids=[],tokens=[])=>core.commit({request_id:'state-test-'+(++n),reason:'Exercise supported state transitions from exact current state.',source_handles:[source],guards:ids.map(id=>({ref:{id},expected_revision:row(id).revision})),claim_tokens:tokens,ops});
+const e=send([{op:'import_evidence',client_ref:'e',source_handle:source,title:'State-table synthetic grounds',source_language:'en'}]).created.e;
+const w=send([{op:'create_record',client_ref:'w',kind:'work',title:'Complete state table',visibility:'workspace',data:{activity_id:null,parent_work_id:null,objective:'Retain a grounded result.',acceptance:[{criterion_id:'result',description:'Result retained',verification:'Inspect retained result',required:true}],status:'draft',current_state:'Objective is being clarified',next_action:null,steps:[],waits:[],context_refs:[],completion:null}}]).created.w;
+const transition=(status,extra={})=>{send([{op:'transition_work',ref:{id:w},status,reason:'Synthetic explicit transition to '+status,decision_source_handle:source,...extra}],[w,e],extra.token?[extra.token]:[]);states.push(status);};
+const update=data=>({op:'update_record',ref:{id:w},data,plan_change_reason:'Explicitly revise the synthetic plan',decision_source_handle:source});
+const claim=(purpose='work',step_id)=>core.claim({action:'acquire',work_id:w,expected_revision:row(w).revision,purpose,step_id,reason:'Record a supported local result'}).data.token;
+try{
+ states.push('draft');transition('active',{next_action:'Produce the result'});transition('blocked',{next_action:null});
+ const wait={wait_id:'input',kind:'user',target:'work',subject:'Concrete missing input',satisfied_by:'Exact retained input received',received_refs:[],question:'Provide input'};
+ send([update({...row(w).data,waits:[wait]}),{op:'transition_work',ref:{id:w},status:'waiting',reason:'No independent action is available'}],[w]);states.push('waiting');
+ send([update({...row(w).data,waits:[{...wait,status:'satisfied',resolution:'Exact input was retained',received_refs:[{id:e}]}]}),{op:'transition_work',ref:{id:w},status:'active',reason:'Input received',next_action:'Execute the independent plan'}],[w]);states.push('active');
+ const plan=[{step_id:'main',intent:'Produce the retained result',status:'todo',depends_on:[],result_refs:[]},{step_id:'optional',intent:'Optional refinement',status:'todo',depends_on:[],result_refs:[],required:false}];
+ send([update({...row(w).data,steps:plan})],[w]);
+ const step=(step_id,status,more={})=>{const tokens=['running','done'].includes(status)?[claim('step',step_id)]:[];send([{op:'transition_step',ref:{id:w},step_id,status,reason:'Synthetic step transition; optional changes have no dependent consumers.',decision_source_handle:source,...more}],[w],tokens);steps.push(status);};
+ step('main','waiting');step('main','blocked');step('main','running');step('main','done',{result_refs:[{id:e}]});step('optional','skipped');step('optional','todo');step('optional','cancelled');
+ transition('paused');transition('active',{next_action:'Verify completion criteria'});
+ const token=claim();send([{op:'transition_work',ref:{id:w},status:'done',reason:'Every required criterion has addressed grounds.',grounds:[{criterion_id:'result',explanation:'Retained exact synthetic result is available.',evidence_refs:[{id:e}]}]}],[w,e],[token]);states.push('done');
+ const completed=row(w).revision;transition('draft');transition('cancelled',{consequences:'No dependent Work exists; optional refinement remains unsuccessful.'});transition('blocked');
+ assert.equal(core.read(w,completed).data.data.status,'done');assert.equal(row(w).data.completion,null);
+ assert.deepEqual(new Set(states),new Set(['draft','active','waiting','blocked','paused','done','cancelled']));assert.deepEqual(new Set(steps),new Set(['todo','waiting','blocked','running','done','skipped','cancelled']));
+ writeFileSync(join(out,'verification.json'),JSON.stringify({public_candidate:'55fac403fd4aba2f6e6ccb81d4e569ec5c0fde33',mechanical_only:true,provider_requests:0,work_states:states,step_states:steps,old_completion_revision:completed,history_retained:true,doctor:disk.doctor()},null,2));console.log('All seven Work and seven step states: PASS');
+}finally{disk.close();}

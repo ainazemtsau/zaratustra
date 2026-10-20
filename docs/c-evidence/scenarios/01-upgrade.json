@@ -1,0 +1,11 @@
+{
+  "agentDir": "<C_EVIDENCE_ROOT>\\upgrade-config",
+  "home": "<C_EVIDENCE_ROOT>\\upgrade-home",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-01-upgrade",
+  "output": "<C_EVIDENCE_ROOT>\\live\\01-upgrade",
+  "prompt": "Продолжим старую работу с материалом. Что сохранено и чего ещё не хватает? Ничего пока не меняй. Ответь по-русски.",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\live-inputs"
+  ]
+}

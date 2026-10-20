@@ -1,0 +1,25 @@
+(node:43144) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранил ответ как запоздалый.\n\n- «Лесные находки без вреда природе» — подходящий вариант заголовка для новой учебной карточки, пока не окончательный.\n- Упоминание 15:00 относится к старому приглашению и в карточку не включается.\n\nПауза сохранена: ничего не возобновлял, старую цель не возвращал.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 9,
+    "requests": 71,
+    "input": 900261,
+    "output": 18571,
+    "cache_read": 379392,
+    "estimated_usd": 1.2653871999999993,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

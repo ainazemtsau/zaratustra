@@ -1,0 +1,11 @@
+{
+  "agentDir": "<C_EVIDENCE_ROOT>\\qualified-config",
+  "home": "<C_EVIDENCE_ROOT>\\ambiguity-home",
+  "cwd": "<C_EVIDENCE_ROOT>\\cwd-18-clarified-return",
+  "output": "<C_EVIDENCE_ROOT>\\live\\18-clarified-return",
+  "prompt": "Этот ответ относился к карточке «Север». Повторю его для точности: «Формулировка понятна, правки не нужны». Это уточнение уже присланного ответа, а не новая независимая проверка. Сохрани его для «Севера»; работу по «Югу» оставь ждать своего отдельного ответа.",
+  "budgetPath": "<C_EVIDENCE_ROOT>\\live-budget.json",
+  "importRoots": [
+    "<C_EVIDENCE_ROOT>\\live-inputs"
+  ]
+}

@@ -1,0 +1,25 @@
+(node:22792) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранил для «Севера»: «Формулировка понятна, правки не нужны» — как уточнение прежнего ответа, не новую независимую проверку. «Юг» по-прежнему ждёт своего отдельного ответа.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 18,
+    "requests": 126,
+    "input": 1597970,
+    "output": 36585,
+    "cache_read": 678912,
+    "estimated_usd": 2.271857199999999,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}

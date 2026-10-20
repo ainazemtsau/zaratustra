@@ -1,0 +1,78 @@
+TAP version 13
+# (node:4264) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+ok 1 - nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+  ---
+  duration_ms: 85.7683
+  type: 'test'
+  ...
+# Subtest: required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+not ok 2 - required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+  ---
+  duration_ms: 66.6611
+  type: 'test'
+  location: '<CHECKOUT>\\tests\\work.test.ts:1:3873'
+  failureType: 'testCodeFailure'
+  error: 'Active Work needs a meaningful next action.'
+  code: 'INVALID_TRANSITION'
+  stack: |-
+    requireThat (<CHECKOUT>\src\core\contracts.ts:241:21)
+    validateWorks (<CHECKOUT>\src\core\work.ts:58:5)
+    Core.commit (<CHECKOUT>\src\core\index.ts:767:7)
+    Object.send (<CHECKOUT>\tests\work.test.ts:16:77)
+    TestContext.<anonymous> (<CHECKOUT>\tests\work.test.ts:53:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+  ...
+# Subtest: dependencies and parent pause suppress execution without changing child facts; independent steps continue
+ok 3 - dependencies and parent pause suppress execution without changing child facts; independent steps continue
+  ---
+  duration_ms: 105.3744
+  type: 'test'
+  ...
+# Subtest: claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+ok 4 - claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+  ---
+  duration_ms: 63.2127
+  type: 'test'
+  ...
+# Subtest: manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+not ok 5 - manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+  ---
+  duration_ms: 49.4027
+  type: 'test'
+  location: '<CHECKOUT>\\tests\\work.test.ts:1:9178'
+  failureType: 'testCodeFailure'
+  error: 'Accepted reply portions must be attached to the corresponding waits in this transaction.'
+  code: 'VALIDATION_ERROR'
+  stack: |-
+    requireThat (<CHECKOUT>\src\core\contracts.ts:241:21)
+    Core.commit (<CHECKOUT>\src\core\index.ts:776:127)
+    Object.send (<CHECKOUT>\tests\work.test.ts:16:77)
+    TestContext.<anonymous> (<CHECKOUT>\tests\work.test.ts:104:5)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: time waits retain exact offsets/timezone and cannot be satisfied early
+ok 6 - time waits retain exact offsets/timezone and cannot be satisfied early
+  ---
+  duration_ms: 98.9022
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 4
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1313.8813

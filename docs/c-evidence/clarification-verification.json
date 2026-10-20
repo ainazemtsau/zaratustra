@@ -1,0 +1,185 @@
+{
+  "actual_model_followup": true,
+  "before_statuses": [
+    {
+      "title": "Север — external wording review",
+      "status": "active",
+      "steps": [
+        {
+          "step_id": "prepare",
+          "intent": "Prepare the manual review request for Север without sending it.",
+          "status": "todo",
+          "depends_on": [],
+          "result_refs": []
+        },
+        {
+          "step_id": "review",
+          "intent": "Receive and assess the reviewer clarity judgment and suggested revision.",
+          "status": "todo",
+          "depends_on": [
+            {
+              "step_id": "prepare"
+            }
+          ],
+          "result_refs": []
+        }
+      ],
+      "waits": [
+        {
+          "wait_id": "review_reply",
+          "kind": "external_result",
+          "target": {
+            "step_id": "review"
+          },
+          "subject": "External review of the Север wording",
+          "satisfied_by": "A manually returned reply assessing clarity and proposing a revision.",
+          "received_refs": [
+            {
+              "id": "evidence-b37fb7f7-a126-455f-bec2-14c63a43187c"
+            },
+            {
+              "id": "evidence-2159fcb5-0795-4fe4-8b52-8f37732fd434"
+            }
+          ],
+          "question": "Is the wording clear, and what revision do you propose?",
+          "status": "partial",
+          "resolution": "The existing response says wording is clear and no edits are needed. Its attribution is clarified, not independently reconfirmed. No explanation or revised wording was provided."
+        }
+      ]
+    },
+    {
+      "title": "Юг — external wording review",
+      "status": "active",
+      "steps": [
+        {
+          "step_id": "prepare",
+          "intent": "Prepare the manual review request for Юг without sending it.",
+          "status": "todo",
+          "depends_on": [],
+          "result_refs": []
+        },
+        {
+          "step_id": "review",
+          "intent": "Receive and assess the reviewer clarity judgment and suggested revision.",
+          "status": "todo",
+          "depends_on": [
+            {
+              "step_id": "prepare"
+            }
+          ],
+          "result_refs": []
+        }
+      ],
+      "waits": [
+        {
+          "wait_id": "review_reply",
+          "kind": "external_result",
+          "target": {
+            "step_id": "review"
+          },
+          "subject": "External review of the Юг wording",
+          "satisfied_by": "A manually returned reply assessing clarity and proposing a revision.",
+          "received_refs": [],
+          "question": "Is the wording clear, and what revision do you propose?",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "after_statuses": [
+    {
+      "title": "Север — external wording review",
+      "status": "waiting",
+      "steps": [
+        {
+          "step_id": "prepare",
+          "intent": "Prepare the manual review request for Север without sending it.",
+          "status": "done",
+          "depends_on": [],
+          "result_refs": [
+            {
+              "id": "evidence-2344c339-62db-4386-8100-75d967f59c0d"
+            }
+          ]
+        },
+        {
+          "step_id": "review",
+          "intent": "Receive and assess the reviewer clarity judgment and suggested revision.",
+          "status": "waiting",
+          "depends_on": [
+            {
+              "step_id": "prepare"
+            }
+          ],
+          "result_refs": []
+        }
+      ],
+      "waits": [
+        {
+          "wait_id": "review_reply",
+          "kind": "external_result",
+          "target": {
+            "step_id": "review"
+          },
+          "subject": "External review of the Север wording",
+          "satisfied_by": "A manually returned reply assessing clarity and proposing a revision.",
+          "received_refs": [
+            {
+              "id": "evidence-b37fb7f7-a126-455f-bec2-14c63a43187c"
+            },
+            {
+              "id": "evidence-2159fcb5-0795-4fe4-8b52-8f37732fd434"
+            }
+          ],
+          "question": "Is the wording clear, and what revision do you propose?",
+          "status": "partial",
+          "resolution": "The existing response says wording is clear and no edits are needed. Its attribution is clarified, not independently reconfirmed. No explanation or revised wording was provided."
+        }
+      ]
+    },
+    {
+      "title": "Юг — external wording review",
+      "status": "waiting",
+      "steps": [
+        {
+          "step_id": "prepare",
+          "intent": "Prepare the manual review request for Юг without sending it.",
+          "status": "done",
+          "depends_on": [],
+          "result_refs": [
+            {
+              "id": "evidence-336ceff1-662b-445d-a161-299aec3d49ff"
+            }
+          ]
+        },
+        {
+          "step_id": "review",
+          "intent": "Receive and assess the reviewer clarity judgment and suggested revision.",
+          "status": "waiting",
+          "depends_on": [
+            {
+              "step_id": "prepare"
+            }
+          ],
+          "result_refs": []
+        }
+      ],
+      "waits": [
+        {
+          "wait_id": "review_reply",
+          "kind": "external_result",
+          "target": {
+            "step_id": "review"
+          },
+          "subject": "External review of the Юг wording",
+          "satisfied_by": "A manually returned reply assessing clarity and proposing a revision.",
+          "received_refs": [],
+          "question": "Is the wording clear, and what revision do you propose?",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "external_reply_count": 1,
+  "response": "План сверён и сохранён:\n\n- Подготовка для обеих карточек завершена.\n- «Север» ждёт недостающей части разбора; частичный ответ сохранён.\n- «Юг» ждёт отдельного ответа, которого пока нет.\n\nПовторных запросов не создавал, ничего не отправлял."
+}

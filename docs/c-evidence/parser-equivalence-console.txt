@@ -1,0 +1,17 @@
+node:internal/worker:188
+        throw new ERR_WORKER_PATH(filename);
+              ^
+
+TypeError [ERR_WORKER_PATH]: The worker script or module filename must be an absolute path or a relative path starting with './' or '../'. Received "qualified-config\git\github.com\ainazemtsau\zaratustra\src\storage\parser-worker.mjs"
+    at new Worker (node:internal/worker:188:15)
+    at file:///<C_EVIDENCE_ROOT>/parser-equivalence.mjs:11:10
+    at new Promise (<anonymous>)
+    at run (file:///<C_EVIDENCE_ROOT>/parser-equivalence.mjs:10:23)
+    at file:///<C_EVIDENCE_ROOT>/parser-equivalence.mjs:17:58
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  code: 'ERR_WORKER_PATH'
+}
+
+Node.js v22.19.0

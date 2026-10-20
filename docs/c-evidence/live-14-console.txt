@@ -1,0 +1,25 @@
+(node:35784) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранены три отдельных материала: `field-notebook.pdf`, `field-manual.epub` и `field-notes.md`.\n\nОригиналы и автоматически извлечённые тексты доступны для будущих вопросов. Содержание не читал и не пересказывал. Существующую ожидающую работу не менял, новых задач не создавал.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 14,
+    "requests": 101,
+    "input": 1301135,
+    "output": 30860,
+    "cache_read": 539136,
+    "estimated_usd": 1.8865115999999986,
+    "limits": {
+      "prompts": 24,
+      "requests": 140,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 15
+    }
+  }
+}
