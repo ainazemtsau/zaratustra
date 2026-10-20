@@ -20,6 +20,16 @@ for (const path of [agentDir, cwd, output])
 process.env.PI_CODING_AGENT_DIR = agentDir;
 process.env.ZARATUSTRA_HOME = home;
 process.env.ZARATUSTRA_IMPORT_ROOTS = JSON.stringify(config.importRoots ?? []);
+if (config.scopes !== undefined) {
+  if (
+    !Array.isArray(config.scopes) ||
+    config.scopes.some(
+      (s) => !["restricted:read", "restricted:write"].includes(s),
+    )
+  )
+    throw new Error("Unknown predeclared synthetic scope profile");
+  process.env.ZARATUSTRA_SCOPES = JSON.stringify(config.scopes);
+}
 process.env.ZARATUSTRA_TEST_CONTROLLER = "isolated-synthetic-sdk-controller";
 const sdk = await import(pathToFileURL(process.env.ZARA_PI_SDK).href);
 const {
@@ -228,6 +238,8 @@ try {
         "relation_history",
         "memory_meta",
         "retrieval_trace",
+        "experience_rows",
+        "experience_versions",
       ].map((table) => [table, db.prepare(`SELECT * FROM ${table}`).all()]),
     );
     db.close();

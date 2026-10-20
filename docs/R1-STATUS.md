@@ -9,8 +9,12 @@ Historical overall PARTIAL remains attributed to 0d188eee/4796fbf, never rewritt
 Fully model-created pair and plan/handoff/wait coherence are independently qualified.
 First block 27a74fd remains separately accepted. Full R1 and personal trial T31 remain open.
 
-The owner authorized D development/public delivery, not acceptance. D M/L evidence and explicit scope-qualified results are
-tracked separately in [D-VALIDATION](D-VALIDATION.md); no independent D verdict is assigned by this executor.
+D is independently scope-qualified technical PASS and separately owner-accepted on
+`1b742a6e774eaa14826c036977ae2a42ff1ca46a`, per the E1 assignment. Its review's large
+corpus checks were mechanical; reviewer live scenarios were small. Those limits remain.
+E1 development/public delivery is now authorized; authorization “принимаю” is not
+acceptance of its future result. Methods/Runs/Evaluations/Signals are implemented and
+undergoing installed M/L qualification. E2/E3 and complete E/R1/T31 remain open.
 The prior full status is preserved byte-for-byte in C-R1-STATUS-e24b2fda.md.
 `partial` never discharges a full release criterion; all later obligations remain.
 
@@ -64,8 +68,12 @@ The prior full status is preserved byte-for-byte in C-R1-STATUS-e24b2fda.md.
 M = mechanical; L = actual Pi/model; O = owner usefulness. A dash means no claim
 for that layer in this handoff, not a waiver. Platform/material profiles beyond the
 declared qualified profiles need their own qualification. Accepted C implemented Work/materials; its version-attributed evidence is tracked in
-[C-VALIDATION.md](C-VALIDATION.md). D is the current authorized block; its exact profile and evidence are in [D-VALIDATION](D-VALIDATION.md).
-The first subsequent unimplemented outcome is E: Methods and safety.
+[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). E1 is the current
+authorized block; its separate evidence will be recorded in E1-VALIDATION.md.
+The first subsequent unimplemented outcome is E2: exact preview-bound confirmations,
+controlled actions/unknown-result recovery and managed SKILL.md export/drift. E3 retains
+user backup/quarantine restore, archive/delete/retention and the restore epoch barrier.
+Real identity merges/bulk reorganization await E2. Codex and R2 Sleep remain separate.
 The full roadmap remains specification §25.8, with full requirements §24.
 
 END_OF_FILE: docs/R1-STATUS.md

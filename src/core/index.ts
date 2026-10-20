@@ -7,6 +7,8 @@ import {
   KnowledgeData,
   ConceptData,
   EntityData,
+  MethodData,
+  RunData,
   requireThat,
   WorkData,
   WorkStatus,
@@ -14,9 +16,17 @@ import {
 import {
   Memory,
   addressedIds,
+  addressedRefs,
   refreshMemory,
   validateMemory,
 } from "./memory.ts";
+import {
+  ExperienceTransaction,
+  exactRef,
+  methodClosure,
+  methodUpdate,
+  validateMethods,
+} from "./experience.ts";
 import type { CursorState } from "./memory.ts";
 import {
   plan,
@@ -32,9 +42,11 @@ import type {
   Source,
   StoragePort,
   Receipt,
+  AddressedRow,
 } from "./contracts.ts";
 export * from "./contracts.ts";
 export { validateWorks } from "./work.ts";
+export { ExperienceSchemaSQL, validateMethods } from "./experience.ts";
 export {
   MemorySchemaSQL,
   refreshMemory,
@@ -96,6 +108,7 @@ export class Core {
       locator: string;
       extraction?: Source["extraction"];
     },
+    observation?: Source["observation"],
   ) {
     this.authorize();
     requireThat(
@@ -116,8 +129,21 @@ export class Core {
       captured_at: new Date().toISOString(),
       capture_stage: material
         ? "validated-file-bytes"
-        : "pi-input-hook-observed",
+        : observation
+          ? "pi-tool-result-hook-observed"
+          : "pi-input-hook-observed",
       original_keystrokes: false,
+      input_integrity:
+        transport === "interactive" &&
+        this.context.interactive_input?.contract === "first-untransformed"
+          ? "trusted_first_untransformed"
+          : "observed_stage_only",
+      owner_channel_eligible:
+        transport === "interactive" &&
+        !!this.context.interactive_input &&
+        !material &&
+        !observation,
+      ...(observation ? { observation } : {}),
       byte_length: Buffer.byteLength(text),
       ...material,
     };
@@ -130,6 +156,9 @@ export class Core {
       capture_stage: source.capture_stage,
       content_hash: source.content_hash,
       byte_length: source.byte_length,
+      input_integrity: source.input_integrity,
+      owner_channel_eligible: source.owner_channel_eligible,
+      ...(source.observation ? { observation: source.observation } : {}),
       ...(source.extraction ? { extraction: source.extraction } : {}),
     };
   }
@@ -145,30 +174,71 @@ export class Core {
       "SELECT coalesce(max(seq),0) AS seq FROM changes",
     )!.seq;
   }
-  private record(recordId: string, revision?: number, internal = false) {
-    if (!internal)
-      requireThat(
-        this.memory.allowed(recordId, revision),
-        "REFERENCE_NOT_FOUND",
-        "Requested record/version is unavailable.",
-      );
+  private record(
+    recordId: string,
+    revision?: number,
+    internal = false,
+    contentVersion?: number,
+  ) {
     const row =
-      revision === undefined
+      contentVersion !== undefined && revision === undefined
         ? this.storage.get<{ json: string }>(
-            "SELECT json FROM records WHERE id=?",
+            "SELECT json FROM revisions WHERE id=? AND json_extract(json,'$.data.content_version')=? ORDER BY revision LIMIT 1",
             recordId,
+            contentVersion,
           )
-        : this.storage.get<{ json: string }>(
-            "SELECT json FROM revisions WHERE id=? AND revision=?",
-            recordId,
-            revision,
-          );
+        : revision === undefined
+          ? this.storage.get<{ json: string }>(
+              "SELECT json FROM records WHERE id=?",
+              recordId,
+            )
+          : this.storage.get<{ json: string }>(
+              "SELECT json FROM revisions WHERE id=? AND revision=?",
+              recordId,
+              revision,
+            );
     requireThat(
       row,
       revision === undefined ? "REFERENCE_NOT_FOUND" : "CONTENT_NOT_RETAINED",
       "Requested record/version is unavailable.",
     );
-    return unpack(row);
+    const result = unpack(row);
+    if (!internal)
+      requireThat(
+        this.memory.allowed(recordId, result.revision),
+        "REFERENCE_NOT_FOUND",
+        "Requested record/version is unavailable.",
+      );
+    requireThat(
+      contentVersion === undefined ||
+        (result.kind === "method" &&
+          result.data.content_version === contentVersion),
+      "REFERENCE_TYPE_MISMATCH",
+      "Requested content_version does not match this Method revision.",
+    );
+    return result;
+  }
+  private addressed(recordId: string, revision?: number): AddressedRow {
+    if (this.storage.get("SELECT id FROM records WHERE id=?", recordId))
+      return this.record(recordId, revision);
+    requireThat(
+      this.memory.allowed(recordId, revision),
+      "REFERENCE_NOT_FOUND",
+      "Requested record/version is unavailable.",
+    );
+    const row = this.storage.get<{ json: string }>(
+      revision === undefined
+        ? "SELECT json FROM experience_rows WHERE id=?"
+        : "SELECT json FROM experience_versions WHERE id=? AND revision=?",
+      recordId,
+      ...(revision === undefined ? [] : [revision]),
+    );
+    requireThat(
+      row,
+      "REFERENCE_NOT_FOUND",
+      "Requested record/version is unavailable.",
+    );
+    return JSON.parse(row.json);
   }
   private envelope<T>(data: T) {
     return {
@@ -197,6 +267,11 @@ export class Core {
         "entities",
         "unfiled",
         "relations",
+        "methods",
+        "runs",
+        "evaluations",
+        "signals",
+        "invocations",
       ].map((view) => ({
         label: view,
         description: "Permitted existing " + view,
@@ -307,12 +382,19 @@ export class Core {
     revision?: number,
     range?: { start: number; length: number },
     locator?: string,
+    contentVersion?: number,
   ) {
     this.authorize();
     return this.retrieval(
       "read",
-      { id: recordId, revision, range, locator },
-      () => this.readRecord(recordId, revision, range, locator),
+      {
+        id: recordId,
+        revision,
+        content_version: contentVersion,
+        range,
+        locator,
+      },
+      () => this.readRecord(recordId, revision, range, locator, contentVersion),
     );
   }
   private readRecord(
@@ -320,8 +402,16 @@ export class Core {
     revision?: number,
     range?: { start: number; length: number },
     locator?: string,
+    contentVersion?: number,
   ) {
-    const r = this.record(recordId, revision);
+    const r = this.storage.get("SELECT id FROM records WHERE id=?", recordId)
+      ? this.record(recordId, revision, false, contentVersion)
+      : this.addressed(recordId, revision);
+    requireThat(
+      contentVersion === undefined || r.kind === "method",
+      "REFERENCE_TYPE_MISMATCH",
+      "Only Methods have content_version.",
+    );
     if (range)
       requireThat(
         Number.isInteger(range.start) &&
@@ -457,6 +547,78 @@ export class Core {
         });
     }
     return this.envelope(r);
+  }
+  methodBundle(
+    recordId: string,
+    contentVersion?: number,
+    revision?: number,
+    limit = 5,
+    cursor?: string,
+  ) {
+    this.authorize();
+    requireThat(
+      Number.isInteger(limit) && limit >= 1 && limit <= 5,
+      "VALIDATION_ERROR",
+      "Method bundle body limit is 1..5.",
+    );
+    return this.retrieval(
+      "method_bundle",
+      {
+        id: recordId,
+        content_version: contentVersion,
+        revision,
+        limit,
+        cursor,
+      },
+      () => {
+        const root = this.record(recordId, revision, false, contentVersion);
+        const rows = methodClosure(exactRef(root), (ref, kind) => {
+          const p = ref as {
+            id: string;
+            revision?: number;
+            content_version?: number;
+          };
+          const r = this.record(p.id, p.revision, false, p.content_version);
+          requireThat(
+            !kind || r.kind === kind,
+            "REFERENCE_TYPE_MISMATCH",
+            "Expected Method.",
+          );
+          return r;
+        });
+        const filters = { root: exactRef(root), limit },
+          generation = this.memory.generation();
+        const last = this.memory.cursor(cursor, filters, generation);
+        const remaining = rows
+          .slice(last)
+          .map((r, index) => ({ key: last + index + 1, record: r }));
+        let bytes = 0,
+          count = 0;
+        for (const row of remaining.slice(0, limit)) {
+          const size = Buffer.byteLength(JSON.stringify(row));
+          if (count && bytes + size > 48000) break;
+          bytes += size;
+          count++;
+        }
+        const page = this.memory.page(
+          remaining,
+          Math.max(1, count),
+          filters,
+          generation,
+          (row) => row.key,
+        );
+        return this.envelope({
+          ...page,
+          cards: page.cards.map((row) => row.record),
+          selected_versions: rows.map(exactRef),
+          root_ref: exactRef(root),
+          body_byte_budget: 48000,
+          closure_limit: 256,
+          meaning:
+            "Resolved selection only; reading is not reported application or observed execution.",
+        });
+      },
+    );
   }
   operation(requestId: string) {
     this.authorize();
@@ -719,6 +881,21 @@ export class Core {
       focus: this.focus(),
       records: items,
       context_current,
+      open_signals: this.storage
+        .all<{
+          json: string;
+        }>(
+          `SELECT t.json FROM experience_rows t WHERE t.kind='signal' AND json_extract(t.json,'$.data.problem_state') IN ('open','observing') AND ${this.memory.technicalSQL("t")} ORDER BY t.rowid DESC LIMIT 6`,
+        )
+        .map((row) => {
+          const r = JSON.parse(row.json);
+          return {
+            id: r.id,
+            revision: r.revision,
+            state: r.data.problem_state,
+            must_read: true,
+          };
+        }),
       must_read: [...new Set(must_read)],
       has_more: rows.length > 20 || must_read.length > 0,
       warnings: [
@@ -748,7 +925,12 @@ export class Core {
       (op) => "visibility" in op && op.visibility === "restricted",
     );
     for (const recordId of addressedIds(request)) {
-      if (this.storage.get("SELECT id FROM records WHERE id=?", recordId)) {
+      if (
+        this.storage.get(
+          "SELECT id FROM addressed_current WHERE id=?",
+          recordId,
+        )
+      ) {
         requireThat(
           this.memory.allowed(recordId),
           "REFERENCE_NOT_FOUND",
@@ -766,6 +948,19 @@ export class Core {
         );
       }
     }
+    for (const ref of addressedRefs(request))
+      if (
+        this.storage.get("SELECT id FROM addressed_current WHERE id=?", ref.id)
+      ) {
+        if (ref.content_version !== undefined)
+          this.record(ref.id, ref.revision, false, ref.content_version);
+        else
+          requireThat(
+            this.memory.allowed(ref.id, ref.revision),
+            "REFERENCE_NOT_FOUND",
+            "Requested record/version is unavailable.",
+          );
+      }
     requireThat(
       !JSON.stringify(request).includes('"visibility":"restricted"') ||
         this.context.scopes?.includes("restricted:write"),
@@ -943,7 +1138,13 @@ export class Core {
         consumed.add(claim.token);
       };
       const stage = (current: RecordRow, data: JsonObject) => {
-        before[current.id] ??= current.revision;
+        if (!(current.id in before))
+          before[current.id] = this.storage.get(
+            "SELECT id FROM records WHERE id=?",
+            current.id,
+          )
+            ? current.revision
+            : null;
         changed.set(current.id, {
           ...current,
           data,
@@ -967,7 +1168,17 @@ export class Core {
                     op.op === "receive_handoff" ||
                     op.op === "record_result"
                   ? "evidence"
-                  : op.kind,
+                  : op.op === "create_record"
+                    ? op.kind
+                    : op.op === "start_run"
+                      ? "run"
+                      : op.op === "invoke_method"
+                        ? "invocation"
+                        : op.op === "record_evaluation"
+                          ? "evaluation"
+                          : op.op === "open_signal"
+                            ? "signal"
+                            : "signal_review",
           );
           if (
             op.op === "import_evidence" &&
@@ -1004,14 +1215,65 @@ export class Core {
       };
       for (const guard of request.guards)
         requireThat(
-          this.record(guard.ref.id).revision === guard.expected_revision,
+          this.addressed(guard.ref.id).revision === guard.expected_revision,
           "REVISION_CONFLICT",
           "A guarded premise changed; read current records.",
         );
       const now = new Date().toISOString();
+      const get = (ref: unknown, kind?: string): RecordRow => {
+        requireThat(
+          ref && typeof ref === "object" && "id" in ref,
+          "REFERENCE_NOT_FOUND",
+          "A permanent reference is required.",
+        );
+        const p = ref as {
+          id: string;
+          revision?: number;
+          content_version?: number;
+        };
+        const staged = changed.get(p.id);
+        const result =
+          staged &&
+          (p.revision === undefined || staged.revision === p.revision) &&
+          (p.content_version === undefined ||
+            staged.data.content_version === p.content_version)
+            ? staged
+            : this.record(p.id, p.revision, true, p.content_version);
+        requireThat(
+          !kind || result.kind === kind,
+          "REFERENCE_TYPE_MISMATCH",
+          "Reference target has the wrong kind.",
+        );
+        requireThat(
+          p.content_version === undefined || result.kind === "method",
+          "REFERENCE_TYPE_MISMATCH",
+          "Only Methods have content_version.",
+        );
+        return result;
+      };
+      const experience = new ExperienceTransaction(
+        this.storage,
+        this.context,
+        request,
+        created,
+        changed,
+        (ref, kind) => {
+          const r = get(ref, kind);
+          if (changed.get(r.id)?.revision !== r.revision)
+            requireThat(
+              this.memory.allowed(r.id, r.revision),
+              "REFERENCE_NOT_FOUND",
+              "Requested record/version is unavailable.",
+            );
+          return r;
+        },
+        stage,
+        now,
+      );
       let focus: unknown = undefined;
       for (const raw of request.ops) {
         const op = resolve(raw) as typeof raw;
+        if (experience.apply(op)) continue;
         if (op.op === "put_relation") {
           relations.push({
             id: created[op.client_ref],
@@ -1214,6 +1476,18 @@ export class Core {
             "Every updated record requires its exact revision guard.",
           );
           before[current.id] = current.revision;
+          if (current.kind === "method")
+            op.data = methodUpdate(
+              current,
+              op.data,
+              op.body === undefined ? current.body : op.body,
+            );
+          if (current.kind === "run")
+            requireThat(
+              canonical(current.data) === canonical(op.data),
+              "INVALID_TRANSITION",
+              "Run lifecycle/results are managed by start_run/finish_run; ordinary update cannot rewrite an episode.",
+            );
           if (current.kind === "work") {
             const w = WorkData.parse(op.data),
               old = WorkData.parse(current.data);
@@ -1243,21 +1517,42 @@ export class Core {
               : op.origin_activity_id) as RecordRow["origin_activity_id"],
           });
         } else {
+          if (
+            op.op !== "record_result" &&
+            op.op !== "import_evidence" &&
+            op.op !== "receive_handoff" &&
+            op.op !== "create_record"
+          )
+            throw new CoreError("VALIDATION_ERROR", "Unsupported operation.");
           const recordId = created[op.client_ref];
           before[recordId] = null;
           let data: JsonObject;
           if (op.op === "record_result") {
-            const workId = refId(op.work_ref);
-            requireClaim(
-              workId,
-              op.step_id ?? null,
-              op.step_id ? "step" : "work",
+            requireThat(
+              op.work_ref || op.run_ref,
+              "VALIDATION_ERROR",
+              "Result needs a Work or a running Run.",
             );
-            const work = WorkData.parse(
-              (changed.get(workId) ?? this.record(workId)).data,
+            const workId = op.work_ref ? refId(op.work_ref) : null;
+            if (workId)
+              requireClaim(
+                workId,
+                op.step_id ?? null,
+                op.step_id ? "step" : "work",
+              );
+            const work = workId
+              ? WorkData.parse(
+                  (changed.get(workId) ?? this.record(workId)).data,
+                )
+              : null;
+            const run = op.run_ref ? get(op.run_ref, "run") : null;
+            requireThat(
+              !run || get({ id: run.id }, "run").data.execution === "running",
+              "INVALID_TRANSITION",
+              "Result requires a currently running Run.",
             );
             requireThat(
-              !op.step_id || work.steps.some((s) => s.step_id === op.step_id),
+              !op.step_id || work?.steps.some((s) => s.step_id === op.step_id),
               "REFERENCE_NOT_FOUND",
               "Generated result step not found.",
             );
@@ -1270,12 +1565,16 @@ export class Core {
               blob_ref: null,
               availability: "retained",
               source_language: op.source_language,
-              work_ref: {
-                id: workId,
-                revision: (changed.get(workId) ?? this.record(workId)).revision,
-              },
+              work_ref: workId
+                ? {
+                    id: workId,
+                    revision: (changed.get(workId) ?? this.record(workId))
+                      .revision,
+                  }
+                : null,
+              run_ref: run ? exactRef(run) : null,
               step_id: op.step_id ?? null,
-              plan_version: work.plan_version ?? 1,
+              plan_version: work?.plan_version ?? null,
               provenance: {
                 transport: "model-generated",
                 runtime_id: this.context.runtime_id,
@@ -1299,9 +1598,13 @@ export class Core {
                 op.op === "receive_handoff" ||
                 op.semantic_source_kind === "external_reply"
                   ? "external_reply"
-                  : s.blob_ref
-                    ? "imported_file"
-                    : "observed_input",
+                  : s.observation
+                    ? "tool_result"
+                    : op.op === "import_evidence" && op.semantic_source_kind
+                      ? op.semantic_source_kind
+                      : s.blob_ref
+                        ? "imported_file"
+                        : "observed_input",
               source_locator: s.locator ?? s.source_ref,
               captured_at: s.captured_at,
               content_hash: s.content_hash,
@@ -1401,6 +1704,12 @@ export class Core {
             }
           } else {
             data = op.data;
+            if (op.kind === "method")
+              requireThat(
+                MethodData.parse(data).content_version === 1,
+                "VALIDATION_ERROR",
+                "A new Method starts at content_version 1.",
+              );
             if (op.kind === "work") {
               const w = WorkData.parse(data);
               requireThat(
@@ -1452,26 +1761,6 @@ export class Core {
           });
         }
       }
-      const get = (ref: unknown, kind?: string): RecordRow => {
-        requireThat(
-          ref && typeof ref === "object" && "id" in ref,
-          "REFERENCE_NOT_FOUND",
-          "A permanent reference is required.",
-        );
-        const r = ref as { id: string; revision?: number };
-        const result =
-          r.revision === undefined
-            ? (changed.get(r.id) ?? this.record(r.id, undefined, true))
-            : changed.get(r.id)?.revision === r.revision
-              ? changed.get(r.id)!
-              : this.record(r.id, r.revision, true);
-        requireThat(
-          !kind || result.kind === kind,
-          "REFERENCE_TYPE_MISMATCH",
-          "Reference target has the wrong kind.",
-        );
-        return result;
-      };
       const guardedIfExisting = (recordId: string) => {
         if (before[recordId] !== null) guarded(recordId);
       };
@@ -1493,6 +1782,26 @@ export class Core {
         if (r.kind === "knowledge") KnowledgeData.parse(r.data);
         if (r.kind === "concept") ConceptData.parse(r.data);
         if (r.kind === "entity") EntityData.parse(r.data);
+        if (r.kind === "method") {
+          const m = MethodData.parse(r.data);
+          m.derived_from = m.derived_from.map((ref) =>
+            exactRef(get(ref, "method")),
+          );
+          r.data = m;
+          requireThat(
+            Buffer.byteLength(JSON.stringify(r)) <= 32000,
+            "VALIDATION_ERROR",
+            "Method exceeds its 32,000-byte addressed-record limit.",
+          );
+        }
+        if (r.kind === "run") {
+          RunData.parse(r.data);
+          requireThat(
+            Buffer.byteLength(JSON.stringify(r)) <= 32000,
+            "VALIDATION_ERROR",
+            "Run exceeds its 32,000-byte addressed-record limit.",
+          );
+        }
       }
       const all = this.storage
         .all<{ json: string }>("SELECT json FROM records")
@@ -1502,6 +1811,7 @@ export class Core {
         ...changed.values(),
       ];
       validateMemory(final, get);
+      validateMethods(final, get);
       for (const r of changed.values()) {
         if (r.kind === "knowledge") {
           const k = KnowledgeData.parse(r.data);
@@ -1772,6 +2082,8 @@ export class Core {
           JSON.stringify(r),
         );
       }
+      experience.write();
+      for (const r of experience.changed.values()) revisions[r.id] = r.revision;
       this.fault?.("after_records");
       const seq = this.domainSequence() + 1;
       const transaction_id = id("txn");
@@ -1779,11 +2091,13 @@ export class Core {
         transaction_id,
         request_id: request.request_id,
         change_seq: seq,
-        changed_refs: [...changed.values()].map((r) => ({
-          id: r.id,
-          before_revision: before[r.id],
-          after_revision: r.revision,
-        })),
+        changed_refs: [...changed.values(), ...experience.changed.values()].map(
+          (r) => ({
+            id: r.id,
+            before_revision: before[r.id] ?? experience.before[r.id] ?? null,
+            after_revision: r.revision,
+          }),
+        ),
         relation_refs: relations.map((r) => ({
           ...JSON.parse(r.json ?? r.previous!),
           state: r.json ? "live" : "removed",
@@ -1831,6 +2145,23 @@ export class Core {
         );
       }
       refreshMemory(this.storage);
+      for (const r of [...changed.values(), ...experience.changed.values()]) {
+        requireThat(
+          this.memory.allowed(r.id),
+          "PERMISSION_DENIED",
+          "New related data is outside the current managed read scope.",
+        );
+        const restricted = this.storage.get<{ restricted: number }>(
+          "SELECT restricted FROM memory_docs WHERE id=? AND revision=?",
+          r.id,
+          r.revision,
+        )?.restricted;
+        requireThat(
+          !restricted || this.context.scopes?.includes("restricted:write"),
+          "PERMISSION_DENIED",
+          "Related restricted writes need trusted setup scope.",
+        );
+      }
       this.fault?.("after_index");
       for (const handoff of handoffs)
         this.storage.run(

@@ -5,6 +5,7 @@ export const Ref = z.union([
   z.strictObject({
     id: text,
     revision: z.number().int().positive().optional(),
+    content_version: z.number().int().positive().optional(),
   }),
   z.strictObject({ client_ref: text }),
 ]);
@@ -191,6 +192,165 @@ export const EntityData = z.strictObject({
   external_ids: z.record(z.string().min(1).max(80), text).optional(),
   status: z.enum(["active", "retired"]),
 });
+export const MethodData = z.strictObject({
+  applicability: text,
+  instructions: z.string().min(1).max(16000),
+  input_contract: text,
+  expected_output: text,
+  context_requirements: z
+    .array(
+      z.strictObject({
+        description: text,
+        refs: z.array(Ref).max(20),
+        selector: text.nullable(),
+        retrieval: text,
+      }),
+    )
+    .max(20),
+  dependencies: z.array(Ref).max(50),
+  tool_requirements: z.array(text).max(30),
+  content_version: z.number().int().positive(),
+  state: z.enum(["candidate", "active", "deprecated"]),
+  derived_from: z.array(Ref).max(20),
+  limitations: text,
+});
+export const RunData = z.strictObject({
+  work_ref: Ref.nullable(),
+  mode: z.enum(["work", "conversation", "correction"]),
+  episode_key: text,
+  case_id: text,
+  continuation_of: Ref.nullable(),
+  execution: z.enum(["running", "completed", "failed", "interrupted"]),
+  started_at: z.iso.datetime(),
+  ended_at: z.iso.datetime().nullable(),
+  summary: text,
+  result_refs: z.array(Ref).max(50),
+  starting_refs: z.array(Ref).max(50),
+  environment_ref: Ref,
+  local_metrics: z
+    .array(
+      z.strictObject({
+        name: text,
+        value: z.number().finite(),
+        unit: text,
+        scope: text,
+      }),
+    )
+    .max(20),
+});
+export const ExperienceOps = [
+  z.strictObject({
+    op: z.literal("revise_method"),
+    ref: z.strictObject({ id: text }),
+    data: MethodData,
+  }),
+  z.strictObject({
+    op: z.literal("set_method_state"),
+    ref: z.strictObject({ id: text }),
+    state: MethodData.shape.state,
+  }),
+  z.strictObject({
+    op: z.literal("start_run"),
+    client_ref: text,
+    title: text,
+    visibility: z.enum(["workspace", "restricted"]),
+    episode_key: text,
+    work_ref: Ref.nullable(),
+    mode: RunData.shape.mode,
+    continuation_of: Ref.nullable(),
+    summary: text,
+    starting_refs: z.array(Ref).max(50),
+  }),
+  z.strictObject({
+    op: z.literal("finish_run"),
+    ref: z.strictObject({ id: text }),
+    execution: z.enum(["completed", "failed", "interrupted"]),
+    summary: text,
+    result_refs: z.array(Ref).max(50),
+    local_metrics: RunData.shape.local_metrics.optional(),
+  }),
+  z.strictObject({
+    op: z.literal("invoke_method"),
+    client_ref: text,
+    run_ref: Ref,
+    invocation_key: text,
+    method_ref: Ref,
+    input_refs: z.array(Ref).max(50),
+    context_refs: z.array(Ref).max(50),
+    selected_versions: z.array(Ref).min(1).max(256),
+    bindings: z
+      .record(
+        z.string().min(1).max(80),
+        z.union([text, z.number().finite(), z.boolean(), z.null()]),
+      )
+      .refine((v) => Object.keys(v).length <= 30),
+    parent_invocation_ref: Ref.nullable(),
+  }),
+  z.strictObject({
+    op: z.literal("report_application"),
+    ref: z.strictObject({ id: text }),
+    output_refs: z.array(Ref).max(50),
+    observation_refs: z.array(Ref).max(50),
+    reported_application: z.strictObject({
+      applied: z.boolean(),
+      summary: text,
+      deviations: z.array(text).max(20),
+    }),
+  }),
+  z.strictObject({
+    op: z.literal("record_evaluation"),
+    client_ref: text,
+    target_ref: Ref,
+    run_ref: Ref.nullable(),
+    assessment: z.enum(["helpful", "unhelpful", "mixed", "unknown"]),
+    dimension: z.enum([
+      "usefulness",
+      "criterion",
+      "technical_operation",
+      "local_metric",
+    ]),
+    dimension_name: text,
+    basis: z.enum([
+      "user_feedback",
+      "reported_feedback",
+      "observed_criterion",
+      "test_result",
+      "model_assessment",
+    ]),
+    evidence_refs: z.array(Ref).min(1).max(20),
+    event_time: z.iso.datetime({ offset: true }).nullable(),
+    supersedes_evaluation_ref: Ref.nullable(),
+    explanation: text,
+  }),
+  z.strictObject({
+    op: z.literal("open_signal"),
+    client_ref: text,
+    kind: z.enum([
+      "problem",
+      "correction",
+      "possible_regression",
+      "useful_result",
+      "novelty",
+    ]),
+    subject_refs: z.array(Ref).min(1).max(20),
+    evidence_refs: z.array(Ref).min(1).max(20),
+    description: text,
+    next_check: text.nullable(),
+    visibility: z.enum(["workspace", "restricted"]),
+  }),
+  z.strictObject({
+    op: z.literal("review_signal"),
+    client_ref: text,
+    ref: z.strictObject({ id: text }),
+    problem_state: z.enum(["open", "observing", "resolved", "dismissed"]),
+    assessment: text,
+    evidence_refs: z.array(Ref).min(1).max(20),
+    applied_change_ref: Ref.nullable(),
+    next_check: text.nullable(),
+    grounds: text.nullable(),
+    dismissal_reason: text.nullable(),
+  }),
+] as const;
 const common = {
   client_ref: text,
   title: text,
@@ -230,6 +390,12 @@ const create = z.discriminatedUnion("kind", [
     kind: z.literal("entity"),
     data: EntityData,
   }),
+  z.strictObject({
+    op: z.literal("create_record"),
+    ...common,
+    kind: z.literal("method"),
+    data: MethodData,
+  }),
 ]);
 export const CommitSchema = z.strictObject({
   request_id: z.string().min(1).max(160),
@@ -248,13 +414,21 @@ export const CommitSchema = z.strictObject({
     .array(
       z.union([
         create,
+        ...ExperienceOps,
         z.strictObject({
           op: z.literal("import_evidence"),
           client_ref: text,
           source_handle: text,
           title: text,
           source_language: text,
-          semantic_source_kind: z.literal("external_reply").optional(),
+          semantic_source_kind: z
+            .enum([
+              "direct_statement",
+              "external_reply",
+              "quotation",
+              "agent_reply",
+            ])
+            .optional(),
           visibility: z.enum(["workspace", "restricted"]).optional(),
         }),
         z.strictObject({
@@ -283,7 +457,8 @@ export const CommitSchema = z.strictObject({
         z.strictObject({
           op: z.literal("record_result"),
           client_ref: text,
-          work_ref: Ref,
+          work_ref: Ref.optional(),
+          run_ref: Ref.optional(),
           step_id: text.optional(),
           title: text,
           content: z.string().min(1).max(32000),
@@ -348,6 +523,8 @@ export const CommitSchema = z.strictObject({
             KnowledgeData,
             ConceptData,
             EntityData,
+            MethodData,
+            RunData,
           ]),
           concept_ids: z.array(Ref).max(30).optional(),
           origin_activity_id: Ref.nullable().optional(),
@@ -368,7 +545,15 @@ export type CommitRequest = z.infer<typeof CommitSchema>;
 export type JsonObject = Record<string, unknown>;
 export interface RecordRow {
   id: string;
-  kind: "activity" | "work" | "evidence" | "knowledge" | "concept" | "entity";
+  kind:
+    | "activity"
+    | "work"
+    | "evidence"
+    | "knowledge"
+    | "concept"
+    | "entity"
+    | "method"
+    | "run";
   title: string;
   body: string | null;
   revision: number;
@@ -377,7 +562,7 @@ export interface RecordRow {
   storage: "live";
   visibility: "workspace" | "restricted";
   data: JsonObject;
-  concept_ids: { id: string; revision?: number }[];
+  concept_ids: { id: string; revision?: number; content_version?: number }[];
   origin_activity_id: { id: string } | null;
 }
 export interface Source {
@@ -392,6 +577,15 @@ export interface Source {
   captured_at: string;
   capture_stage: string;
   original_keystrokes: false;
+  input_integrity: "observed_stage_only" | "trusted_first_untransformed";
+  owner_channel_eligible: boolean;
+  observation?: {
+    tool_name: string;
+    tool_call_id: string;
+    is_error: boolean;
+    full_content_hash: string;
+    truncated: boolean;
+  };
   blob_ref?: string;
   byte_length: number;
   locator?: string;
@@ -431,7 +625,22 @@ export interface CallContext {
   processing_allowed: boolean;
   /** Trusted setup only. Default permits workspace records, never restricted records. */
   scopes?: string[];
+  /** Trusted deployment assertion, never model arguments. No biometric authorship claim. */
+  interactive_input?: {
+    contract: "first-untransformed";
+    caller_identity: string;
+  };
+  environment?: JsonObject;
 }
+export interface SupportingRow extends Omit<RecordRow, "kind"> {
+  kind:
+    | "evaluation"
+    | "signal"
+    | "signal_review"
+    | "invocation"
+    | "environment";
+}
+export type AddressedRow = RecordRow | SupportingRow;
 export interface StoragePort {
   workspace: { workspace_id: string; epoch: string; schema_version: number };
   readonly: boolean;

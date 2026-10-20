@@ -1,6 +1,6 @@
 ---
 name: zaratustra-work
-description: Continue durable nested plans, steps, partial waits and manual handoffs through conversation.
+description: Continue durable work; discover and apply versioned textual Methods, retain Runs, separate assessments and open problems.
 ---
 
 Inspect current catalog and read candidate Work before creating replacements. The model
@@ -108,3 +108,98 @@ then text_derivative_ref and exact ranges or page/chapter locator. Inspect all w
 Save language preference as grounded English Knowledge with labelled English paraphrase.
 Only report persistence after committed:true. A new process discovers Work from the same
 workspace; never ask the user to reconstruct its internal state.
+
+## Textual Methods and substantive episodes
+
+Before doing a substantive task, inspect methods or English search for applicable saved
+ways of working even when the user does not mention memory. Read the full Method and
+conditions, input_contract, expected_output, context_requirements, tool_requirements,
+limitations and dependencies. zara_read {id,projection:method_bundle} returns root_ref,
+the complete selected_versions (at most 256), and at most five bounded bodies; follow
+next_cursor for the remaining bodies. It is a resolved selection, not application.
+Read the necessary current contextual records. You interpret composition; no custom DSL.
+
+create_record kind:method data has applicability, instructions, input_contract,
+expected_output, context_requirements:[{description,refs,selector:null|string,retrieval}],
+dependencies:[Method refs], tool_requirements:[strings], content_version:1,
+state:candidate/active/deprecated, derived_from:[Method refs], limitations. Check for an
+existing method first. Instructions/conditions/contracts/dependencies/safety changes use
+revise_method {ref,data} or update_record with the entire current data and revision guard;
+supply the CURRENT content_version, Core increments it. Rename or set_method_state {ref,state}
+changes revision only. A body qualification is behavioral. Work-specific paths/parameters
+belong in bindings, not new Method versions. derived_from is pinned; an independent local
+variant never silently follows a later parent edit. Do not select deprecated Methods anew.
+
+Use start_run {client_ref,title,visibility,episode_key,work_ref:null|ref,mode:work/conversation/
+correction,continuation_of:null|Run ref,summary,starting_refs}. One Run is a meaningful
+episode, not every turn. Core assigns case_id, times and actual available environment_ref.
+Use the same Run while it is running. A retry/interrupted continuation uses continuation_of
+and retains case_id; do not inflate independent cases. episode_key is a stable technical
+episode key; discover its existing Run before retrying with a new request ID.
+
+Before applying, invoke_method {client_ref,run_ref,invocation_key,method_ref:root_ref,
+selected_versions:the complete bundle list,input_refs,context_refs,bindings:{},
+parent_invocation_ref:null}. Inputs address retained Evidence/Knowledge/Work/Entity/Activity;
+pin the material actually used. A dynamically chosen submethod gets its own invocation
+at selection time, parent_invocation_ref links the original invocation; resolve its full
+closure too. invocation_key deduplicates technical repeats within this Run. Selection does
+not mean you followed it. Execute real ordinary Pi tools when the task needs them.
+
+Save a result with record_result. It accepts work_ref with the existing claim protocol,
+or run_ref for a running episode without artificial Work. Keep actual text and source
+language. This is model-generated artifact Evidence, never verification. Actual native
+read/bash/powershell/write/edit/grep/find/ls results expose captured source handles in the
+next snapshot with tool_name, tool_call_id, is_error, full digest and truncation. Import
+the relevant source using import_evidence to retain an observation. Reading a skill file
+is observable retrieval, not proof of applying its instructions to the task.
+
+After execution, report_application {ref:invocation id,output_refs,observation_refs,
+reported_application:{applied:boolean,summary,deviations:[]}} with the invocation revision
+guard. Outputs must be retained Evidence; observation_refs must be actual captured tool
+Evidence. Empty observations honestly mean only a model report. A deviation can mean
+applied:false. Do not report another agent's statement as your own execution.
+Reports are immutable; subsequent correction is an addressed Evaluation/Signal.
+finish_run {ref,execution:completed/failed/interrupted,summary,result_refs,local_metrics?}
+requires its exact revision guard. A completed episode is not proof of criteria or benefit;
+a failed result may still be a completed episode, with a separate negative Evaluation.
+Use failed for an episode that failed to deliver its intended result and interrupted when
+execution stopped unfinished. Waiting remains Work state. Finish meaningful episodes before
+replying when their actual result is available, retaining failed/interrupted ones honestly.
+
+## Addressed assessments and problems
+
+record_evaluation {client_ref,target_ref:EXACT result revision or Method content version,
+run_ref:null|exact Run ref,assessment:helpful/unhelpful/mixed/unknown,
+dimension:usefulness/criterion/technical_operation/local_metric,dimension_name,
+basis:user_feedback/reported_feedback/observed_criterion/test_result/model_assessment,
+evidence_refs,event_time:null|known ISO instant,supersedes_evaluation_ref:null|ref,
+explanation}. Technical/test bases need retained tool observations; their interpretation
+and criterion fit remain your assessment. Keep separate records for different dimensions
+and bases, never one overall score. For late feedback find the old result, Run and actual
+versions. Correct an assessment by supersedes_evaluation_ref, retaining the same exact
+target and dimension. This is no new application or independent success.
+
+RPC/extension/imported/quoted feedback is reported_feedback, including synthetic tests.
+Import quotations with semantic_source_kind:quotation, agent replies as agent_reply and
+external replies as external_reply. A direct trusted interactive message may be imported
+as direct_statement; Core also requires its trusted first/untransformed capture contract
+for user_feedback. Without that contract original authorship stays unknown. Classification
+can only downgrade a technically eligible source; it cannot elevate a programmatic source.
+You must distinguish the speaker's own feedback from pasted/quoted speech. Captured origin
+does not prove a causal diagnosis. A synthetic controller is not Anton or T31.
+
+open_signal {client_ref,kind:problem/correction/possible_regression/useful_result/novelty,
+subject_refs,evidence_refs,description,next_check:null|string,visibility}. Describe an
+observed issue and keep causal hypotheses labelled. It starts open and retains original
+grounds/versions. review_signal {client_ref,ref,problem_state:open/observing/resolved/dismissed,
+assessment,evidence_refs,applied_change_ref:null|EXACT changed content version,
+next_check:null|string,grounds:null|string,dismissal_reason:null|string} needs the Signal
+revision guard. A review is an independent immutable row even if state remains open.
+Observing requires applied_change_ref and future conditions. Resolution needs retained
+verification grounds; editing/applying a Method alone is insufficient. Dismissal needs a
+reason. Retain negative results and future checks; do not assert improvement without them.
+
+Browse runs/invocations/evaluations/signals/signal_reviews/environments, optionally by
+record_id, for bounded routing cards. Read supporting IDs using normal zara_read. Use
+projection:history with id, limit/cursor for version headers, then read exact revision.
+The snapshot routes to open Signals. All managed access restrictions still apply.

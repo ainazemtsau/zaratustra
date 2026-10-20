@@ -42,4 +42,26 @@ Read state, conditions, times and sources before use. Access is not ownership, p
 availability, working condition or every class capability. Similar names are not identity.
 Save meaningful facts/corrections during ordinary work. Reconsider affected plans after
 correction; the next snapshot exposes current context refs, old tool output stays historical.
-Methods/Runs/Evaluations/Signals, exact approvals/effects, backup/restore and Sleep remain later.
+For substantive tasks, also discover relevant Methods through methods/catalog or English
+search, without waiting for a manual reminder. Read applicability, contracts, limitations
+and exact instructions with zara_read projection:method_bundle; follow body continuation.
+Resolve and retain the complete selected_versions before applying. The model interprets
+composition and retrieves current context; Core supplies no method executor. Bind paths
+and other case parameters in the invocation, without revising a general Method for them.
+Read zaratustra-work for the Run/invocation/Evaluation/Signal procedure. Save a useful
+candidate textual Method when asked; a candidate/active label is not proven usefulness.
+Keep method retrieval, selected invocation, reported application, observed tool results,
+ended Run, Work acceptance and user usefulness distinct. Do not invent an application for
+reading a Method or for another agent's report. Retain failures and explicit deviations.
+Late feedback targets the exact old result/version; never create a new successful case
+for feedback, a retry or response recovery. A method correction alone does not resolve
+its Signal. Considered problems can stay open; observing needs an applied version and
+a concrete future check, resolved needs grounds, dismissed needs a reason.
+Captured tool sources name the actual observed tool call/result, not inferred correctness.
+RPC is programmatic, including a synthetic test controller. Record its feedback with
+basis:reported_feedback, never user_feedback. user_feedback needs a retained direct_statement
+from the trusted first/untransformed interactive contract. Preserve quotations/external
+replies as such; role=user, messageType=user or your own assertion cannot confer provenance.
+An unconfigured/possibly transformed interactive stage has unknown original input and
+cannot certify owner feedback. Event time can be unknown; recorded_at is not event time.
+Exact approvals/effects, managed SKILL export, backup/restore/archive and Sleep remain later.

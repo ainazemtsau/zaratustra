@@ -1,57 +1,41 @@
-# Approved outcome D: shared memory
+# Approved outcome E1: Methods and experience
 
-The owner authorized implementation, checks and ordinary public commit/push solely to
-`codex/zaratustra-v1` with “да” after the third-block description. This is development
-authority, not acceptance of its future result. One executor, no subagents or other chats.
-Independent review will be owner-launched after return. Direction OS is untouched.
+The owner assigned E1 implementation, verification and public delivery from accepted D
+`1b742a6e774eaa14826c036977ae2a42ff1ca46a`, solely to `codex/zaratustra-v1`.
+His “принимаю” approves the E1 scope, not its future result. D was independently
+scope-qualified PASS and separately accepted. The independent large D review was mechanical;
+its own live scenarios were small. Those limits remain. One executor; no agents/other chats.
+Direction OS is untouched. Full E, R1 and actual-owner trial T31 remain open.
 
-Accepted base: `e24b2fda260247ab81daf797408f1d5261ea8aff`. C has independent aggregate
-technical PASS in `C:/projects/zaratustra-v1-c-alias-independent-evidence-20261020/REVIEW.txt`,
-then separate owner acceptance “да” recorded in this assignment. Its preceding runtime
-qualification is `C:/projects/zaratustra-v1-c-rereview-evidence-20261020/REVIEW.txt`.
-Historical PARTIAL verdicts remain those versions' verdicts; the final stdout-alias fix
-closed their last LOW. Model-created pair and plan/wait gaps are independently closed.
-First block `27a74fd` remains separately accepted. Neither acceptance closes R1/T31.
+Before changes the complete unchanged specification and D handoff were read. Original
+SHA256 `7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`;
+public derivative `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
+Previous current documents are preserved byte-for-byte in D-RESULT-1b742a6.md,
+D-DEVELOPMENT-1b742a6.md and D-R1-STATUS-1b742a6.md. Historical evidence stays frozen.
 
-Prior current documents are preserved byte-for-byte as C-RESULT-e24b2fda.md,
-C-DEVELOPMENT-e24b2fda.md and C-R1-STATUS-e24b2fda.md. All historical evidence/manifests
-and closed ledgers remain immutable. The normative specification is unchanged:
-original SHA256 `7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4`;
-public SHA256 `4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb`.
+E1 implements specification §§4.7–4.8, 5.2–5.3 and 11: canonical textual Methods,
+exact selected dependency closures, meaningful Runs, separate addressed Evaluations and
+Signals/reviews. Schema 4 reuses Core/StoragePort, guarded short transactions, version
+history, receipts, Changes, FTS and managed scopes. Model/Pi own applicability, composition,
+execution and interpretation. No Method runtime, workflow language or second model.
+See [E1-DESIGN](E1-DESIGN.md) for each mechanism and its finite limits. Actual M/L
+qualification is recorded in E1-VALIDATION.md, with reproduction in E1-REPRODUCE.md.
 
-D scope is §§4–8/13 shared Concept/Entity/Knowledge, registered navigation relations,
-English FTS5 plus typed queries, corrections/history, bounded reads and request-local
-freshness, managed access, safe preserving migration, installed qualification and scale.
-Methods/Runs/Evaluations/Signals, managed effects, exact approvals, full backup/restore/
-archive, Codex and Sleep are later. Real identity merges and semantic bulk operations
-are explicitly unavailable, rather than accepting model-supplied approval flags.
+One new E1 ledger, never reset: 24 conversational attempts / 180 actual provider dispatch
+attempts / USD 15 Pi estimate; stop at the first cap. It includes errors and incomplete
+attempts. Selected `openai-codex/gpt-6.1-sol`, medium, native Pi auth/authPath only.
+The synthetic RPC controller is programmatic, never Anton or T31. Mechanical SDK
+interactive-source tests are separately labelled M, with zero provider requests.
 
-D qualification uses one ledger: 24 conversations / 180 provider dispatches / USD 15 Pi
-estimate, stopping at the first reached cap. Model `openai-codex/gpt-6.1-sol`, medium;
-only native Pi authentication. RPC is a trusted synthetic controller, never the owner.
-Unknown actual billing stays unknown. Failed setup, transport and retries remain recorded.
-
-Predeclared scale: inspectable <=50-record corpus; fixed synthetic 2,048 claims, 128
-Entities and 96 Concepts (depth 12, wide branches, multiple parents), plus addressed
-grounds/Activities and selected revisions/contradictions/misclassification. This exposes
-paging and deep/wide navigation while allowing complete mechanical source inspection;
-it does not represent unlimited-scale latency or measure intelligence/usefulness.
-
-## D implementation and qualification
-
-Current design/rationale: [D-DESIGN](D-DESIGN.md). Actual separate M/L criteria,
-profiles, all attempts, scale, preservation and known limits: [D-VALIDATION](D-VALIDATION.md).
-[Reproduction](D-REPRODUCE.md) includes trusted personal scope setup. Default/unset
-scopes are workspace-only; the positive protected-memory profile explicitly receives
-restricted:read/write from trusted setup, never model arguments. One failed final
-workspace-only save is retained; the scoped continuation succeeds.
-
-Schema 3 adds rebuildable FTS5/name indexes, memberships/Concept parents, effective
-managed access, registered relations/history and a bounded retrieval trace. Native
-schema-2 migration preserves canonical JSON/IDs/materials and validates the old
-Work/handoff graph before switching. Current snapshots/reads/search reflect corrections.
-Opaque per-Core cursors hide positions and bind query, order, access and generation;
-technical sequence numbers exposed to limited scopes count permitted Changes only.
+Default scopes are workspace-only. A separate protected profile explicitly supplies
+`restricted:read`/`restricted:write` before its history starts. Do not raise rights during
+a failing history and claim the old profile passed. Owner feedback additionally needs
+trusted setup `ZARATUSTRA_INTERACTIVE_INPUT_CONTRACT=first-untransformed`: the local Pi
+owner channel with this hook preceding transforming handlers. Without that deployment
+assertion the observed stage is retained but original input is unknown. Quotations,
+external/agent reports and programmatic inputs cannot acquire owner origin through tool
+arguments. This is a trusted personal deployment contract, not biometric identity or
+protection from malicious same-process extensions. Exact action approvals remain E2.
 
 ## Retained profile
 
@@ -102,17 +86,21 @@ No time scheduler: waits preserve due_at with offset and required IANA timezone.
 
 ## State and scope
 
-The accepted schema-2 base added claims, handoffs and migration receipts. Schema 3
-retains those canonical rows exactly and adds the derived/shared-memory structures above.
+The accepted schema-2 base added claims, handoffs and migration receipts. Accepted D
+schema 3 added shared-memory indexes. Schema 4 retains canonical rows exactly and adds
+supporting experience rows/versions and address views. A verified pre-schema-4 SQLite
+copy precedes the atomic migration; the old D writer refuses schema 4.
 Backup files stay under the separate home and are not automatically deleted. Missing/corrupt
 stores never create replacement empty databases. Failed imports can leave orphan staging/
 immutable blobs; garbage collection and full user backup/quarantine restore remain stage E.
 Fsync/readback are not a hardware power-loss guarantee. Managed policy is not OS isolation
 from same-account shell/extensions or adversarial outside filesystem writers.
 
-Outcome D is the current implementation; qualification is recorded in D-VALIDATION.md.
-Outcome E Methods and safety is the first subsequent unimplemented outcome. Methods,
-Runs/Evaluations/Signals, universal approvals/effects, general backup/restore/archive,
-Codex and Sleep remain later. Full R1 matrix is retained in R1-STATUS.md.
+E1 is the current authorized implementation. E2 is the next bounded outcome: exact
+preview-bound confirmations and controlled actions/unknown-result recovery, including
+managed textual SKILL.md export and drift checks. E3 retains user backup, quarantine
+restore, retention/archive/delete and the restore epoch barrier. Real identity merges
+and bulk reorganization await E2 authority. Codex and R2 Sleep/scheduler remain separate.
+Full R1 matrix is retained in R1-STATUS.md; E1 does not close it.
 
 END_OF_FILE: docs/DEVELOPMENT.md

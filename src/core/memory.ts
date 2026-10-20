@@ -13,6 +13,7 @@ import type {
   JsonObject,
   RecordRow,
   StoragePort,
+  AddressedRow,
 } from "./contracts.ts";
 
 const hash = (v: unknown) =>
@@ -57,6 +58,30 @@ export function addressedIds(value: unknown): string[] {
   };
   walk(value);
   return [...found];
+}
+export function addressedRefs(
+  value: unknown,
+): { id: string; revision?: number; content_version?: number }[] {
+  const refs: { id: string; revision?: number; content_version?: number }[] =
+    [];
+  const walk = (v: unknown) => {
+    if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") {
+      const o = v as JsonObject;
+      if (
+        typeof o.id === "string" &&
+        Object.keys(o).every((k) =>
+          ["id", "revision", "content_version"].includes(k),
+        )
+      )
+        refs.push(
+          o as { id: string; revision?: number; content_version?: number },
+        );
+      Object.values(o).forEach(walk);
+    }
+  };
+  walk(value);
+  return refs;
 }
 export function validateMemory(
   final: RecordRow[],
@@ -154,10 +179,47 @@ export function validateMemory(
 
 /** Derived indexes only. Caller owns the short SQLite transaction. */
 export function refreshMemory(storage: StoragePort, rebuild = false) {
+  const experience = !!storage.get(
+    "SELECT name FROM sqlite_master WHERE type='view' AND name='addressed_current'",
+  );
   const current = storage
-    .all<{ json: string }>("SELECT json FROM records")
-    .map((r) => JSON.parse(r.json) as RecordRow);
+    .all<{
+      json: string;
+    }>("SELECT json FROM " + (experience ? "addressed_current" : "records"))
+    .map((r) => JSON.parse(r.json) as AddressedRow);
   const byId = new Map(current.map((r) => [r.id, r]));
+  const versions = storage
+    .all<{
+      json: string;
+    }>(
+      "SELECT json FROM " +
+        (experience ? "addressed_versions" : "revisions") +
+        " ORDER BY id,revision",
+    )
+    .map((row) => JSON.parse(row.json) as AddressedRow);
+  const versionKey = (r: AddressedRow) => r.id + ":" + r.revision;
+  const versionRestrictions = new Map(
+    versions.map((r) => [versionKey(r), r.visibility === "restricted"]),
+  );
+  const versionRefs = new Map(
+    versions.map((r) => [
+      versionKey(r),
+      addressedRefs(r).map((ref) => {
+        if (ref.revision !== undefined) return ref.id + ":" + ref.revision;
+        if (ref.content_version !== undefined) {
+          const target = versions.find(
+            (v) =>
+              v.id === ref.id &&
+              v.kind === "method" &&
+              v.data.content_version === ref.content_version,
+          );
+          return target ? versionKey(target) : "";
+        }
+        const target = byId.get(ref.id);
+        return target ? versionKey(target) : "";
+      }),
+    ]),
+  );
   const restrictions = new Map<string, boolean>();
   // Monotone fixed point handles legitimate cyclic reference graphs without recursive leakage.
   current.forEach((r) => restrictions.set(r.id, r.visibility === "restricted"));
@@ -172,20 +234,33 @@ export function refreshMemory(storage: StoragePort, rebuild = false) {
         restrictions.set(r.id, true);
         changed = true;
       }
+    for (const r of versions) {
+      const key = versionKey(r);
+      if (
+        !versionRestrictions.get(key) &&
+        (restrictions.get(r.id) ||
+          addressedIds(r).some((id) => restrictions.get(id)) ||
+          versionRefs.get(key)!.some((key) => versionRestrictions.get(key)))
+      ) {
+        versionRestrictions.set(key, true);
+        changed = true;
+        if (byId.get(r.id)?.revision === r.revision)
+          restrictions.set(r.id, true);
+      }
+    }
   }
   if (rebuild) {
     storage.exec(
       "DELETE FROM memory_text; DELETE FROM memory_names; DELETE FROM memory_docs;",
     );
   }
-  for (const row of storage.all<{ json: string }>(
-    "SELECT json FROM revisions ORDER BY id,revision",
-  )) {
-    const r = JSON.parse(row.json) as RecordRow;
+  for (const r of versions) {
     const restricted =
       r.visibility === "restricted" ||
       restrictions.get(r.id) ||
       addressedIds(r).some((id) => restrictions.get(id));
+    const effectiveRestricted =
+      restricted || versionRestrictions.get(versionKey(r));
     const exists = storage.get<{ docid: number }>(
       "SELECT docid FROM memory_docs WHERE id=? AND revision=?",
       r.id,
@@ -194,7 +269,7 @@ export function refreshMemory(storage: StoragePort, rebuild = false) {
     if (exists)
       storage.run(
         "UPDATE memory_docs SET restricted=? WHERE docid=?",
-        restricted ? 1 : 0,
+        effectiveRestricted ? 1 : 0,
         exists.docid,
       );
     else {
@@ -202,7 +277,7 @@ export function refreshMemory(storage: StoragePort, rebuild = false) {
         "INSERT INTO memory_docs(id,revision,restricted) VALUES(?,?,?)",
         r.id,
         r.revision,
-        restricted ? 1 : 0,
+        effectiveRestricted ? 1 : 0,
       );
       const doc = storage.get<{ docid: number }>(
         "SELECT docid FROM memory_docs WHERE id=? AND revision=?",
@@ -225,6 +300,16 @@ export function refreshMemory(storage: StoragePort, rebuild = false) {
         r.data.objective,
         r.data.current_state,
         r.data.next_action,
+        r.data.applicability,
+        r.data.instructions,
+        r.data.input_contract,
+        r.data.expected_output,
+        r.data.limitations,
+        r.data.summary,
+        r.data.context_requirements
+          ? canonical(r.data.context_requirements)
+          : null,
+        r.data.tool_requirements ? canonical(r.data.tool_requirements) : null,
         r.data.conditions ? canonical(r.data.conditions) : "",
       ]
         .filter((v) => typeof v === "string")
@@ -266,13 +351,15 @@ const kinds = z.enum([
   "evidence",
   "concept",
   "entity",
+  "method",
+  "run",
 ]);
 export const SearchSchema = z.strictObject({
   query: z.string().min(1).max(512).optional(),
   match: z.enum(["all", "any", "phrase"]).optional(),
   channel: z.enum(["working", "names", "both"]).optional(),
   exact_name: z.boolean().optional(),
-  kinds: z.array(kinds).min(1).max(6).optional(),
+  kinds: z.array(kinds).min(1).max(8).optional(),
   concept_ids: z.array(z.string().min(1).max(160)).min(1).max(10).optional(),
   descendants: z.boolean().optional(),
   subject_id: z.string().min(1).max(160).optional(),
@@ -296,6 +383,12 @@ export const SearchSchema = z.strictObject({
         "blocked",
         "done",
         "cancelled",
+        "candidate",
+        "deprecated",
+        "running",
+        "completed",
+        "failed",
+        "interrupted",
       ]),
     )
     .min(1)
@@ -312,6 +405,10 @@ export const SearchSchema = z.strictObject({
       "extracted_text",
       "generated_artifact",
       "external_reply",
+      "direct_statement",
+      "quotation",
+      "agent_reply",
+      "tool_result",
     ])
     .optional(),
   limit: z.number().int().min(1).max(50).optional(),
@@ -383,7 +480,7 @@ export class Memory {
   }
   allowed(id: string, revision?: number) {
     const r = this.db.get<{ restricted: number }>(
-      "SELECT d.restricted FROM memory_docs d JOIN records r ON r.id=d.id WHERE d.id=? AND d.revision=coalesce(?,json_extract(r.json,'$.revision'))",
+      "SELECT d.restricted FROM memory_docs d JOIN addressed_current r ON r.id=d.id WHERE d.id=? AND d.revision=coalesce(?,json_extract(r.json,'$.revision'))",
       id,
       revision ?? null,
     );
@@ -394,7 +491,7 @@ export class Memory {
   }
   technicalSQL(alias: string) {
     if (this.restricted) return "1";
-    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE (secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM memory_docs d JOIN records r ON r.id=d.id AND d.revision=json_extract(r.json,'$.revision') WHERE d.restricted=1))`;
+    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE (secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1))`;
   }
   technical(value: unknown) {
     const serialized = JSON.stringify(value);
@@ -402,13 +499,16 @@ export class Memory {
       return false;
     return addressedIds(value).every(
       (id) =>
-        !this.db.get("SELECT id FROM records WHERE id=?", id) ||
-        this.allowed(id),
+        !this.db.get("SELECT id FROM addressed_current WHERE id=?", id) ||
+        !this.db.get(
+          "SELECT id FROM memory_docs WHERE id=? AND restricted=1 LIMIT 1",
+          id,
+        ),
     );
   }
   generation() {
     const visible = this.db.all<{ id: string; revision: number }>(
-      "SELECT d.id,d.revision FROM memory_docs d JOIN records r ON r.id=d.id AND json_extract(r.json,'$.revision')=d.revision WHERE (d.restricted=0 OR ?=1) ORDER BY d.id",
+      "SELECT d.id,d.revision FROM memory_docs d JOIN addressed_current r ON r.id=d.id AND json_extract(r.json,'$.revision')=d.revision WHERE (d.restricted=0 OR ?=1) ORDER BY d.id",
       this.restricted,
     );
     const technical = ["intents", "claims", "handoffs", "relations"].map(
@@ -502,14 +602,22 @@ export class Memory {
       ],
     };
   }
-  card(r: RecordRow, reasons: string[] = []) {
+  card(r: AddressedRow, reasons: string[] = []) {
     return {
       id: r.id,
       kind: r.kind,
       title: r.title,
       revision: r.revision,
       storage: r.storage,
-      state: r.data.state ?? r.data.status ?? null,
+      state:
+        r.data.state ??
+        r.data.status ??
+        r.data.execution ??
+        r.data.problem_state ??
+        null,
+      ...(r.kind === "method"
+        ? { content_version: r.data.content_version }
+        : {}),
       // Cards route discovery; a short statement would lose qualifications and contaminate retrieval tests.
       description: null,
       selector: { record_id: r.id },
@@ -549,11 +657,32 @@ export class Memory {
       handoffs: { table: "handoffs", key: "rowid" },
       claims: { table: "claims", key: "rowid" },
       relations: { table: "relations", key: "rowid" },
+      evaluations: { table: "experience_rows", key: "rowid" },
+      signals: { table: "experience_rows", key: "rowid" },
+      signal_reviews: { table: "experience_rows", key: "rowid" },
+      invocations: { table: "experience_rows", key: "rowid" },
+      environments: { table: "experience_rows", key: "rowid" },
+      history: { table: "addressed_versions", key: "revision" },
     };
     if (technical[view] && mode !== "current_claims") {
       const { table, key } = technical[view];
+      requireThat(
+        view !== "history" || recordId,
+        "VALIDATION_ERROR",
+        "History needs a record id.",
+      );
+      const supportKinds: Record<string, string> = {
+        evaluations: "evaluation",
+        signals: "signal",
+        signal_reviews: "signal_review",
+        invocations: "invocation",
+        environments: "environment",
+      };
+      const kindFilter = supportKinds[view]
+        ? ` AND t.kind='${supportKinds[view]}'`
+        : "";
       const rows = this.db.all<{ key: number; json: string }>(
-        `SELECT t.${key} AS key,t.json FROM ${table} t WHERE t.${key}>? AND ${this.technicalSQL("t")} AND (? IS NULL OR EXISTS(SELECT 1 FROM json_tree(t.json) WHERE atom=?)) ORDER BY t.${key} LIMIT ?`,
+        `SELECT t.${key} AS key,t.json FROM ${table} t WHERE t.${key}>? ${kindFilter} AND ${this.technicalSQL("t")} AND (? IS NULL OR ${view === "history" ? "t.id=?" : "EXISTS(SELECT 1 FROM json_tree(t.json) WHERE atom=?)"}) ORDER BY t.${key} LIMIT ?`,
         last,
         recordId ?? null,
         recordId ?? null,
@@ -566,6 +695,17 @@ export class Memory {
           const value = this.sanitizeTechnical(
             JSON.parse(r.json),
           ) as JsonObject;
+          if (supportKinds[view] || view === "history")
+            return {
+              ...this.card(value as unknown as AddressedRow),
+              ...(supportKinds[view]
+                ? {
+                    assessment: (value.data as JsonObject)?.assessment ?? null,
+                    basis: (value.data as JsonObject)?.basis ?? null,
+                  }
+                : {}),
+              untrusted_data: true,
+            };
           if (view === "operations") {
             const { payload, ...header } = value;
             return {
@@ -588,6 +728,8 @@ export class Memory {
       topics: "concept",
       concepts: "concept",
       entities: "entity",
+      methods: "method",
+      runs: "run",
     };
     if (mode === "current_claims") {
       requireThat(
@@ -799,7 +941,7 @@ export class Memory {
     if (p.kinds) list("r.kind", p.kinds);
     if (p.states)
       list(
-        `coalesce(json_extract(${j},'$.data.state'),json_extract(${j},'$.data.status'))`,
+        `coalesce(json_extract(${j},'$.data.state'),json_extract(${j},'$.data.status'),json_extract(${j},'$.data.execution'))`,
         p.states,
       );
     for (const [field, value] of [

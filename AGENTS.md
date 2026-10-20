@@ -11,9 +11,10 @@ Commands (Node 22.19.0, npm 11.6.2, Pi 1.3.0):
 
 Read `docs/specification-v1.1.html` completely and `docs/DEVELOPMENT.md` for the
 approved block and decisions. The full R1 contract remains the target. The current
-owner-authorized third block implements outcome D: shared Concept/Entity/Knowledge,
-catalog, English FTS5/typed search, corrections, managed access and scale qualification.
-C is independently PASS and owner-accepted on e24b2fda. Full R1/T31 remain open.
+owner-authorized block is E1: textual Methods, Runs, separate Evaluations and Signals.
+D is independently scope-qualified PASS and separately owner-accepted on
+1b742a6e774eaa14826c036977ae2a42ff1ca46a. E1 authorization “принимаю” approves its
+implementation scope, not its future result. Full E/R1/T31 remain open.
 
 ## Run contract (PROBA)
 
@@ -38,7 +39,7 @@ C is independently PASS and owner-accepted on e24b2fda. Full R1/T31 remain open.
 All product writes stay in this checkout and explicitly isolated synthetic/output paths.
 Keep imports bounded; no database transaction spans model, human or external-tool waits.
 Test actual installed public refs outside checkout; never copy credentials into test config.
-Live D budget: one non-reset ledger, 24 attempts / 180 dispatches / USD 15 Pi estimate;
+Live E1 budget: one new non-reset ledger, 24 attempts / 180 dispatches / USD 15 Pi estimate;
 openai-codex/gpt-6.1-sol, medium, native Pi authentication. Retain all errors/retries.
 Real merges and bulk reorganization are unavailable until bound approvals in E.
 Public route is only `codex/zaratustra-v1`; no force push, main/foreign ref/tag mutation.
