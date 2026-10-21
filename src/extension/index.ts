@@ -1,4 +1,6 @@
 import { registerAdministration } from "./administration.ts";
+import { workspacePaths } from "./workspace.ts";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -77,6 +79,7 @@ const productInputs = [
   "src/extension/managed.ts",
   "src/extension/preview.ts",
   "src/extension/authority.ts",
+  "src/extension/workspace.ts",
   "src/storage/index.ts",
   "src/storage/extract.ts",
   "src/storage/parser-worker.mjs",
@@ -117,6 +120,7 @@ export default function extension(pi: ExtensionAPI) {
   let activeImports = 0,
     nativeDialogs = 0;
   let outputBoundary: OutputBoundary | undefined;
+  let paths: ReturnType<typeof workspacePaths> | undefined;
   let readyFile: { effect: FileEffect; preview: string } | undefined;
   const activeFiles = new Map<string, FileEffect>();
   let selectionGeneration = 0;
@@ -171,7 +175,7 @@ export default function extension(pi: ExtensionAPI) {
         unavailable ??
         new CoreError(
           "STORE_UNAVAILABLE",
-          "Set an absolute ZARATUSTRA_HOME outside package/config storage through trusted setup.",
+          "Zaratustra memory is unavailable. Trust the project in native Pi for .local defaults, or check the explicit directory configuration.",
         )
       );
     return core;
@@ -203,16 +207,22 @@ export default function extension(pi: ExtensionAPI) {
     readyFile = undefined;
     activeFiles.clear();
     outputBoundary = undefined;
+    paths = undefined;
     disk?.close();
     core = undefined;
     disk = undefined;
     try {
-      const home = process.env.ZARATUSTRA_HOME;
-      if (!home || !isAbsolute(home))
+      const scopes = z
+        .array(z.enum(["restricted:read", "restricted:write"]))
+        .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]"));
+      const ingress = process.env.ZARATUSTRA_INTERACTIVE_INPUT_CONTRACT;
+      if (ingress && ingress !== "first-untransformed")
         throw new CoreError(
-          "STORE_UNAVAILABLE",
-          "Trusted setup must select an absolute ZARATUSTRA_HOME.",
+          "VALIDATION_ERROR",
+          "Unknown trusted interactive input contract.",
         );
+      paths = workspacePaths(ctx, root, getAgentDir());
+      const home = paths.home;
       const canonicalHome = resolvedLocation(home);
       if (
         within(realpathSync(root), canonicalHome) ||
@@ -226,10 +236,10 @@ export default function extension(pi: ExtensionAPI) {
           "PERMISSION_DENIED",
           "Workspace must be outside package and Pi configuration/cache.",
         );
-      if (process.env.ZARATUSTRA_BACKUP_ROOT) {
-        const backupRoot = resolvedLocation(process.env.ZARATUSTRA_BACKUP_ROOT);
+      if (paths.backup) {
+        const backupRoot = resolvedLocation(paths.backup);
         requireThat(
-          isAbsolute(process.env.ZARATUSTRA_BACKUP_ROOT) &&
+          isAbsolute(paths.backup) &&
             !within(canonicalHome, backupRoot) &&
             !within(backupRoot, canonicalHome) &&
             !within(realpathSync(root), backupRoot) &&
@@ -256,9 +266,7 @@ export default function extension(pi: ExtensionAPI) {
             runtime_id: runtimeId,
             can_write: true,
             processing_allowed: !!selected,
-            scopes: z
-              .array(z.enum(["restricted:read", "restricted:write"]))
-              .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]")),
+            scopes,
             approval_principal: process.env.ZARATUSTRA_TEST_CONTROLLER
               ? "synthetic-controller:" + process.env.ZARATUSTRA_TEST_CONTROLLER
               : "trusted-local-desktop-owner",
@@ -276,8 +284,8 @@ export default function extension(pi: ExtensionAPI) {
           "PERMISSION_DENIED",
           "Workspace resolves inside package storage.",
         );
-      if (process.env.ZARATUSTRA_OUTPUT_ROOT) {
-        const outputRoot = process.env.ZARATUSTRA_OUTPUT_ROOT;
+      if (paths.output) {
+        const outputRoot = paths.output;
         const outputReal = resolvedLocation(outputRoot);
         requireThat(
           !within(outputReal, realpathSync(root)) &&
@@ -296,12 +304,6 @@ export default function extension(pi: ExtensionAPI) {
         );
         outputBoundary = new OutputBoundary(outputRoot);
       }
-      const ingress = process.env.ZARATUSTRA_INTERACTIVE_INPUT_CONTRACT;
-      if (ingress && ingress !== "first-untransformed")
-        throw new CoreError(
-          "VALIDATION_ERROR",
-          "Unknown trusted interactive input contract.",
-        );
       core = new Core(
         disk,
         bindRecipient({
@@ -315,9 +317,7 @@ export default function extension(pi: ExtensionAPI) {
           runtime_id: runtimeId,
           can_write: !disk.readonly,
           processing_allowed: !!selected,
-          scopes: z
-            .array(z.enum(["restricted:read", "restricted:write"]))
-            .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]")),
+          scopes,
           ...(ingress
             ? {
                 interactive_input: {
@@ -358,7 +358,7 @@ export default function extension(pi: ExtensionAPI) {
       disk = undefined;
       core = undefined;
       ctx.ui.notify(
-        "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+        `Zaratustra store unavailable: ${failure(e).message} Dependent actions are blocked; ordinary Pi remains available.`,
         "warning",
       );
     }
@@ -541,6 +541,15 @@ export default function extension(pi: ExtensionAPI) {
         provider_model: selected,
         recipient_authority: recipientAuthority,
         managed_output_root: outputBoundary?.root ?? null,
+        workspace_paths: paths
+          ? {
+              profile: paths.profile,
+              memory: paths.home,
+              imports: JSON.parse(paths.imports),
+              output: paths.output ?? null,
+              backups: paths.backup ?? null,
+            }
+          : null,
         capability_manifest: {
           covered: [
             "exact preview-bound Core changes",
@@ -1100,14 +1109,12 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_import",
-    "Retain authorized TXT/Markdown (1 MiB), text PDF or unencrypted EPUB (64 MiB). Returns an exact source handle and honest extraction classification, not committed Evidence. import_evidence commits immutable original and a separate addressed text derivative; read that derivative with ranges/page/chapter locators. Paths must lie in trusted ZARATUSTRA_IMPORT_ROOTS.",
+    "Retain authorized TXT/Markdown (1 MiB), text PDF or unencrypted EPUB (64 MiB). Returns an exact source handle and honest extraction classification, not committed Evidence. import_evidence commits immutable original and a separate addressed text derivative; read that derivative with ranges/page/chapter locators. Paths must lie in snapshot workspace_paths.imports (project .local/imports by default, or explicit trusted import roots).",
     z.strictObject({ path: z.string() }),
     async (p) => {
       const c = get();
       c.authorizeImport();
-      const roots = JSON.parse(
-        process.env.ZARATUSTRA_IMPORT_ROOTS ?? "[]",
-      ) as string[];
+      const roots = JSON.parse(paths!.imports) as string[];
       activeImports++;
       try {
         const material = await disk!.importMaterial(

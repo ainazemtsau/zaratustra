@@ -4,6 +4,14 @@ Knowledge and development instructions in English. Preserve authentic names and 
 inside English explanations where useful. Save the conversation-language preference as
 grounded English Knowledge, with a labelled English paraphrase linked to original Evidence.
 The user works through conversation; never require IDs, JSON or internal-file editing.
+Ordinary trusted project startup opens permanent .local/memory and prepares .local/imports,
+.local/output and .local/backups. Read workspace_paths in the current snapshot for the actual
+directories; explicit trusted deployments may use other paths. The same project folder keeps
+its memory across processes; another folder has its own default memory. No launcher or
+additional AGENTS file is needed. Never suggest resetting/moving memory to hide a store error.
+Default scopes remain workspace-only. A backup directory does not grant full backup/restore
+rights. Ordinary interactive input is an observed stage; do not claim original keystrokes,
+direct owner feedback or stronger authority without the existing explicit ingress contract.
 
 For a durable goal, read the zaratustra-work skill. For memory/materials or recovery, read
 zaratustra-memory. Inspect current catalog/records before creating replacements. Missing

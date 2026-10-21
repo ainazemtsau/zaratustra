@@ -30,22 +30,27 @@ Accepted D evidence remains [here](docs/D-VALIDATION.md). Accepted C predecessor
 and remaining release obligations: [R1 status](docs/R1-STATUS.md).
 Full target: [specification 1.1](docs/specification-v1.1.html).
 
-Operator installation in an isolated PowerShell environment:
+Install once in the project root, then start ordinary Pi there:
 
 ```powershell
-$env:PI_CODING_AGENT_DIR = '<absolute isolated Pi config directory>'
-$env:ZARATUSTRA_HOME = '<absolute separate durable workspace>'
-$env:ZARATUSTRA_IMPORT_ROOTS = '["<absolute permitted input directory>"]'
-$env:ZARATUSTRA_OUTPUT_ROOT = '<absolute separate controlled output directory>'
-$env:ZARATUSTRA_BACKUP_ROOT = '<absolute separate backup directory>'
-pi install git:github.com/ainazemtsau/zaratustra@<exact-public-commit>
-pi list
+pi install --local git:github.com/ainazemtsau/zaratustra@<exact-public-commit>
 pi
 ```
 
+Accept native Pi project trust after reviewing the package. No launcher, additional
+AGENTS file or per-launch environment setup is required. With directory overrides
+absent, Zaratustra creates `.local/memory`, `.local/imports`, `.local/output` and
+`.local/backups` in Pi's current project directory. A fresh process in the same
+folder reopens that memory; a different project has separate state. The snapshot
+reports the actual paths. `.local/.gitignore` protects new local data without
+editing the project's root ignore file. Existing user content is never overwritten.
+
 Use Pi's normal authentication and deliberately selected model. Never copy
-credentials into this repository. ZARATUSTRA_HOME is trusted operator setup, never
-a model tool argument; it must remain outside the checkout/package/Pi cache.
+credentials into this repository. Advanced explicit `ZARATUSTRA_HOME` deployments
+keep their existing optional directory behavior and authority settings. Partial
+directory overrides without a home fail rather than opening different memory.
+See [startup behavior and reproducibility](docs/PROJECT-STARTUP.md) for limits,
+native verification and explicit configuration.
 Daily use is conversation only: ask to create an area, send a material, recall useful
 resources, plan using their current conditions, correct a record, or continue.
 Ask to save a useful approach; a later suitable task can discover and reuse it without
@@ -59,8 +64,8 @@ inspection, independent of whether the database actually contains protected reco
 
 `pi update --extensions` reconciles the configured pin. Bare `pi update` updates
 the host instead. Explicit upgrade selects a different real public commit with
-`pi install`; no mutable-branch assumption. `pi remove <same-source>` removes
-package configuration/resources while the separate workspace remains. Native
+`pi install --local`; no mutable-branch assumption. `pi remove --local <same-source>` removes
+project package configuration/resources while `.local` memory remains. Native
 package filters `extensions:[]` and `skills:[]` disable both resources.
 
 Developer commands: `npm ci`, `npm run check`, `npm run deliver`. See `AGENTS.md`
