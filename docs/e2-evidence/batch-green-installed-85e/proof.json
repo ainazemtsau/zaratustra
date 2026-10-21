@@ -1,0 +1,288 @@
+{
+  "pkg": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-batch\\git\\github.com\\ainazemtsau\\zaratustra",
+  "request": {
+    "request_id": "correct-merge",
+    "ops": [
+      {
+        "op": "update_record",
+        "ref": {
+          "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+        },
+        "title": "Reference lamp E2-B62",
+        "body": "Exact approved corrected label",
+        "data": {
+          "entity_kind": "device",
+          "aliases": [
+            "b original"
+          ],
+          "disambiguation": "Marking confirmed in synthetic fixture",
+          "external_ids": {
+            "serial": "E2-B62"
+          },
+          "status": "active"
+        }
+      },
+      {
+        "op": "merge_identity",
+        "from_ref": {
+          "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc"
+        },
+        "to_ref": {
+          "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+        }
+      }
+    ],
+    "guards": [
+      {
+        "ref": {
+          "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc"
+        },
+        "expected_revision": 1
+      },
+      {
+        "ref": {
+          "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+        },
+        "expected_revision": 1
+      }
+    ],
+    "reason": "Synthetic exact connected batch",
+    "source_handles": [
+      "source-7f5ec2ba-2801-4f2e-91af-ad935f960645"
+    ]
+  },
+  "preview": {
+    "request_id": "preview-3977faac-a91c-4d1a-b9ce-117d232df79e",
+    "kind": "preview",
+    "status": "draft",
+    "payload": {
+      "workspace_id": "c8774f48-9ad1-410b-82af-4d445583beeb",
+      "epoch": "d8d58735-e1ab-42d7-9619-6748ea9b1da7",
+      "principal": "trusted-personal",
+      "scopes": [],
+      "policy_revision": "E2-exact-v1",
+      "session_id": "own-batch",
+      "runtime_id": "own-batch",
+      "action": "commit",
+      "exact": {
+        "request_id": "correct-merge",
+        "reason": "Synthetic exact connected batch",
+        "source_handles": [
+          "observed-a5406b71-431c-443f-9382-5abef87ed9c6"
+        ],
+        "guards": [
+          {
+            "ref": {
+              "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc"
+            },
+            "expected_revision": 1
+          },
+          {
+            "ref": {
+              "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+            },
+            "expected_revision": 1
+          }
+        ],
+        "ops": [
+          {
+            "op": "update_record",
+            "ref": {
+              "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+            },
+            "title": "Reference lamp E2-B62",
+            "body": "Exact approved corrected label",
+            "data": {
+              "entity_kind": "device",
+              "aliases": [
+                "b original"
+              ],
+              "disambiguation": "Marking confirmed in synthetic fixture",
+              "external_ids": {
+                "serial": "E2-B62"
+              },
+              "status": "active"
+            }
+          },
+          {
+            "op": "merge_identity",
+            "from_ref": {
+              "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc"
+            },
+            "to_ref": {
+              "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+            }
+          }
+        ],
+        "before": [
+          {
+            "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc",
+            "kind": "entity",
+            "title": "Bench lamp Ω",
+            "body": null,
+            "revision": 1,
+            "created_at": "2026-10-21T03:14:58.854Z",
+            "updated_at": "2026-10-21T03:14:58.854Z",
+            "storage": "live",
+            "concept_ids": [],
+            "origin_activity_id": null,
+            "visibility": "workspace",
+            "data": {
+              "entity_kind": "device",
+              "aliases": [
+                "a original"
+              ],
+              "disambiguation": "Serial not checked",
+              "external_ids": {
+                "serial": "unknown"
+              },
+              "status": "active"
+            }
+          },
+          {
+            "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863",
+            "kind": "entity",
+            "title": "Reference lamp",
+            "body": null,
+            "revision": 1,
+            "created_at": "2026-10-21T03:14:58.854Z",
+            "updated_at": "2026-10-21T03:14:58.854Z",
+            "storage": "live",
+            "concept_ids": [],
+            "origin_activity_id": null,
+            "visibility": "workspace",
+            "data": {
+              "entity_kind": "device",
+              "aliases": [
+                "b original"
+              ],
+              "disambiguation": "Serial not checked",
+              "external_ids": {
+                "serial": "unknown"
+              },
+              "status": "active"
+            }
+          }
+        ],
+        "effective_access": [
+          {
+            "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc",
+            "restricted": false
+          },
+          {
+            "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863",
+            "restricted": false
+          }
+        ],
+        "assigned_method_versions": []
+      },
+      "dependencies": [
+        {
+          "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc",
+          "revision": 1
+        },
+        {
+          "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863",
+          "revision": 1
+        }
+      ],
+      "consequence": "Correct target title, body, serial/disambiguation and merge the original lamp into it",
+      "alternatives": "Keep the separate entries",
+      "expires_at": "2026-10-21T03:29:58.877Z",
+      "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+    },
+    "operation_digest": "5205ad9b218a8336916408561863720f352e79167fe4b7798c64e9acc27f8c01"
+  },
+  "receipt": {
+    "ok": true,
+    "request_id": "correct-merge",
+    "workspace_id": "c8774f48-9ad1-410b-82af-4d445583beeb",
+    "schema_version": 5,
+    "snapshot_seq": 2,
+    "transaction_id": "txn-3920ab5a-9ccc-48da-8d0f-c8a69a03ea0e",
+    "committed": true,
+    "created": {},
+    "new_revisions": {
+      "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863": 2,
+      "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc": 2
+    },
+    "warnings": []
+  },
+  "before": {
+    "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863",
+    "kind": "entity",
+    "title": "Reference lamp",
+    "body": null,
+    "revision": 1,
+    "created_at": "2026-10-21T03:14:58.854Z",
+    "updated_at": "2026-10-21T03:14:58.854Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": null,
+    "visibility": "workspace",
+    "data": {
+      "entity_kind": "device",
+      "aliases": [
+        "b original"
+      ],
+      "disambiguation": "Serial not checked",
+      "external_ids": {
+        "serial": "unknown"
+      },
+      "status": "active"
+    }
+  },
+  "actual": {
+    "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863",
+    "kind": "entity",
+    "title": "Reference lamp E2-B62",
+    "body": "Exact approved corrected label",
+    "revision": 2,
+    "created_at": "2026-10-21T03:14:58.854Z",
+    "updated_at": "2026-10-21T03:14:58.896Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": null,
+    "visibility": "workspace",
+    "data": {
+      "entity_kind": "device",
+      "aliases": [
+        "b original",
+        "Bench lamp Ω",
+        "a original"
+      ],
+      "disambiguation": "Marking confirmed in synthetic fixture",
+      "external_ids": {
+        "serial": "E2-B62"
+      },
+      "status": "active"
+    }
+  },
+  "source_after": {
+    "id": "entity-3a1e5e7e-acde-4cb8-888b-2df597a80fdc",
+    "kind": "entity",
+    "title": "Bench lamp Ω",
+    "body": null,
+    "revision": 2,
+    "created_at": "2026-10-21T03:14:58.854Z",
+    "updated_at": "2026-10-21T03:14:58.896Z",
+    "storage": "live",
+    "concept_ids": [],
+    "origin_activity_id": null,
+    "visibility": "workspace",
+    "data": {
+      "entity_kind": "device",
+      "aliases": [
+        "a original"
+      ],
+      "disambiguation": "Serial not checked",
+      "external_ids": {
+        "serial": "unknown"
+      },
+      "status": "merged",
+      "redirect_to": {
+        "id": "entity-0a2eba96-73a4-4fc2-9a8d-c6a6d80ae863"
+      }
+    }
+  }
+}

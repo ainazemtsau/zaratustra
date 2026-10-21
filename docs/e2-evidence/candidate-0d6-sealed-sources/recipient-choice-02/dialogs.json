@@ -1,0 +1,16 @@
+[
+  {
+    "profile": "workspace",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/synthetic-unexplained-recipient. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "choice": false,
+    "synthetic": true
+  },
+  {
+    "profile": "workspace",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/gpt-6.1-sol. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "choice": true,
+    "synthetic": true
+  }
+]

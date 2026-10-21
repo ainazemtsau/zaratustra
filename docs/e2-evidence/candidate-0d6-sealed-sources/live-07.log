@@ -1,0 +1,26 @@
+(node:72808) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Импорт подтверждён и сохранён: **Bench note check, версия 2**, статус `candidate`.\n\nДобавлено: указывать цвет лампы, если он есть в записке; иначе отмечать отсутствие сведений.\n\nТочные внешние bytes сохранены как Evidence, версия 1 — в истории. `SKILL.md` не перезаписывался, код не устанавливался. Подтверждение ограничено синтетическим тестом.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 8,
+    "requests": 56,
+    "input": 2753557,
+    "output": 7623,
+    "cache_read": 2045440,
+    "estimated_usd": 1.6970080000000003,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 56
+  }
+}

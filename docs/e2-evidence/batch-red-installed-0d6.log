@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Reference lamp'
+- 'Reference lamp E2-B62'
+                 ^
+
+    at file:///<SYNTHETIC_EVIDENCE_ROOT>/batch-repro.mjs:20:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'Reference lamp',
+  expected: 'Reference lamp E2-B62',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.19.0

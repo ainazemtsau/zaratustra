@@ -1,0 +1,7 @@
+{
+  "original_seal_sha256": "b1d4e8526549475d66728f1d8daf812602ade7a1e5badf3aa0ec87281deb63e1",
+  "sealed_sources_snapshot_root": "<SYNTHETIC_EVIDENCE_ROOT>\\candidate-0d6-sealed-sources",
+  "all_221_source_bytes_exact": true,
+  "reason": "same live ledger must continue for independently discovered blocking fix; immutable snapshot preserves all closed candidate source bytes including original ledger",
+  "budget_not_reset": true
+}

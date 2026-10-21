@@ -1,0 +1,22 @@
+{
+  "runtime": "Windows11x64/Node22.19.0/npm11.6.2/Pi1.3.0",
+  "model": "openai-codex/gpt-6.1-sol",
+  "thinking": "medium",
+  "writer": "single trusted personal writer; no outside concurrent writers",
+  "profiles": {
+    "workspace": {
+      "scopes": [],
+      "root": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace"
+    },
+    "protected": {
+      "scopes": [
+        "restricted:read",
+        "restricted:write"
+      ],
+      "root": "<SYNTHETIC_EVIDENCE_ROOT>\\protected"
+    }
+  },
+  "auth": "supported native ModelRuntime authPath, no credential contents read/copied",
+  "budget": "one non-reset budget.json for every candidate, error and retry",
+  "not_owner_T31": true
+}

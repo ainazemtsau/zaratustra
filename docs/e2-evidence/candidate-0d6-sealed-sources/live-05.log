@@ -1,0 +1,26 @@
+(node:65836) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Declined. `declined-note.txt` was not created; the folder was left unchanged.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 6,
+    "requests": 38,
+    "input": 1801938,
+    "output": 4586,
+    "cache_read": 1349120,
+    "estimated_usd": 1.086408,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 38
+  }
+}

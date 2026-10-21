@@ -1,0 +1,205 @@
+[
+  {
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "workspace",
+    "name": "zara_map",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Provider processing authority is unresolved.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "workspace",
+    "name": "zara_map",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"workspace_id\":\"b670d861-be2f-47df-a762-c282692ea88d\",\"schema_version\":5,\"snapshot_seq\":0,\"data\":{\"entries\":[{\"label\":\"activities\",\"description\":\"Permitted existing activities\",\"selector\":{\"view\":\"activities\"},\"has_more\":false},{\"label\":\"work\",\"description\":\"Permitted existing work\",\"selector\":{\"view\":\"work\"},\"has_more\":false},{\"label\":\"knowledge\",\"description\":\"Permitted existing knowledge\",\"selector\":{\"view\":\"knowledge\"},\"has_more\":false},{\"label\":\"materials\",\"description\":\"Permitted existing materials\",\"selector\":{\"view\":\"materials\"},\"has_more\":false},{\"label\":\"operations\",\"description\":\"Permitted existing operations\",\"selector\":{\"view\":\"operations\"},\"has_more\":false},{\"label\":\"handoffs\",\"description\":\"Permitted existing handoffs\",\"selector\":{\"view\":\"handoffs\"},\"has_more\":false},{\"label\":\"claims\",\"description\":\"Permitted existing claims\",\"selector\":{\"view\":\"claims\"},\"has_more\":false},{\"label\":\"resources\",\"description\":\"Permitted existing resources\",\"selector\":{\"view\":\"resources\"},\"has_more\":false},{\"label\":\"people\",\"description\":\"Permitted existing people\",\"selector\":{\"view\":\"people\"},\"has_more\":false},{\"label\":\"topics\",\"description\":\"Permitted existing topics\",\"selector\":{\"view\":\"topics\"},\"has_more\":false},{\"label\":\"entities\",\"description\":\"Permitted existing entities\",\"selector\":{\"view\":\"entities\"},\"has_more\":false},{\"label\":\"unfiled\",\"description\":\"Permitted existing unfiled\",\"selector\":{\"view\":\"unfiled\"},\"has_more\":false},{\"label\":\"relations\",\"description\":\"Permitted existing relations\",\"selector\":{\"view\":\"relations\"},\"has_more\":false},{\"label\":\"methods\",\"description\":\"Permitted existing methods\",\"selector\":{\"view\":\"methods\"},\"has_more\":false},{\"label\":\"runs\",\"description\":\"Permitted existing runs\",\"selector\":{\"view\":\"runs\"},\"has_more\":false},{\"label\":\"evaluations\",\"description\":\"Permitted existing evaluations\",\"selector\":{\"view\":\"evaluations\"},\"has_more\":false},{\"label\":\"signals\",\"description\":\"Permitted existing signals\",\"selector\":{\"view\":\"signals\"},\"has_more\":false},{\"label\":\"invocations\",\"description\":\"Permitted existing invocations\",\"selector\":{\"view\":\"invocations\"},\"has_more\":false}],\"focus\":null,\"applied_filters\":{\"access\":\"trusted context\"},\"generation\":\"9e22e57eebe34da40aec736b12bba957da6bfe2a1a5f991729cd886c54a0bc98\",\"has_more\":false,\"next_cursor\":null},\"warnings\":[]}"
+        }
+      ],
+      "details": {
+        "ok": true,
+        "workspace_id": "b670d861-be2f-47df-a762-c282692ea88d",
+        "schema_version": 5,
+        "snapshot_seq": 0,
+        "data": {
+          "entries": [
+            {
+              "label": "activities",
+              "description": "Permitted existing activities",
+              "selector": {
+                "view": "activities"
+              },
+              "has_more": false
+            },
+            {
+              "label": "work",
+              "description": "Permitted existing work",
+              "selector": {
+                "view": "work"
+              },
+              "has_more": false
+            },
+            {
+              "label": "knowledge",
+              "description": "Permitted existing knowledge",
+              "selector": {
+                "view": "knowledge"
+              },
+              "has_more": false
+            },
+            {
+              "label": "materials",
+              "description": "Permitted existing materials",
+              "selector": {
+                "view": "materials"
+              },
+              "has_more": false
+            },
+            {
+              "label": "operations",
+              "description": "Permitted existing operations",
+              "selector": {
+                "view": "operations"
+              },
+              "has_more": false
+            },
+            {
+              "label": "handoffs",
+              "description": "Permitted existing handoffs",
+              "selector": {
+                "view": "handoffs"
+              },
+              "has_more": false
+            },
+            {
+              "label": "claims",
+              "description": "Permitted existing claims",
+              "selector": {
+                "view": "claims"
+              },
+              "has_more": false
+            },
+            {
+              "label": "resources",
+              "description": "Permitted existing resources",
+              "selector": {
+                "view": "resources"
+              },
+              "has_more": false
+            },
+            {
+              "label": "people",
+              "description": "Permitted existing people",
+              "selector": {
+                "view": "people"
+              },
+              "has_more": false
+            },
+            {
+              "label": "topics",
+              "description": "Permitted existing topics",
+              "selector": {
+                "view": "topics"
+              },
+              "has_more": false
+            },
+            {
+              "label": "entities",
+              "description": "Permitted existing entities",
+              "selector": {
+                "view": "entities"
+              },
+              "has_more": false
+            },
+            {
+              "label": "unfiled",
+              "description": "Permitted existing unfiled",
+              "selector": {
+                "view": "unfiled"
+              },
+              "has_more": false
+            },
+            {
+              "label": "relations",
+              "description": "Permitted existing relations",
+              "selector": {
+                "view": "relations"
+              },
+              "has_more": false
+            },
+            {
+              "label": "methods",
+              "description": "Permitted existing methods",
+              "selector": {
+                "view": "methods"
+              },
+              "has_more": false
+            },
+            {
+              "label": "runs",
+              "description": "Permitted existing runs",
+              "selector": {
+                "view": "runs"
+              },
+              "has_more": false
+            },
+            {
+              "label": "evaluations",
+              "description": "Permitted existing evaluations",
+              "selector": {
+                "view": "evaluations"
+              },
+              "has_more": false
+            },
+            {
+              "label": "signals",
+              "description": "Permitted existing signals",
+              "selector": {
+                "view": "signals"
+              },
+              "has_more": false
+            },
+            {
+              "label": "invocations",
+              "description": "Permitted existing invocations",
+              "selector": {
+                "view": "invocations"
+              },
+              "has_more": false
+            }
+          ],
+          "focus": null,
+          "applied_filters": {
+            "access": "trusted context"
+          },
+          "generation": "9e22e57eebe34da40aec736b12bba957da6bfe2a1a5f991729cd886c54a0bc98",
+          "has_more": false,
+          "next_cursor": null
+        },
+        "warnings": []
+      }
+    }
+  }
+]

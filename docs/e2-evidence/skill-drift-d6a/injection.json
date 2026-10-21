@@ -1,0 +1,8 @@
+{
+  "between_completed_attempts": true,
+  "before_sha256": "c34e021e82f7cfd714f7bc3f130ce90923e45b411a67506b4432abc648135411",
+  "after_sha256": "b7bbb7f0ce2374f7cc2057e9caf2ef12506d623fba94558382727428a18aacad",
+  "addition": "Also note the ambient temperature if stated; otherwise report it as missing.",
+  "canonical_version_before": 2,
+  "executables_installed": false
+}

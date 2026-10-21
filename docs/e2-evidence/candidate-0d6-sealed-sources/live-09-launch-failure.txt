@@ -1,0 +1,1 @@
+Initial command launcher rejected before process creation: missing cwd-09 (Windows error267). No runner started and no ledger/provider use. Preparation then performed from the existing evidence root.

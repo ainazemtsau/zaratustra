@@ -1,0 +1,46 @@
+[
+  {
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "workspace",
+    "name": "zara_map",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Provider processing authority is unresolved.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "workspace",
+    "name": "zara_map",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Provider processing authority is unresolved.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  }
+]

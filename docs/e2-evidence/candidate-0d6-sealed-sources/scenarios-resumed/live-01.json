@@ -1,0 +1,21 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\home",
+  "outputRoot": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "scopes": [],
+  "importRoots": [],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\cwd-01",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\attempts\\live-01",
+  "prompt": "Please answer in English for this synthetic scenario. Preserve two separate original catalogue entries first: “Маяк Ω label printer” and “Blue desk printer”. They describe the same lab label printer, serial SYN-ZX-413; that identity is explicit in this test input. Then propose merging the first entry into Blue desk printer. Explain the exact current change, alternatives and what remains historical, and obtain my concrete decision before merging. I want the original identities and references retained, not replaced by one newly invented object.",
+  "dialogReplies": [
+    {
+      "answer": true,
+      "note": "I approve exactly the displayed finite consequence, under the declared synthetic controller authority, not Anton.",
+      "expected": [
+        "Blue desk printer",
+        "Маяк Ω"
+      ]
+    }
+  ]
+}

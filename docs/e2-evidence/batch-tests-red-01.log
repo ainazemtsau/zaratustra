@@ -1,0 +1,125 @@
+TAP version 13
+# (node:53112) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E2 disk connected corrected identities merge from current staged values with exact sequential preview, history, access and replay
+not ok 1 - E2 disk connected corrected identities merge from current staged values with exact sequential preview, history, access and replay
+  ---
+  duration_ms: 112.3484
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\effects.test.ts:1:25985'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Merge (entity|concept|activity) “Corrected source” into “Corrected target”/. Input:
+    
+    'Correct both identities and merge the corrected source into the corrected target\n' +
+      '\n' +
+      'Alternatives: Keep them separate\n' +
+      '\n' +
+      'Update entity “Old source”:\n' +
+      'Title: Old source → Corrected source\n' +
+      'Body: none → Source correction\n' +
+      'aliases: none → Corrected source alias\n' +
+      'disambiguation: Synthetic distinct identity → Corrected source\n' +
+      'external records: none → serial: E2-B62\n' +
+      '\n' +
+      'Update entity “Old target”:\n' +
+      'Title: Old target → Corrected target\n' +
+      'Body: none → Target correction\n' +
+      'aliases: none → Corrected target alias\n' +
+      'disambiguation: Synthetic distinct identity → Corrected target\n' +
+      'external records: none → serial: E2-B62\n' +
+      '\n' +
+      'Merge entity “Old source” into “Old target”.\n' +
+      'Source identity: entity kind: item\n' +
+      'aliases: none\n' +
+      'disambiguation: Synthetic distinct identity\n' +
+      'status: active\n' +
+      'Destination identity: entity kind: item\n' +
+      'aliases: none\n' +
+      'disambiguation: Synthetic distinct identity\n' +
+      'status: active\n' +
+      'Destination aliases will include: Old source.\n' +
+      'Destination visibility: workspace. Source keeps a current redirect; historical identities and references stay exact.\n' +
+      '\n' +
+      'Expires: 2026-10-21T03:22:20.244Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    Correct both identities and merge the corrected source into the corrected target
+    
+    Alternatives: Keep them separate
+    
+    Update entity “Old source”:
+    Title: Old source → Corrected source
+    Body: none → Source correction
+    aliases: none → Corrected source alias
+    disambiguation: Synthetic distinct identity → Corrected source
+    external records: none → serial: E2-B62
+    
+    Update entity “Old target”:
+    Title: Old target → Corrected target
+    Body: none → Target correction
+    aliases: none → Corrected target alias
+    disambiguation: Synthetic distinct identity → Corrected target
+    external records: none → serial: E2-B62
+    
+    Merge entity “Old source” into “Old target”.
+    Source identity: entity kind: item
+    aliases: none
+    disambiguation: Synthetic distinct identity
+    status: active
+    Destination identity: entity kind: item
+    aliases: none
+    disambiguation: Synthetic distinct identity
+    status: active
+    Destination aliases will include: Old source.
+    Destination visibility: workspace. Source keeps a current redirect; historical identities and references stay exact.
+    
+    Expires: 2026-10-21T03:22:20.244Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\effects.test.ts:1069:14)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: E2 disk connected merge/catalog order retains staged aliases and catalog changes or rejects atomically; late writes cannot leave Work in merged Activity
+not ok 2 - E2 disk connected merge/catalog order retains staged aliases and catalog changes or rejects atomically; late writes cannot leave Work in merged Activity
+  ---
+  duration_ms: 118.1137
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\effects.test.ts:1:28374'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'Destination'
+    - 'Renamed destination'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'Renamed destination'
+  actual: 'Destination'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\effects.test.ts:1089:38)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2326.177

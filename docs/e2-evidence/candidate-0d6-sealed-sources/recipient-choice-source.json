@@ -1,0 +1,6 @@
+{
+  "source": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\scripts\\e2-native.mjs",
+  "source_sha256": "a5027ac0660bf6fe0240ffd856988cb6618a1855172e58d60ff19c6f85cc705e",
+  "derived_script_sha256": "0b8c440c09c3c6f892538b288e58366eed464bf368ff82dd34ce243dbaf074fa",
+  "change": "Reuse installed native runner helpers, replace full test sequence with explicit recipient recovery positive control. No product changes."
+}

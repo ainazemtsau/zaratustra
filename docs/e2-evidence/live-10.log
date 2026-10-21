@@ -1,0 +1,26 @@
+(node:55436) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Committed under one exact synthetic-controller decision and verified by reading saved records:\n\n- **Title:** Optics reference lamp E2-B62\n- **Serial:** E2-B62\n- **Disambiguation:** Verified synthetic marking E2-B62\n- **Copper lamp sleeve Ω:** merged, redirecting to the existing target.\n\nBoth stable IDs and original revisions remain, including the target’s original title, unknown serial and unverified description. Both original names are survivor aliases. Anton and T31 were untouched.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 11,
+    "requests": 79,
+    "input": 3933462,
+    "output": 10835,
+    "cache_read": 2915840,
+    "estimated_usd": 2.435178000000001,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 79
+  }
+}

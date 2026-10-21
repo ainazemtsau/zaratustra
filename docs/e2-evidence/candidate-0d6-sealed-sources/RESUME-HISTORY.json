@@ -1,0 +1,49 @@
+{
+  "resumed_at": "2026-10-21T02:46:02.853961+00:00",
+  "same_physical_E2": true,
+  "ledger_reset": false,
+  "original_interruption": {
+    "date": "2026-10-20",
+    "native_install_exit_codes": [
+      1073807364,
+      1073807364
+    ],
+    "source": "coordinator recovery handoff; original partial clone logs retained"
+  },
+  "resume_failures": [
+    {
+      "logs": [
+        "resume-install-workspace-01.log",
+        "resume-install-protected-01.log"
+      ],
+      "reason": "native installer cannot resolve HEAD in interrupted unborn clone; originals kept"
+    },
+    {
+      "log": "installed-tests-01.log",
+      "reason": "test harness parent test root omitted; all ENOENT, no assertions ran"
+    },
+    {
+      "log": "upgrade-verify-01.log",
+      "reason": "supported SDK path environment omitted; failed before migration"
+    },
+    {
+      "log": "installed-tests-02.log",
+      "reason": "71 pass,2 skip,one effects module could not resolve native Pi peer; external host paths added for effects+extension only"
+    }
+  ],
+  "qualified_installed_M": [
+    "installed-tests-02.log (other modules)",
+    "installed-tests-03.log (effects+extension)",
+    "installed-native-01/verification.json",
+    "installed-ingress-01/verification.json",
+    "upgrade-proof/verification.json",
+    "upgrade-proof/old-rejection.json"
+  ],
+  "authority": "registered synthetic controller only; not owner/T31",
+  "additional_failures": [
+    "recipient-choice-01: wrong oracle expected native same-model set to emit; Pi suppresses equal-model events; explicit M return event02 qualified",
+    "verify-live-01: incorrect oracle required unknown receipt although unknown state before first inspect has no receipt; verify-live02 indentation error; verify-live03 validated actual pre-inspect unknown state and later confirmation",
+    "live-09 initial launcher cwd error267 before runner; no model/ledger charge",
+    "full-audit-resume JSON parser encountered native npm trailing notice; preserved raw and valid derived audit wrapper"
+  ]
+}

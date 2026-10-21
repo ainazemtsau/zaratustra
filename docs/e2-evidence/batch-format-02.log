@@ -1,0 +1,3 @@
+src/core/index.ts 245ms
+src/extension/preview.ts 22ms
+tests/effects.test.ts 79ms

@@ -1,0 +1,82 @@
+
+> zaratustra@0.3.0-dev.1 format
+> prettier --write .
+
+.dependency-cruiser.cjs 30ms (unchanged)
+AGENTS.md 27ms
+CLAUDE.md 1ms (unchanged)
+docs/ATTEMPTS.md 16ms (unchanged)
+docs/C-ATTEMPTS.md 25ms (unchanged)
+docs/C-CONVERSATIONS.md 52ms (unchanged)
+docs/C-FIX-ATTEMPTS.md 6ms (unchanged)
+docs/C-FIX-CONVERSATIONS.md 15ms (unchanged)
+docs/C-FIX-VALIDATION.md 12ms (unchanged)
+docs/C-PROVENANCE-CORRECTION.md 5ms (unchanged)
+docs/C-RESULT-0d188eee.md 3ms (unchanged)
+docs/C-RESULT-4796fbf.md 4ms (unchanged)
+docs/C-STDOUT-ALIAS.md 14ms (unchanged)
+docs/C-VALIDATION.md 13ms (unchanged)
+docs/D-DESIGN.md 7ms (unchanged)
+docs/D-EVIDENCE-VERIFICATION.json 30ms (unchanged)
+docs/D-REPRODUCE.md 9ms (unchanged)
+docs/D-VALIDATION.md 22ms (unchanged)
+docs/DEVELOPMENT.md 12ms (unchanged)
+docs/E1-DESIGN.md 8ms (unchanged)
+docs/E1-EVIDENCE-VERIFICATION.json 14ms (unchanged)
+docs/E1-INSTALL-VERIFICATION.json 1ms (unchanged)
+docs/E1-REPRODUCE.md 8ms (unchanged)
+docs/E1-VALIDATION.md 18ms (unchanged)
+docs/EVIDENCE.md 8ms (unchanged)
+docs/FIRST-BLOCK-DEVELOPMENT.md 8ms (unchanged)
+docs/FIRST-BLOCK-RESULT.md 4ms (unchanged)
+docs/P2-ATTEMPTS.md 6ms (unchanged)
+docs/P2-DEPENDENCIES.md 4ms (unchanged)
+docs/P2-VALIDATION.md 12ms (unchanged)
+docs/R1-STATUS.md 13ms (unchanged)
+docs/REPRODUCE.md 13ms (unchanged)
+eslint.config.js 4ms (unchanged)
+instructions/bootstrap.md 8ms (unchanged)
+package.json 1ms (unchanged)
+README.md 5ms (unchanged)
+RESULT.md 12ms (unchanged)
+scripts/c-identity.mjs 15ms (unchanged)
+scripts/c-upgrade.mjs 13ms (unchanged)
+scripts/d-scale.mjs 17ms (unchanged)
+scripts/d-upgrade.mjs 13ms (unchanged)
+scripts/deliver.mjs 3ms (unchanged)
+scripts/e1-provenance.mjs 11ms (unchanged)
+scripts/e1-upgrade.mjs 10ms (unchanged)
+scripts/export-evidence.mjs 11ms (unchanged)
+scripts/live.mjs 10ms (unchanged)
+scripts/p2-probe.mjs 12ms (unchanged)
+scripts/p2-tail.mjs 3ms (unchanged)
+scripts/resources.mjs 1ms (unchanged)
+skills/zaratustra-memory/SKILL.md 21ms (unchanged)
+skills/zaratustra-work/SKILL.md 23ms (unchanged)
+src/core/AGENTS.md 1ms (unchanged)
+src/core/approval.ts 45ms
+src/core/contracts.ts 58ms
+src/core/effects.ts 12ms
+src/core/experience.ts 37ms (unchanged)
+src/core/index.ts 134ms
+src/core/memory.ts 42ms
+src/core/work.ts 15ms
+src/extension/AGENTS.md 1ms (unchanged)
+src/extension/index.ts 34ms
+src/extension/managed.ts 4ms
+src/extension/preview.ts 3ms
+src/storage/AGENTS.md 1ms (unchanged)
+src/storage/extract.ts 3ms (unchanged)
+src/storage/index.ts 33ms
+src/storage/output.ts 6ms
+src/storage/parser-worker.mjs 21ms (unchanged)
+tests/core.test.ts 22ms (unchanged)
+tests/evidence.test.ts 7ms (unchanged)
+tests/experience.test.ts 57ms
+tests/extension.test.ts 2ms (unchanged)
+tests/materials.test.ts 15ms
+tests/memory.test.ts 36ms
+tests/p2.test.ts 9ms (unchanged)
+tests/work.test.ts 39ms
+tsconfig.build.json 1ms (unchanged)
+tsconfig.json 1ms (unchanged)

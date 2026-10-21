@@ -1,0 +1,68 @@
+{
+  "from": "0d6c9a2d604aec0f8b108841219c68369189315b",
+  "to": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+  "changed_model_runtime_inputs": [
+    {
+      "path": "skills\\zaratustra-memory\\SKILL.md",
+      "before_sha256": "1ad0f7a0f1f4c7cfa4cd4519209487e7daa72d497a529649c4537887ae5203c0",
+      "after_sha256": "a15d2c06d9a620bd6b57c76a1250b9b0544553d5296f6f19c148178639eb3fbc"
+    },
+    {
+      "path": "src\\core\\index.ts",
+      "before_sha256": "65e2db342d204cd2b2055c19e6adb2dc935c10f027e726b052e5d12db4b87ca4",
+      "after_sha256": "c46052f50d556311752a1616bde97ff8338069d9556342684e21406a09b4f7dd"
+    },
+    {
+      "path": "src\\extension\\preview.ts",
+      "before_sha256": "c13968730987fc891b47b186e0a706efd4a52884fab23bf7442d7a6a48b3ced2",
+      "after_sha256": "a7d7c97e3c851330462037f7ae4ea7a534c959d8c865ac7e1c877ebf97875646"
+    }
+  ],
+  "actual_L_native_read_paths": {
+    "live-01b": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+    ],
+    "live-02": [],
+    "live-03": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+    ],
+    "live-04": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\revision-note.txt",
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\revision-note.txt",
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\revision-note.txt"
+    ],
+    "live-05": [],
+    "live-06": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md"
+    ],
+    "live-07": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md",
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+    ],
+    "live-08": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-resumed\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md"
+    ],
+    "live-09": [],
+    "live-10": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-batch\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+    ],
+    "live-11": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-batch\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md",
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-batch\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+    ],
+    "live-12": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+    ],
+    "live-13": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md"
+    ]
+  },
+  "impact_reruns": {
+    "connected_entity_merge": "L12",
+    "connected_Activity_merge": "L13",
+    "new_lost_write_and_fresh_inspect": "L14/15",
+    "textual_drift_import_regeneration": "L16/17"
+  },
+  "unchanged_runtime_inputs": "all other src/instructions/skills bytes; bootstrap, tool schemas, approval/effect/storage/output/provider/managed adapters and work skill unchanged",
+  "qualification_boundary": "old merge qualification superseded by RED/GREEN+new L; all prior failures retained; unaffected old file/refusal/material/ambiguity observations retain exact original-version attribution"
+}

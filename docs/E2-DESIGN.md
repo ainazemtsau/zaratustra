@@ -22,6 +22,15 @@ of its eventual result. E3, full E/R1/T31, Sleep and Codex stay open.
 | Provider boundary               | Pi alone chooses/configures/authenticates. model_select set/cycle/restore is not choice evidence. Unexplained change invalidates pending rights, stops reads/imports and calls supported abort; trusted native confirmation names actual current recipient plus existing-context scope. Already loaded/sent context is not purged. before_provider_request catches observer exceptions and returns the payload: it is not a veto. Automatic routing without a proved gate or explicit bounded policy is unsupported.                                     |
 | Schema 4→5                      | One index over existing intents plus an old-writer semantics barrier; no new recovery database. Reuses verified SQLite VACUUM INTO backup, short migration transaction, receipt-bound manifest repair and no-empty-replacement behavior. Existing canonical E1 primary/support rows, versions, receipts, Changes and original bytes are retained exactly. This is migration safety, not E3 user backup/restore.                                                                                                                                          |
 
+Connected merges read latest staged values while independently guarding persisted
+before revisions. This specifically closes reviewed H1 (silent overwrite of an earlier
+approved correction). Shared pure alias generation prevents domain/display divergence;
+a finite sequential formatter projection shows the actual corrected merge destination,
+without validating, authorizing or executing changes. Staged restricted visibility flows
+through chains. Final Activity state cannot leave/introduce current Work in a merged
+source elsewhere in the batch. Duplicate update/catalog and overlapping Work mutations
+remain honest atomic validation failures; no generic composition DSL is added.
+
 Core remains portable TypeScript without Pi types; storage is behind StoragePort and
 adapter imports use public index.ts. No database transaction spans a model, human or
 external-tool wait. Working records and search are English; original bytes/names/quotes

@@ -1,0 +1,7 @@
+{
+  "failed_derivatives_preserved": "export-failed-privacy-01",
+  "cause": "forward-slash-only redaction did not cover Windows backslash paths",
+  "not_a_secret_leak": "unpublished local draft, path-only scan failed before staging/push",
+  "replacement_seal": "sealed-inputs-02.json",
+  "same_221_finished_sources": true
+}

@@ -1,0 +1,22 @@
+(node:130548) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'registered-synthetic-controller-not-owner'
+- 'trusted-desktop-dialog'
+
+    at file:///<PRODUCT_CHECKOUT>/scripts/e2-ingress.mjs:23:35 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'registered-synthetic-controller-not-owner',
+  expected: 'trusted-desktop-dialog',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.19.0

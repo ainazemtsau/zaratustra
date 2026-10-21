@@ -1,0 +1,26 @@
+(node:56672) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Verified `output/revision-note.txt` contains exactly `Checked optics note B-17` followed by one newline.\n\nThe changed state invalidated the first approval; a separate synthetic-controller decision authorized the replacement.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 5,
+    "requests": 35,
+    "input": 1666266,
+    "output": 4312,
+    "cache_read": 1262080,
+    "estimated_usd": 0.9777,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 35
+  }
+}

@@ -1,0 +1,253 @@
+{
+  "executor_qualification_only": true,
+  "independent_verdict_not_assigned": true,
+  "live_code_candidate": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+  "all_18_attempts": [
+    {
+      "attempt": "live-01",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 65936,
+      "dispatches": 8,
+      "estimated_usd": 0.20476799999999998,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-01b",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 40444,
+      "dispatches": 8,
+      "estimated_usd": 0.20676999999999995,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-02",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 48976,
+      "dispatches": 3,
+      "estimated_usd": 0.11135,
+      "summary_present": false
+    },
+    {
+      "attempt": "live-03",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 64888,
+      "dispatches": 5,
+      "estimated_usd": 0.231142,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-04",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 56672,
+      "dispatches": 11,
+      "estimated_usd": 0.22367000000000004,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-05",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 65836,
+      "dispatches": 3,
+      "estimated_usd": 0.108708,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-06",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 45008,
+      "dispatches": 10,
+      "estimated_usd": 0.277228,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-07",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 72808,
+      "dispatches": 8,
+      "estimated_usd": 0.333372,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-08",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 19312,
+      "dispatches": 11,
+      "estimated_usd": 0.37372799999999995,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-09",
+      "public_code": "0d6c9a2d604aec0f8b108841219c68369189315b",
+      "pid": 64964,
+      "dispatches": 1,
+      "estimated_usd": 0.08945399999999999,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-10",
+      "public_code": "85e44c1859421ff0815fb845b3c2c6553860c2a5",
+      "pid": 55436,
+      "dispatches": 11,
+      "estimated_usd": 0.274988,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-11",
+      "public_code": "85e44c1859421ff0815fb845b3c2c6553860c2a5",
+      "pid": 63640,
+      "dispatches": 11,
+      "estimated_usd": 0.3515579999999999,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-12",
+      "public_code": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+      "pid": 65020,
+      "dispatches": 11,
+      "estimated_usd": 0.2127292,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-13",
+      "public_code": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+      "pid": 44076,
+      "dispatches": 11,
+      "estimated_usd": 0.370954,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-14",
+      "public_code": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+      "pid": 53068,
+      "dispatches": 3,
+      "estimated_usd": 0.116584,
+      "summary_present": false
+    },
+    {
+      "attempt": "live-15",
+      "public_code": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+      "pid": 22736,
+      "dispatches": 6,
+      "estimated_usd": 0.228152,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-16",
+      "public_code": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+      "pid": 48100,
+      "dispatches": 9,
+      "estimated_usd": 0.2541392,
+      "summary_present": true
+    },
+    {
+      "attempt": "live-17",
+      "public_code": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+      "pid": 27948,
+      "dispatches": 10,
+      "estimated_usd": 0.37824,
+      "summary_present": true
+    }
+  ],
+  "all_dispatch_and_usage_counters_reconcile": true,
+  "single_non_reset_budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 18,
+    "requests": 140,
+    "input": 7148632,
+    "output": 21068,
+    "cache_read": 5347584,
+    "estimated_usd": 4.347534400000001,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 140
+  },
+  "actual_native_L_calls": [
+    {
+      "attempt": "live-02",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\bench-note.txt",
+        "content": "Optics bench B-17\nOriginal label: «Луч Ω»\nNext check: align the reference mark\n"
+      }
+    },
+    {
+      "attempt": "live-04",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\revision-note.txt",
+        "content": "Checked optics note B-17\n"
+      }
+    },
+    {
+      "attempt": "live-04",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\revision-note.txt",
+        "content": "Checked optics note B-17\n"
+      }
+    },
+    {
+      "attempt": "live-06",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\SKILL.md",
+        "content": "---\nname: zara-method-9c1e6aae-15c9-4172-99cb-ef64cde18653\ndescription: \"Bench note check\"\nzaratustra_method_ref: {\"content_version\":1,\"id\":\"method-9c1e6aae-15c9-4172-99cb-ef64cde18653\",\"revision\":1}\nzaratustra_content_sha256: 5c8b73faa7a70aeea75fc2e19ae0b6042148827bab217daecf0ce69752993563\n---\n\n# Bench note check\n\nDerived textual export. Core remains canonical. External edits are drift; explicitly import as a new version or regenerate with a new bound decision. No executable installation or authority is granted.\n\n\n\n## applicability\n\nA small optics handover note.\n\n## instructions\n\n1. Read the whole retained source note; do not treat an excerpt as the whole note.\n2. Confirm the bench identifier from the note. If it cannot be confirmed, state that explicitly rather than guessing.\n3. Preserve the original label unchanged when reproducing it.\n4. List the next physical check indicated by the note; state explicitly if it is not specified.\n5. State missing information.\n6. Return a short checklist addressed to the retained source note.\n\n## input_contract\n\nThe retained source note, readable in full.\n\n## expected_output\n\nA short addressed checklist confirming the bench identifier, preserving the original label unchanged, listing the next physical check, and stating missing information.\n\n## context_requirements\n\n[]\n\n## dependencies\n\n[]\n\n## tool_requirements\n\n[]\n\n## content_version\n\n1\n\n## state\n\ncandidate\n\n## derived_from\n\n[]\n\n## limitations\n\nThis does not prove physical alignment or usefulness.\n"
+      }
+    },
+    {
+      "attempt": "live-08",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\SKILL.md",
+        "content": "---\nname: zara-method-9c1e6aae-15c9-4172-99cb-ef64cde18653\ndescription: \"Bench note check\"\nzaratustra_method_ref: {\"content_version\":2,\"id\":\"method-9c1e6aae-15c9-4172-99cb-ef64cde18653\",\"revision\":2}\nzaratustra_content_sha256: c3d3534af0c415b86d97e672a35175d801a3c9a17ffc5d227e9f9a3f129ac8a4\n---\n\n# Bench note check\n\nDerived textual export. Core remains canonical. External edits are drift; explicitly import as a new version or regenerate with a new bound decision. No executable installation or authority is granted.\n\n\n\n## applicability\n\nA small optics handover note.\n\n## instructions\n\n1. Read the whole retained source note; do not treat an excerpt as the whole note.\n2. Confirm the bench identifier from the note. If it cannot be confirmed, state that explicitly rather than guessing. Also note the lamp colour if stated; otherwise mark it as missing.\n3. Preserve the original label unchanged when reproducing it.\n4. List the next physical check indicated by the note; state explicitly if it is not specified.\n5. State missing information.\n6. Return a short checklist addressed to the retained source note.\n\n## input_contract\n\nThe retained source note, readable in full.\n\n## expected_output\n\nA short addressed checklist confirming the bench identifier, preserving the original label unchanged, listing the next physical check, and stating missing information.\n\n## context_requirements\n\n[]\n\n## dependencies\n\n[]\n\n## tool_requirements\n\n[]\n\n## content_version\n\n2\n\n## state\n\ncandidate\n\n## derived_from\n\n[]\n\n## limitations\n\nThis does not prove physical alignment or usefulness.\n"
+      }
+    },
+    {
+      "attempt": "live-14",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\calibration-note.txt",
+        "content": "Optics calibration C-73\nOriginal label: «Луч Ω»\nNext check: align the reference mark\n"
+      }
+    },
+    {
+      "attempt": "live-17",
+      "name": "write",
+      "args": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\SKILL.md",
+        "content": "---\nname: zara-method-9c1e6aae-15c9-4172-99cb-ef64cde18653\ndescription: \"Bench note check\"\nzaratustra_method_ref: {\"content_version\":3,\"id\":\"method-9c1e6aae-15c9-4172-99cb-ef64cde18653\",\"revision\":3}\nzaratustra_content_sha256: 322a5d63e0e2704d11e4999d868dbbc857527a2cd3b4111a9bdc02130cb1bdce\n---\n\n# Bench note check\n\nDerived textual export. Core remains canonical. External edits are drift; explicitly import as a new version or regenerate with a new bound decision. No executable installation or authority is granted.\n\n\n\n## applicability\n\nA small optics handover note.\n\n## instructions\n\n1. Read the whole retained source note; do not treat an excerpt as the whole note.\n2. Confirm the bench identifier from the note. If it cannot be confirmed, state that explicitly rather than guessing. Also note the lamp colour if stated; otherwise mark it as missing. Also note the ambient temperature if stated; otherwise report it as missing.\n3. Preserve the original label unchanged when reproducing it.\n4. List the next physical check indicated by the note; state explicitly if it is not specified.\n5. State missing information.\n6. Return a short checklist addressed to the retained source note.\n\n## input_contract\n\nThe retained source note, readable in full.\n\n## expected_output\n\nA short addressed checklist confirming the bench identifier, preserving the original label unchanged, listing the next physical check, and stating missing information.\n\n## context_requirements\n\n[]\n\n## dependencies\n\n[]\n\n## tool_requirements\n\n[]\n\n## content_version\n\n3\n\n## state\n\ncandidate\n\n## derived_from\n\n[]\n\n## limitations\n\nThis does not prove physical alignment or usefulness.\n"
+      }
+    }
+  ],
+  "native_call_counts": {
+    "write_starts": 7,
+    "stale_blocked": 1,
+    "native_writes": 6,
+    "lost_results": 2
+  },
+  "final_code_lost_reply": {
+    "current_bytes": 91,
+    "fresh_inspect_without_old_ID_or_write": true,
+    "postcondition_confirmed_author_unknown": true
+  },
+  "final_code_textual_export": {
+    "method_ID": "method-9c1e6aae-15c9-4172-99cb-ef64cde18653",
+    "version": 3,
+    "history_1_2_preserved": true,
+    "external_Evidence_hash": "b7bbb7f0ce2374f7cc2057e9caf2ef12506d623fba94558382727428a18aacad",
+    "external_Evidence_bytes": 1653,
+    "final_export_bytes": 1653,
+    "final_export_sha256": "f7a77f65a8e5e84d9c3e54c162572ac423b0bdefb03171aa8e05b72723242e4b",
+    "final_content_hash": "322a5d63e0e2704d11e4999d868dbbc857527a2cd3b4111a9bdc02130cb1bdce",
+    "export_current": true,
+    "drift": false
+  },
+  "actual_billing": "unknown",
+  "cost_kind": "Pi estimate"
+}

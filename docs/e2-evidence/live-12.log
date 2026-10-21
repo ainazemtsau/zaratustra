@@ -1,0 +1,26 @@
+(node:65020) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Approved by the registered synthetic controller and committed as one connected change.\n\nVerified saved fields:\n- Title: **Optics calibration lamp E2-V73**\n- Serial: `E2-V73`\n- Disambiguation: `Verified synthetic marking E2-V73`\n- **Violet lamp sleeve Ω** redirects to the surviving target.\n\nStable IDs remain. The target’s original revision still retains its original title, serial `unknown`, and unverified description. Both original names remain discoverable.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 13,
+    "requests": 101,
+    "input": 5060131,
+    "output": 15064,
+    "cache_read": 3827072,
+    "estimated_usd": 2.999465200000001,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 101
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-batch",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\home",
+  "outputRoot": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "scopes": [],
+  "importRoots": [],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\cwd-11",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\attempts\\live-11",
+  "prompt": "Это ранее объявленный изолированный синтетический workspace. Зарегистрированный test controller разрешает действия только с этими fixtures; это не Антон и не T31. Ответь по-русски. Сначала сохрани две отдельные активные Activities с английскими именами Copper notes area и Optics labeling area, а в Copper notes area одну активную Work Prepare source label с исходным origin в этой Activity, целью Prepare an addressed source label и обычным приоритетом. Затем предложи одно связное изменение под одним точным решением: уточнить purpose существующей Optics labeling area до Labeling optical source notes и объединить Copper notes area с ней, переместив только эту Work. Не меняй цель или приоритет Work; сохрани ID, историческое происхождение и старые версии. Объясни последствия и альтернативы, получи конкретное решение, затем проверь действительные сохранённые purpose, принадлежность Work и историю.",
+  "dialogReplies": [
+    {
+      "answer": true,
+      "note": "Fresh exact approval by the already registered isolated synthetic principal; never owner/T31.",
+      "expected": [
+        "Copper notes area",
+        "Optics labeling area",
+        "Prepare source label",
+        "Labeling optical source notes"
+      ]
+    }
+  ]
+}

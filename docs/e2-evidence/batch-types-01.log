@@ -1,0 +1,10 @@
+
+> zaratustra@0.4.0-dev.1 types
+> tsc --noEmit
+
+tests/effects.test.ts(1140,36): error TS2339: Property 'snapshot_seq' does not exist on type '{ workspace_id: string; epoch: string; schema_version: number; }'.
+tests/effects.test.ts(1142,37): error TS2339: Property 'snapshot_seq' does not exist on type '{ workspace_id: string; epoch: string; schema_version: number; }'.
+tests/effects.test.ts(1187,30): error TS2339: Property 'snapshot_seq' does not exist on type '{ workspace_id: string; epoch: string; schema_version: number; }'.
+tests/effects.test.ts(1191,35): error TS2339: Property 'snapshot_seq' does not exist on type '{ workspace_id: string; epoch: string; schema_version: number; }'.
+tests/effects.test.ts(1241,30): error TS2339: Property 'snapshot_seq' does not exist on type '{ workspace_id: string; epoch: string; schema_version: number; }'.
+tests/effects.test.ts(1244,35): error TS2339: Property 'snapshot_seq' does not exist on type '{ workspace_id: string; epoch: string; schema_version: number; }'.

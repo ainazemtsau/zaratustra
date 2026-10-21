@@ -1,0 +1,24 @@
+{
+  "closed_at": "2026-10-21T03:33:57.689996+00:00",
+  "candidate": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 18,
+    "requests": 140,
+    "input": 7148632,
+    "output": 21068,
+    "cache_read": 5347584,
+    "estimated_usd": 4.347534400000001,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 140
+  },
+  "budget_reset": false,
+  "further_runtime_change_requires_affected_reruns_in_same_ledger": true
+}

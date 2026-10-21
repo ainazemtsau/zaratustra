@@ -1,0 +1,22 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\home",
+  "outputRoot": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "scopes": [],
+  "importRoots": [],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\cwd-12",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\attempts\\live-12",
+  "prompt": "This is the predeclared isolated synthetic workspace. The already registered test controller authorizes only these fixtures, never Anton or T31. Preserve two separate original catalogue entries first: Violet lamp sleeve Ω and Optics calibration lamp. They are the same synthetic device, but the target original must initially retain serial unknown and an unverified marking description. Then propose ONE connected change under one exact decision: correct the surviving target title to Optics calibration lamp E2-V73, set its external serial to E2-V73 and its disambiguation to Verified synthetic marking E2-V73, and merge Violet lamp sleeve Ω into that corrected existing target. Explain the whole final consequence and alternatives before the decision. Preserve stable IDs, original title/serial/history and references. After approval execute the connected change and inspect actual saved fields, not just the receipt text.",
+  "dialogReplies": [
+    {
+      "answer": true,
+      "note": "Fresh exact approval by the already registered isolated synthetic principal; never owner/T31.",
+      "expected": [
+        "Violet lamp sleeve Ω",
+        "Optics calibration lamp E2-V73",
+        "E2-V73"
+      ]
+    }
+  ]
+}

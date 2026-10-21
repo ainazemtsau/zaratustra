@@ -1,0 +1,617 @@
+
+> zaratustra@0.4.0-dev.1 deliver
+> npm run check && node scripts/deliver.mjs
+
+
+> zaratustra@0.4.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.4.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.4.0-dev.1 lint
+> eslint src tests scripts
+
+
+> zaratustra@0.4.0-dev.1 types
+> tsc --noEmit
+
+
+> zaratustra@0.4.0-dev.1 boundary
+> depcruise src --config .dependency-cruiser.cjs
+
+
+✔ no dependency violations found (28 modules, 51 dependencies cruised)
+
+
+> zaratustra@0.4.0-dev.1 build
+> tsc -p tsconfig.build.json
+
+
+> zaratustra@0.4.0-dev.1 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# (node:32344) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+ok 1 - disk WAL reopen preserves all linked objects, versions, Change, exact source and receipt
+  ---
+  duration_ms: 164.8015
+  type: 'test'
+  ...
+# Subtest: faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+ok 2 - faults on every commit boundary leave all domain state/receipt or none; lost response is recoverable without old ID
+  ---
+  duration_ms: 769.1196
+  type: 'test'
+  ...
+# Subtest: similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+ok 3 - similar independent requests create distinct records; stale guard and invalid final links are atomic failures
+  ---
+  duration_ms: 214.406
+  type: 'test'
+  ...
+# Subtest: source expiry, forged fields and unsupported kinds do not mutate domain state
+ok 4 - source expiry, forged fields and unsupported kinds do not mutate domain state
+  ---
+  duration_ms: 121.7433
+  type: 'test'
+  ...
+# Subtest: one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+ok 5 - one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes
+  ---
+  duration_ms: 153.0379
+  type: 'test'
+  ...
+# Subtest: retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+ok 6 - retained Markdown survives source removal, exact bytes/read ranges and interrupted imports do not publish unfinished refs
+  ---
+  duration_ms: 201.9128
+  type: 'test'
+  ...
+# Subtest: bounded catalog cursors reject changed generation and permissions apply to reads
+ok 7 - bounded catalog cursors reject changed generation and permissions apply to reads
+  ---
+  duration_ms: 165.1482
+  type: 'test'
+  ...
+# Subtest: SQLite disk-full fault leaves no domain records or committed receipt
+ok 8 - SQLite disk-full fault leaves no domain records or committed receipt
+  ---
+  duration_ms: 120.343
+  type: 'test'
+  ...
+# Subtest: workspace aliases resolve before any future directory is created
+ok 9 - workspace aliases resolve before any future directory is created
+  ---
+  duration_ms: 97.6969
+  type: 'test'
+  ...
+# (node:68544) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E2 disk exact merge permission: old yes/new target or values refused; unrelated mutation positive; atomic receipt replay and historical navigation
+ok 10 - E2 disk exact merge permission: old yes/new target or values refused; unrelated mutation positive; atomic receipt replay and historical navigation
+  ---
+  duration_ms: 325.3005
+  type: 'test'
+  ...
+# Subtest: E2 disk approval invalidation: material revision, scopes, policy, epoch, runtime, expiry, revoked/expired source, refused/cancelled/forged reply
+ok 11 - E2 disk approval invalidation: material revision, scopes, policy, epoch, runtime, expiry, revoked/expired source, refused/cancelled/forged reply
+  ---
+  duration_ms: 3265.6888
+  type: 'test'
+  ...
+# Subtest: E2 disk failed domain commit rolls back consumption, versions, Changes and index; persisted draft never reattaches transient authority
+ok 12 - E2 disk failed domain commit rolls back consumption, versions, Changes and index; persisted draft never reattaches transient authority
+  ---
+  duration_ms: 183.0525
+  type: 'test'
+  ...
+# Subtest: E2 disk preview/support access and bounded operations/history hide guessed protected identities and restricted drafts
+ok 13 - E2 disk preview/support access and bounded operations/history hide guessed protected identities and restricted drafts
+  ---
+  duration_ms: 147.6441
+  type: 'test'
+  ...
+# Subtest: E2 disk finite Concept merge/reorg preserves IDs, aliases, memberships and exact historical refs; final cycle and bypass refused atomically
+ok 14 - E2 disk finite Concept merge/reorg preserves IDs, aliases, memberships and exact historical refs; final cycle and bypass refused atomically
+  ---
+  duration_ms: 369.1725
+  type: 'test'
+  ...
+# Subtest: E2 disk native write/edit round-trip exact BOM/CRLF/Unicode and public fuzzy semantics, dispatch replay and readback separate from native success prose
+ok 15 - E2 disk native write/edit round-trip exact BOM/CRLF/Unicode and public fuzzy semantics, dispatch replay and readback separate from native success prose
+  ---
+  duration_ms: 186.2681
+  type: 'test'
+  ...
+# Subtest: E2 disk lost result/new process without ID discovers requested attempt and inspects bytes without redispatch; prior unknown blocks a new request ID
+ok 16 - E2 disk lost result/new process without ID discovers requested attempt and inspects bytes without redispatch; prior unknown blocks a new request ID
+  ---
+  duration_ms: 224.2975
+  type: 'test'
+  ...
+# Subtest: E2 disk confirmed receipt survives later drift, repeated inspection and addressed historical replay
+ok 17 - E2 disk confirmed receipt survives later drift, repeated inspection and addressed historical replay
+  ---
+  duration_ms: 127.8663
+  type: 'test'
+  ...
+# Subtest: E2 disk Activity merge and split move only explicitly bound Work; historical origins, goals and priorities require new permission
+ok 18 - E2 disk Activity merge and split move only explicitly bound Work; historical origins, goals and priorities require new permission
+  ---
+  duration_ms: 322.1843
+  type: 'test'
+  ...
+# Subtest: E2 disk output containment, hardlinks/junctions/control aliases, changed before bytes/identity and native UTF-8 limits
+ok 19 - E2 disk output containment, hardlinks/junctions/control aliases, changed before bytes/identity and native UTF-8 limits
+  ---
+  duration_ms: 145.9327
+  type: 'test'
+  ...
+# Subtest: E2 disk textual export binds exact canonical version/content/export hashes; external edit is drift, regeneration needs new permission
+ok 20 - E2 disk textual export binds exact canonical version/content/export hashes; external edit is drift, regeneration needs new permission
+  ---
+  duration_ms: 186.6101
+  type: 'test'
+  ...
+# Subtest: E2 disk schema-4 filled migration: all canonical rows preserved, verified backup/transaction/manifest faults and old-schema guard
+ok 21 - E2 disk schema-4 filled migration: all canonical rows preserved, verified backup/transaction/manifest faults and old-schema guard
+  ---
+  duration_ms: 799.9574
+  type: 'test'
+  ...
+# Subtest: E2 disk merged destination discovers original current claims and cannot expose protected aliases/history
+ok 22 - E2 disk merged destination discovers original current claims and cannot expose protected aliases/history
+  ---
+  duration_ms: 231.4155
+  type: 'test'
+  ...
+# Subtest: E2 disk native Work/step association binds actual plan and context revisions; unrelated data remains independent
+ok 23 - E2 disk native Work/step association binds actual plan and context revisions; unrelated data remains independent
+  ---
+  duration_ms: 200.4475
+  type: 'test'
+  ...
+# Subtest: E2 disk old source cannot authorize a new write after an active epoch change even in the same Core instance
+ok 24 - E2 disk old source cannot authorize a new write after an active epoch change even in the same Core instance
+  ---
+  duration_ms: 95.9919
+  type: 'test'
+  ...
+# Subtest: E2 disk connected corrected identities merge from current staged values with exact sequential preview, history, access and replay
+ok 25 - E2 disk connected corrected identities merge from current staged values with exact sequential preview, history, access and replay
+  ---
+  duration_ms: 983.6458
+  type: 'test'
+  ...
+# Subtest: E2 disk connected merge/catalog order retains staged aliases and catalog changes or rejects atomically; late writes cannot leave Work in merged Activity
+ok 26 - E2 disk connected merge/catalog order retains staged aliases and catalog changes or rejects atomically; late writes cannot leave Work in merged Activity
+  ---
+  duration_ms: 307.4093
+  type: 'test'
+  ...
+# Subtest: E2 disk sequential merges propagate staged protected identity to final destination without losing intermediate aliases
+ok 27 - E2 disk sequential merges propagate staged protected identity to final destination without losing intermediate aliases
+  ---
+  duration_ms: 122.8515
+  type: 'test'
+  ...
+# Subtest: developer evidence export preserves completed sealed inputs and refuses changes before or during processing
+ok 28 - developer evidence export preserves completed sealed inputs and refuses changes before or during processing
+  ---
+  duration_ms: 228.5306
+  type: 'test'
+  ...
+# Subtest: developer evidence export rejects its redirected stdout through filesystem aliases
+    # Subtest: same spelling
+    ok 1 - same spelling
+      ---
+      duration_ms: 59.5512
+      type: 'test'
+      ...
+    # Subtest: normalized separators and components
+    ok 2 - normalized separators and components
+      ---
+      duration_ms: 62.0586
+      type: 'test'
+      ...
+    # Subtest: hard link
+    ok 3 - hard link
+      ---
+      duration_ms: 45.5067
+      type: 'test'
+      ...
+    # Subtest: drive letter case
+    ok 4 - drive letter case
+      ---
+      duration_ms: 44.6277
+      type: 'test'
+      ...
+    # Subtest: path case
+    ok 5 - path case
+      ---
+      duration_ms: 46.6046
+      type: 'test'
+      ...
+    # Subtest: junction
+    ok 6 - junction
+      ---
+      duration_ms: 53.7523
+      type: 'test'
+      ...
+    # Subtest: file symlink when permitted
+    ok 7 - file symlink when permitted # SKIP File symlink unavailable without changing current permissions
+      ---
+      duration_ms: 9.5239
+      type: 'test'
+      ...
+    1..7
+ok 29 - developer evidence export rejects its redirected stdout through filesystem aliases
+  ---
+  duration_ms: 323.0221
+  type: 'test'
+  ...
+# Subtest: developer evidence export does not merge distinct case-sensitive files
+ok 30 - developer evidence export does not merge distinct case-sensitive files # SKIP This directory is case-insensitive; distinct case-only names unavailable
+  ---
+  duration_ms: 17.1991
+  type: 'test'
+  ...
+# (node:73192) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E1 Method revision/content versions cannot be bypassed through ordinary updates; local variants and bindings stay independent
+ok 31 - E1 Method revision/content versions cannot be bypassed through ordinary updates; local variants and bindings stay independent
+  ---
+  duration_ms: 748.3738
+  type: 'test'
+  ...
+# Subtest: E1 full exact dependency closure survives updates; missing/extra/wrong selected versions and direct/final-batch cycles fail atomically
+ok 32 - E1 full exact dependency closure survives updates; missing/extra/wrong selected versions and direct/final-batch cycles fail atomically
+  ---
+  duration_ms: 462.2379
+  type: 'test'
+  ...
+# Subtest: E1 reading, selecting, reporting, observations, episode completion and Work acceptance remain distinct; retries share case identity
+ok 33 - E1 reading, selecting, reporting, observations, episode completion and Work acceptance remain distinct; retries share case identity
+  ---
+  duration_ms: 428.2559
+  type: 'test'
+  ...
+# Subtest: E1 late and corrected Evaluations retain old result/version and history, never create a new case or automatic causal claim
+ok 34 - E1 late and corrected Evaluations retain old result/version and history, never create a new case or automatic causal claim
+  ---
+  duration_ms: 378.865
+  type: 'test'
+  ...
+# Subtest: E1 Signals keep independent reviews; consideration/edit/application never silently resolves a failure
+ok 35 - E1 Signals keep independent reviews; consideration/edit/application never silently resolves a failure
+  ---
+  duration_ms: 333.3512
+  type: 'test'
+  ...
+# Subtest: E1 provenance rejects RPC/extension, unknown-stage interactive, imported or quoted feedback; trusted interactive is separately bounded
+ok 36 - E1 provenance rejects RPC/extension, unknown-stage interactive, imported or quoted feedback; trusted interactive is separately bounded
+  ---
+  duration_ms: 335.7049
+  type: 'test'
+  ...
+# Subtest: E1 access covers primary/support/history/bundle/technical counts, guessed IDs and derived restriction without generation leaks
+ok 37 - E1 access covers primary/support/history/bundle/technical counts, guessed IDs and derived restriction without generation leaks
+  ---
+  duration_ms: 439.4833
+  type: 'test'
+  ...
+# Subtest: E1 linked records/support/versions/index/Change/receipt rollback together; stale guards and exact replay never duplicate
+ok 38 - E1 linked records/support/versions/index/Change/receipt rollback together; stale guards and exact replay never duplicate
+  ---
+  duration_ms: 637.0367
+  type: 'test'
+  ...
+# Subtest: E1 supporting history pages invalidate after change
+ok 39 - E1 supporting history pages invalidate after change
+  ---
+  duration_ms: 254.3311
+  type: 'test'
+  ...
+# Subtest: E1 open-Signal snapshot routes a bounded prefix with an explicit catalog continuation
+ok 40 - E1 open-Signal snapshot routes a bounded prefix with an explicit catalog continuation
+  ---
+  duration_ms: 178.4723
+  type: 'test'
+  ...
+# Subtest: E1 correction Run outcomes can pin changed Method and review versions; invocation outputs remain Evidence
+ok 41 - E1 correction Run outcomes can pin changed Method and review versions; invocation outputs remain Evidence
+  ---
+  duration_ms: 274.11
+  type: 'test'
+  ...
+# Subtest: E1 navigation links resolve exact Method and supporting review refs with guards and access; typed derivation is not duplicated
+ok 42 - E1 navigation links resolve exact Method and supporting review refs with guards and access; typed derivation is not duplicated
+  ---
+  duration_ms: 567.9642
+  type: 'test'
+  ...
+# Subtest: E1 request-local Work premises route current Method versions without rewriting the historical context
+ok 43 - E1 request-local Work premises route current Method versions without rewriting the historical context
+  ---
+  duration_ms: 183.7514
+  type: 'test'
+  ...
+# Subtest: E1 stale guards, invocation output types, complete selection and start replay are enforced
+ok 44 - E1 stale guards, invocation output types, complete selection and start replay are enforced
+  ---
+  duration_ms: 258.1489
+  type: 'test'
+  ...
+# Subtest: E1 a new result and its exact Evaluation/application/Signal commit atomically through client refs
+ok 45 - E1 a new result and its exact Evaluation/application/Signal commit atomically through client refs
+  ---
+  duration_ms: 780.4989
+  type: 'test'
+  ...
+# Subtest: E1 historical protected refs cannot be selected through a currently public Method
+ok 46 - E1 historical protected refs cannot be selected through a currently public Method
+  ---
+  duration_ms: 202.4248
+  type: 'test'
+  ...
+# Subtest: E1 schema-3 upgrade faults preserve filled canonical rows and material bytes with a verified backup
+ok 47 - E1 schema-3 upgrade faults preserve filled canonical rows and material bytes with a verified backup
+  ---
+  duration_ms: 1122.8873
+  type: 'test'
+  ...
+# (node:77196) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: snapshot replacement preserves system, tool, user and unrelated extension data by identity
+ok 48 - snapshot replacement preserves system, tool, user and unrelated extension data by identity
+  ---
+  duration_ms: 1.0025
+  type: 'test'
+  ...
+# (node:71824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+ok 49 - TXT, multipage PDF and multichapter EPUB keep exact original bytes, separate text, stable code-point ranges and locators after source removal
+  ---
+  duration_ms: 1190.6574
+  type: 'test'
+  ...
+# Subtest: scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+ok 50 - scanned/blank, encrypted, damaged, unsafe, unsupported and partly missing books expose honest availability
+  ---
+  duration_ms: 2104.6306
+  type: 'test'
+  ...
+# Subtest: every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+ok 51 - every new import authorizes before source access and rechecks after async extraction; interrupts never create records/handles
+  ---
+  duration_ms: 1231.9917
+  type: 'test'
+  ...
+# Subtest: book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+ok 52 - book bounds exceed old TXT limit, extraction output and archive expansion stay bounded
+  ---
+  duration_ms: 1619.233
+  type: 'test'
+  ...
+# Subtest: new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+ok 53 - new material transaction faults preserve original/text linkage and receipt atomicity on reopen
+  ---
+  duration_ms: 1164.3824
+  type: 'test'
+  ...
+# Subtest: schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+ok 54 - schema-1 migration preserves every row and material; before/after-commit failures retain a verifiable backup and recover without reset
+  ---
+  duration_ms: 1490.7189
+  type: 'test'
+  ...
+# (node:56076) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: D final Concept graph allows multiple parents, preserves ambiguous aliases and rejects direct/batch cycles and wrong kinds atomically
+ok 55 - D final Concept graph allows multiple parents, preserves ambiguous aliases and rejects direct/batch cycles and wrong kinds atomically
+  ---
+  duration_ms: 293.4108
+  type: 'test'
+  ...
+# Subtest: D literal English FTS, exact authentic aliases, punctuation/metacharacters, meaningful filters and bounded cursors
+ok 56 - D literal English FTS, exact authentic aliases, punctuation/metacharacters, meaningful filters and bounded cursors
+  ---
+  duration_ms: 357.4317
+  type: 'test'
+  ...
+# Subtest: D independent lexical fallback ignores wrong classification and absent predicate; typed filters retain explicit applicability limits
+ok 57 - D independent lexical fallback ignores wrong classification and absent predicate; typed filters retain explicit applicability limits
+  ---
+  duration_ms: 189.3682
+  type: 'test'
+  ...
+# Subtest: D corrections preserve exact historical truth, conditions, grounded sources, FTS and semantic states without assigning unknown times
+ok 58 - D corrections preserve exact historical truth, conditions, grounded sources, FTS and semantic states without assigning unknown times
+  ---
+  duration_ms: 321.326
+  type: 'test'
+  ...
+# Subtest: D identity clarification changes current references without merging similar objects or rewriting historical identities
+ok 59 - D identity clarification changes current references without merging similar objects or rewriting historical identities
+  ---
+  duration_ms: 200.9052
+  type: 'test'
+  ...
+# Subtest: D index and correction commit faults are all-or-none; unavailable index is explicit and rebuild is lossless
+ok 60 - D index and correction commit faults are all-or-none; unavailable index is explicit and rebuild is lossless
+  ---
+  duration_ms: 377.903
+  type: 'test'
+  ...
+# Subtest: D managed restrictions cover all pages, counts, links, snippets, history, guessed IDs, diagnostics, technical rows and mutations
+ok 61 - D managed restrictions cover all pages, counts, links, snippets, history, guessed IDs, diagnostics, technical rows and mutations
+  ---
+  duration_ms: 320.638
+  type: 'test'
+  ...
+# Subtest: D registered relations validate endpoints and reject competing copies of typed grounds
+ok 62 - D registered relations validate endpoints and reject competing copies of typed grounds
+  ---
+  duration_ms: 248.1108
+  type: 'test'
+  ...
+# Subtest: D schema-2 migration faults preserve filled canonical rows, original materials, backup and repeatability
+ok 63 - D schema-2 migration faults preserve filled canonical rows, original materials, backup and repeatability
+  ---
+  duration_ms: 1536.7506
+  type: 'test'
+  ...
+# Subtest: D memory migration rejects a broken legacy Work graph without replacing or mutating source rows
+ok 64 - D memory migration rejects a broken legacy Work graph without replacing or mutating source rows
+  ---
+  duration_ms: 289.6593
+  type: 'test'
+  ...
+# Subtest: D next request snapshot routes changed Work premises with exact revisions, no general fact injection and a measured byte budget
+ok 65 - D next request snapshot routes changed Work premises with exact revisions, no general fact injection and a measured byte budget
+  ---
+  duration_ms: 156.6296
+  type: 'test'
+  ...
+# (node:30824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+ok 66 - retained excerpt: long ASCII, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 240.0908
+  type: 'test'
+  ...
+# Subtest: retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+ok 67 - retained excerpt: emoji on page boundary, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 156.8363
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+ok 68 - retained excerpt: exactly 8000 non-BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 153.2155
+  type: 'test'
+  ...
+# Subtest: retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+ok 69 - retained excerpt: exactly 8000 BMP code points, bounded reading reconstructs original without mutation
+  ---
+  duration_ms: 178.8504
+  type: 'test'
+  ...
+# Subtest: import preflight uses Core processing, identity and write authority
+ok 70 - import preflight uses Core processing, identity and write authority
+  ---
+  duration_ms: 132.3374
+  type: 'test'
+  ...
+# Subtest: historical excerpt ranges use the requested revision, not current text
+ok 71 - historical excerpt ranges use the requested revision, not current text
+  ---
+  duration_ms: 225.5479
+  type: 'test'
+  ...
+# Subtest: authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+ok 72 - authorized imported material still retains exact BOM/CRLF bytes and code-point ranges
+  ---
+  duration_ms: 183.5767
+  type: 'test'
+  ...
+# Subtest: retained excerpt ranges keep explicit invalid-range errors
+ok 73 - retained excerpt ranges keep explicit invalid-range errors
+  ---
+  duration_ms: 154.2576
+  type: 'test'
+  ...
+# (node:33248) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a saved handoff is reusable preparation-step grounds without a duplicate message record
+ok 74 - a saved handoff is reusable preparation-step grounds without a duplicate message record
+  ---
+  duration_ms: 315.6594
+  type: 'test'
+  ...
+# Subtest: preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input
+ok 75 - preparation grounds retain claims and ref guards, external waits stay separate, and reopen waits for new input
+  ---
+  duration_ms: 895.7323
+  type: 'test'
+  ...
+# Subtest: linking an immutable preparation result is atomic with claim, revision, Change and receipt
+ok 76 - linking an immutable preparation result is atomic with claim, revision, Change and receipt
+  ---
+  duration_ms: 703.5016
+  type: 'test'
+  ...
+# Subtest: nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+ok 77 - nested graph and final-batch cycles, wrong references and update lifecycle bypass are rejected atomically
+  ---
+  duration_ms: 248.1888
+  type: 'test'
+  ...
+# Subtest: required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+ok 78 - required child/step conditions, grounded completion, cancellation is not success, reopening retains history
+  ---
+  duration_ms: 423.1555
+  type: 'test'
+  ...
+# Subtest: dependencies and parent pause suppress execution without changing child facts; independent steps continue
+ok 79 - dependencies and parent pause suppress execution without changing child facts; independent steps continue
+  ---
+  duration_ms: 501.5762
+  type: 'test'
+  ...
+# Subtest: claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+ok 80 - claims are independent of writer lease and bind revisions/runtime/epoch; expired unresolved claims need reconciliation
+  ---
+  duration_ms: 238.8949
+  type: 'test'
+  ...
+# Subtest: manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+ok 81 - manual handoff retains original plan and external authorship; partial/late events never auto-resume cancelled plan
+  ---
+  duration_ms: 459.9844
+  type: 'test'
+  ...
+# Subtest: time waits retain exact offsets/timezone and cannot be satisfied early
+ok 82 - time waits retain exact offsets/timezone and cannot be satisfied early
+  ---
+  duration_ms: 221.7013
+  type: 'test'
+  ...
+# Subtest: addressed generated results and handoff/claim transaction recovery preserve all-or-none state
+ok 83 - addressed generated results and handoff/claim transaction recovery preserve all-or-none state
+  ---
+  duration_ms: 1118.3233
+  type: 'test'
+  ...
+# Subtest: ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction
+ok 84 - ancestor revisions invalidate child claims and parent-goal changes make replies late in the final transaction
+  ---
+  duration_ms: 316.5692
+  type: 'test'
+  ...
+# Subtest: step addresses cannot collide with internal parent/completion graph nodes
+ok 85 - step addresses cannot collide with internal parent/completion graph nodes
+  ---
+  duration_ms: 132.9705
+  type: 'test'
+  ...
+1..85
+# tests 92
+# suites 0
+# pass 90
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 10073.5321
+RESULT structure passed (content and owner acceptance require human review).

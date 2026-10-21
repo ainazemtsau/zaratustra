@@ -1,0 +1,213 @@
+{
+  "source": "full-audit-resume.json",
+  "source_sha256": "dc0c72ae8a201f05f3979d90061e3233125c7c0e3bb1df81e8a2b987e11186b1",
+  "derived_audit": {
+    "auditReportVersion": 2,
+    "vulnerabilities": {
+      "@typescript-eslint/eslint-plugin": {
+        "name": "@typescript-eslint/eslint-plugin",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@typescript-eslint/type-utils",
+          "@typescript-eslint/utils"
+        ],
+        "effects": [],
+        "range": "8.2.1-alpha.0 - 8.47.1-alpha.9",
+        "nodes": [
+          "node_modules/@typescript-eslint/eslint-plugin"
+        ],
+        "fixAvailable": true
+      },
+      "@typescript-eslint/parser": {
+        "name": "@typescript-eslint/parser",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@typescript-eslint/typescript-estree"
+        ],
+        "effects": [
+          "typescript-eslint"
+        ],
+        "range": "8.2.1-alpha.0 - 8.47.1-alpha.9",
+        "nodes": [
+          "node_modules/@typescript-eslint/parser"
+        ],
+        "fixAvailable": {
+          "name": "typescript-eslint",
+          "version": "8.72.0",
+          "isSemVerMajor": false
+        }
+      },
+      "@typescript-eslint/type-utils": {
+        "name": "@typescript-eslint/type-utils",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@typescript-eslint/typescript-estree",
+          "@typescript-eslint/utils"
+        ],
+        "effects": [
+          "@typescript-eslint/eslint-plugin"
+        ],
+        "range": "8.2.1-alpha.0 - 8.47.1-alpha.9",
+        "nodes": [
+          "node_modules/@typescript-eslint/type-utils"
+        ],
+        "fixAvailable": true
+      },
+      "@typescript-eslint/typescript-estree": {
+        "name": "@typescript-eslint/typescript-estree",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "fast-glob"
+        ],
+        "effects": [
+          "@typescript-eslint/parser",
+          "@typescript-eslint/type-utils",
+          "@typescript-eslint/utils",
+          "typescript-eslint"
+        ],
+        "range": "8.2.1-alpha.0 - 8.47.1-alpha.9",
+        "nodes": [
+          "node_modules/@typescript-eslint/typescript-estree"
+        ],
+        "fixAvailable": {
+          "name": "typescript-eslint",
+          "version": "8.72.0",
+          "isSemVerMajor": false
+        }
+      },
+      "@typescript-eslint/utils": {
+        "name": "@typescript-eslint/utils",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "@typescript-eslint/typescript-estree"
+        ],
+        "effects": [],
+        "range": "8.2.1-alpha.0 - 8.47.1-alpha.9",
+        "nodes": [
+          "node_modules/@typescript-eslint/utils"
+        ],
+        "fixAvailable": true
+      },
+      "braces": {
+        "name": "braces",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          {
+            "source": 1240992,
+            "name": "braces",
+            "dependency": "braces",
+            "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+            "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+            "severity": "high",
+            "cwe": [
+              "CWE-674"
+            ],
+            "cvss": {
+              "score": 7.5,
+              "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+            },
+            "range": "<=3.0.3"
+          }
+        ],
+        "effects": [
+          "micromatch"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/braces"
+        ],
+        "fixAvailable": {
+          "name": "typescript-eslint",
+          "version": "8.72.0",
+          "isSemVerMajor": false
+        }
+      },
+      "fast-glob": {
+        "name": "fast-glob",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "micromatch"
+        ],
+        "effects": [
+          "@typescript-eslint/typescript-estree"
+        ],
+        "range": "*",
+        "nodes": [
+          "node_modules/fast-glob"
+        ],
+        "fixAvailable": {
+          "name": "typescript-eslint",
+          "version": "8.72.0",
+          "isSemVerMajor": false
+        }
+      },
+      "micromatch": {
+        "name": "micromatch",
+        "severity": "high",
+        "isDirect": false,
+        "via": [
+          "braces"
+        ],
+        "effects": [
+          "fast-glob"
+        ],
+        "range": ">=0.2.0",
+        "nodes": [
+          "node_modules/micromatch"
+        ],
+        "fixAvailable": {
+          "name": "typescript-eslint",
+          "version": "8.72.0",
+          "isSemVerMajor": false
+        }
+      },
+      "typescript-eslint": {
+        "name": "typescript-eslint",
+        "severity": "high",
+        "isDirect": true,
+        "via": [
+          "@typescript-eslint/eslint-plugin",
+          "@typescript-eslint/parser",
+          "@typescript-eslint/typescript-estree",
+          "@typescript-eslint/utils"
+        ],
+        "effects": [],
+        "range": "8.2.1-alpha.0 - 8.47.1-alpha.9",
+        "nodes": [
+          "node_modules/typescript-eslint"
+        ],
+        "fixAvailable": {
+          "name": "typescript-eslint",
+          "version": "8.72.0",
+          "isSemVerMajor": false
+        }
+      }
+    },
+    "metadata": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 9,
+        "critical": 0,
+        "total": 9
+      },
+      "dependencies": {
+        "prod": 10,
+        "dev": 311,
+        "optional": 39,
+        "peer": 6,
+        "peerOptional": 0,
+        "total": 333
+      }
+    }
+  },
+  "trailing_native_notices": "\r\nnpm notice\r\nnpm notice New minor version of npm available! 11.6.2 -> 11.21.1\r\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v11.21.1\r\nnpm notice To update run: npm install -g npm@11.21.1\r\nnpm notice\r\n"
+}

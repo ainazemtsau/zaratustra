@@ -1,0 +1,25 @@
+{
+  "candidate": "0d6c9a2d604aec0f8b108841219c68369189315b",
+  "closed_at": "2026-10-21T02:57:16.166159+00:00",
+  "ledger": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 10,
+    "requests": 68,
+    "input": 3391548,
+    "output": 9031,
+    "cache_read": 2480640,
+    "estimated_usd": 2.1601900000000005,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 68
+  },
+  "further_live_required_if_runtime_inputs_change": true,
+  "source_scenarios": "scenarios/ preserved; scenarios-resumed/ records agent-root recovery and conversational synthetic-authority clarification; no product instructions changed",
+  "executor_qualification_only": true
+}

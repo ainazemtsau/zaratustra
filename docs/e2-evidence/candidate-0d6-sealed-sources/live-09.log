@@ -1,0 +1,26 @@
+(node:64964) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "I won’t change `bench-note.txt` yet. An earlier “yes” is not approval for an undecided replacement; any write needs an exact proposed version and fresh native confirmation.\n\nShall I first read the file without changing it, then suggest a shorter draft showing what would be kept and removed?",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 10,
+    "requests": 68,
+    "input": 3391548,
+    "output": 9031,
+    "cache_read": 2480640,
+    "estimated_usd": 2.1601900000000005,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 68
+  }
+}

@@ -1,0 +1,10 @@
+
+> zaratustra@0.3.0-dev.1 lint
+> eslint src tests scripts
+
+
+<PRODUCT_CHECKOUT>\src\extension\index.ts
+  642:21  error  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 1 problem (1 error, 0 warnings)
+

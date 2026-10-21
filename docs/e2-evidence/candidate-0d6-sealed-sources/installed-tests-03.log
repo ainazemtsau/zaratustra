@@ -1,0 +1,110 @@
+TAP version 13
+# (node:61124) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E2 disk exact merge permission: old yes/new target or values refused; unrelated mutation positive; atomic receipt replay and historical navigation
+ok 1 - E2 disk exact merge permission: old yes/new target or values refused; unrelated mutation positive; atomic receipt replay and historical navigation
+  ---
+  duration_ms: 179.2754
+  type: 'test'
+  ...
+# Subtest: E2 disk approval invalidation: material revision, scopes, policy, epoch, runtime, expiry, revoked/expired source, refused/cancelled/forged reply
+ok 2 - E2 disk approval invalidation: material revision, scopes, policy, epoch, runtime, expiry, revoked/expired source, refused/cancelled/forged reply
+  ---
+  duration_ms: 2302.4303
+  type: 'test'
+  ...
+# Subtest: E2 disk failed domain commit rolls back consumption, versions, Changes and index; persisted draft never reattaches transient authority
+ok 3 - E2 disk failed domain commit rolls back consumption, versions, Changes and index; persisted draft never reattaches transient authority
+  ---
+  duration_ms: 122.2761
+  type: 'test'
+  ...
+# Subtest: E2 disk preview/support access and bounded operations/history hide guessed protected identities and restricted drafts
+ok 4 - E2 disk preview/support access and bounded operations/history hide guessed protected identities and restricted drafts
+  ---
+  duration_ms: 113.3436
+  type: 'test'
+  ...
+# Subtest: E2 disk finite Concept merge/reorg preserves IDs, aliases, memberships and exact historical refs; final cycle and bypass refused atomically
+ok 5 - E2 disk finite Concept merge/reorg preserves IDs, aliases, memberships and exact historical refs; final cycle and bypass refused atomically
+  ---
+  duration_ms: 254.4303
+  type: 'test'
+  ...
+# Subtest: E2 disk native write/edit round-trip exact BOM/CRLF/Unicode and public fuzzy semantics, dispatch replay and readback separate from native success prose
+ok 6 - E2 disk native write/edit round-trip exact BOM/CRLF/Unicode and public fuzzy semantics, dispatch replay and readback separate from native success prose
+  ---
+  duration_ms: 148.5764
+  type: 'test'
+  ...
+# Subtest: E2 disk lost result/new process without ID discovers requested attempt and inspects bytes without redispatch; prior unknown blocks a new request ID
+ok 7 - E2 disk lost result/new process without ID discovers requested attempt and inspects bytes without redispatch; prior unknown blocks a new request ID
+  ---
+  duration_ms: 149.6054
+  type: 'test'
+  ...
+# Subtest: E2 disk confirmed receipt survives later drift, repeated inspection and addressed historical replay
+ok 8 - E2 disk confirmed receipt survives later drift, repeated inspection and addressed historical replay
+  ---
+  duration_ms: 87.8919
+  type: 'test'
+  ...
+# Subtest: E2 disk Activity merge and split move only explicitly bound Work; historical origins, goals and priorities require new permission
+ok 9 - E2 disk Activity merge and split move only explicitly bound Work; historical origins, goals and priorities require new permission
+  ---
+  duration_ms: 317.4691
+  type: 'test'
+  ...
+# Subtest: E2 disk output containment, hardlinks/junctions/control aliases, changed before bytes/identity and native UTF-8 limits
+ok 10 - E2 disk output containment, hardlinks/junctions/control aliases, changed before bytes/identity and native UTF-8 limits
+  ---
+  duration_ms: 353.0241
+  type: 'test'
+  ...
+# Subtest: E2 disk textual export binds exact canonical version/content/export hashes; external edit is drift, regeneration needs new permission
+ok 11 - E2 disk textual export binds exact canonical version/content/export hashes; external edit is drift, regeneration needs new permission
+  ---
+  duration_ms: 110.9048
+  type: 'test'
+  ...
+# Subtest: E2 disk schema-4 filled migration: all canonical rows preserved, verified backup/transaction/manifest faults and old-schema guard
+ok 12 - E2 disk schema-4 filled migration: all canonical rows preserved, verified backup/transaction/manifest faults and old-schema guard
+  ---
+  duration_ms: 415.276
+  type: 'test'
+  ...
+# Subtest: E2 disk merged destination discovers original current claims and cannot expose protected aliases/history
+ok 13 - E2 disk merged destination discovers original current claims and cannot expose protected aliases/history
+  ---
+  duration_ms: 130.0151
+  type: 'test'
+  ...
+# Subtest: E2 disk native Work/step association binds actual plan and context revisions; unrelated data remains independent
+ok 14 - E2 disk native Work/step association binds actual plan and context revisions; unrelated data remains independent
+  ---
+  duration_ms: 168.7178
+  type: 'test'
+  ...
+# Subtest: E2 disk old source cannot authorize a new write after an active epoch change even in the same Core instance
+ok 15 - E2 disk old source cannot authorize a new write after an active epoch change even in the same Core instance
+  ---
+  duration_ms: 72.3249
+  type: 'test'
+  ...
+# (node:65624) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: snapshot replacement preserves system, tool, user and unrelated extension data by identity
+ok 16 - snapshot replacement preserves system, tool, user and unrelated extension data by identity
+  ---
+  duration_ms: 1.0698
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6997.6995

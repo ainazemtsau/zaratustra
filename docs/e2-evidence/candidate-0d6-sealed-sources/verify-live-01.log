@@ -1,0 +1,7 @@
+<SYNTHETIC_EVIDENCE_ROOT>\verify-live.py:66: SyntaxWarning: invalid decimal literal
+  assert any(r['id']==method['id'] and r['data']['content_version']==1for r in rows('live-08','revisions'))
+Traceback (most recent call last):
+  File "<SYNTHETIC_EVIDENCE_ROOT>\verify-live.py", line 43, in <module>
+    assert len(r['receipt_history'])>=2 and r['interruption']
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

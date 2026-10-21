@@ -1,0 +1,7 @@
+Installing git:github.com/ainazemtsau/zaratustra@0d6c9a2d604aec0f8b108841219c68369189315b...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            0d6c9a2d604aec0f8b108841219c68369189315b -> FETCH_HEAD
+Error: git rev-parse HEAD failed with code 128: fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+

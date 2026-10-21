@@ -1,0 +1,26 @@
+(node:64888) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Found the original durable attempt, `independent-bench-note-20261020-01`, and inspected the actual file without writing or retrying.\n\n**Established:** `<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output\\bench-note.txt` matches the intended 85 UTF-8 bytes, including the final newline:\n```text\nOptics bench B-17\nOriginal label: «Луч Ω»\nNext check: align the reference mark\n```\n\n**Still unknown:** who wrote those bytes and whether the interrupted native write completed. Matching current bytes proves the postcondition, not authorship.\n\n**Retained:** the original intent, exact payload/hash, preview reference, native call identifier and interruption remain attached to the same attempt. Inspection added an observation and confirmation receipt; it did not create a replacement attempt.\n\nThis establishes no Anton approval, owner usefulness or T31.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 4,
+    "requests": 24,
+    "input": 1145591,
+    "output": 3392,
+    "cache_read": 826880,
+    "estimated_usd": 0.75403,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 24
+  }
+}

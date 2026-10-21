@@ -1,0 +1,3 @@
+(node:74248) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"qualified":true,"dialogs":2,"provider_network_requests":0}

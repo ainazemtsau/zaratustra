@@ -1,0 +1,3 @@
+{"preserves_exact_connected_batch":true,"replay_same_receipt":true}
+(node:73448) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

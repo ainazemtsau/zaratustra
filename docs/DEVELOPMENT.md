@@ -35,7 +35,7 @@ Unconsented routing is unsupported; before_provider_request exceptions are not a
 Stopping future reads never purges existing transcript or proves pre-transmission control.
 
 All original B/C/D/E1 requirements and version-attributed results remain in R1-STATUS.md.
-E2 qualification is still in progress in this candidate. E3 owns user backup/quarantine
+E2 executor qualification is recorded in E2-VALIDATION/REPRODUCE/ATTEMPTS and the sealed synthetic manifest. Final code/live candidate d6a3187 after independent H1 FAIL on the preserved original0d6c9a2 and bounded correction; final exact publication/installation is in the terminal local FINAL-READBACK. Independent E2 review and coordinator acceptance remain separate. E3 owns user backup/quarantine
 restore, archive/delete/retention/GC and the future epoch reconciliation barrier. That
 barrier must stop every resumed potentially effectful Work/step, including a backup with
 no receipt/intent. E2 supplies identities/bindings, not restore implementation. Full E/R1,

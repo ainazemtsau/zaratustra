@@ -1,0 +1,26 @@
+(node:40444) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Committed and verified after fresh, exact synthetic-controller approval:\n\n- **Blue desk printer** remains active.\n- **Маяк Ω label printer** redirects to it and is retained as an alias.\n- The original identity and historical revision remain accessible.\n\nThis was synthetic-test authorization only—not Anton approval, owner usefulness, or T31.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 2,
+    "requests": 16,
+    "input": 771530,
+    "output": 2611,
+    "cache_read": 609280,
+    "estimated_usd": 0.41153799999999996,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 16
+  }
+}

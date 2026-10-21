@@ -1,0 +1,150 @@
+{
+  "candidate": "d6a3187163c385c3c45f5fb89f7279dfbf636ced",
+  "loader_resources": {
+    "extension_paths": [
+      "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts",
+      "<inline:1>"
+    ],
+    "errors": [],
+    "skills": [
+      {
+        "name": "zaratustra-work",
+        "filePath": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md"
+      },
+      {
+        "name": "zaratustra-memory",
+        "filePath": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md"
+      }
+    ]
+  },
+  "actual_source_instruction_skill_inputs": [
+    {
+      "path": "instructions/bootstrap.md",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\instructions\\bootstrap.md",
+      "sha256": "6b366bf4b7ec8468e49972ed1918f75cc7a65bf3d5d52611eb5b790106998b5e",
+      "bytes": 8960
+    },
+    {
+      "path": "skills/zaratustra-memory/SKILL.md",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md",
+      "sha256": "a15d2c06d9a620bd6b57c76a1250b9b0544553d5296f6f19c148178639eb3fbc",
+      "bytes": 8468
+    },
+    {
+      "path": "skills/zaratustra-work/SKILL.md",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md",
+      "sha256": "900e2c0dbd2e3264c4395cff97c88b36f33bda8332e4be8c94dcc1b66ba82815",
+      "bytes": 16746
+    },
+    {
+      "path": "src/core/AGENTS.md",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\AGENTS.md",
+      "sha256": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff",
+      "bytes": 415
+    },
+    {
+      "path": "src/core/approval.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\approval.ts",
+      "sha256": "0493abb61f1d369c7e3b830e49e08973ebd963dc7fe23396ca380b11994675d1",
+      "bytes": 7864
+    },
+    {
+      "path": "src/core/contracts.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\contracts.ts",
+      "sha256": "6583cf95730d3e7b89d27907498ef0fcd66cce1f522d18a62992aab2e131c015",
+      "bytes": 20051
+    },
+    {
+      "path": "src/core/effects.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\effects.ts",
+      "sha256": "ead8125dbf57167b239a6364bce04975b19e964f4de233970e5d8d87e5a6ce30",
+      "bytes": 8467
+    },
+    {
+      "path": "src/core/experience.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\experience.ts",
+      "sha256": "d7ecd8351f217cf7319623e23b53da7e738eceba7cd17ce188d9fcbe534e8e4d",
+      "bytes": 25981
+    },
+    {
+      "path": "src/core/index.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\index.ts",
+      "sha256": "c46052f50d556311752a1616bde97ff8338069d9556342684e21406a09b4f7dd",
+      "bytes": 104410
+    },
+    {
+      "path": "src/core/memory.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\memory.ts",
+      "sha256": "ea035d7dafdf05867347bc58bc42a2d3253508ad539e19174bf571065b5bf648",
+      "bytes": 38039
+    },
+    {
+      "path": "src/core/work.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\core\\work.ts",
+      "sha256": "05ba856ec833e583610f024ae38db2249bd40ca321617eed603dc673ce0ebefa",
+      "bytes": 12143
+    },
+    {
+      "path": "src/extension/AGENTS.md",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\AGENTS.md",
+      "sha256": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b",
+      "bytes": 331
+    },
+    {
+      "path": "src/extension/authority.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\authority.ts",
+      "sha256": "6dc1df9e139036a4f80e9e5fcd959e8d63bd1a99eda353646e072e5fe6d0e92e",
+      "bytes": 824
+    },
+    {
+      "path": "src/extension/index.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts",
+      "sha256": "f270168ac23b0f49be7155072790f89ab1818c7787f7b7a19524b26ee30f2c0c",
+      "bytes": 37545
+    },
+    {
+      "path": "src/extension/managed.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\managed.ts",
+      "sha256": "2963f1c3d467de2b6856d4ca30be35adb1d0f6413948bb3108406a3c31d7d85c",
+      "bytes": 4022
+    },
+    {
+      "path": "src/extension/preview.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\preview.ts",
+      "sha256": "a7d7c97e3c851330462037f7ae4ea7a534c959d8c865ac7e1c877ebf97875646",
+      "bytes": 7792
+    },
+    {
+      "path": "src/storage/AGENTS.md",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\storage\\AGENTS.md",
+      "sha256": "500f77dd410808616b6e714275cfce81b554e0ca4bc52d0af71b5bcd9e19834c",
+      "bytes": 347
+    },
+    {
+      "path": "src/storage/extract.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\storage\\extract.ts",
+      "sha256": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f",
+      "bytes": 1612
+    },
+    {
+      "path": "src/storage/index.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\storage\\index.ts",
+      "sha256": "4bf262cc4ddd1f2f3b1d01defe98f83ba96a22b89384b90eb85267b1399923c9",
+      "bytes": 25568
+    },
+    {
+      "path": "src/storage/output.ts",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\storage\\output.ts",
+      "sha256": "ac1151c1e8b9bb26cafd02e025f9488ca6a2356378120827b0761c2bacff309c",
+      "bytes": 4723
+    },
+    {
+      "path": "src/storage/parser-worker.mjs",
+      "actual_path": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent-final-code\\git\\github.com\\ainazemtsau\\zaratustra\\src\\storage\\parser-worker.mjs",
+      "sha256": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec",
+      "bytes": 9970
+    }
+  ],
+  "all_actual_bytes_match_public_freeze": true,
+  "no_builder_checkout_dependency": true
+}

@@ -1,0 +1,26 @@
+(node:45008) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Saved candidate “Bench note check” v1 and exported it to `output/SKILL.md` after native-dialog synthetic-controller authorization. Verified the export matches the canonical version.\n\nNo code installed; no physical alignment, owner usefulness, Anton approval, or T31 claimed.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 7,
+    "requests": 48,
+    "input": 2305693,
+    "output": 5977,
+    "cache_read": 1740800,
+    "estimated_usd": 1.3636360000000003,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 48
+  }
+}

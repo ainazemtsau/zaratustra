@@ -1,0 +1,20 @@
+{
+  "agentDir": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\agent",
+  "home": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\home",
+  "outputRoot": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\output",
+  "budgetPath": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "scopes": [],
+  "importRoots": [],
+  "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\workspace\\cwd-07",
+  "output": "<SYNTHETIC_EVIDENCE_ROOT>\\attempts\\live-07",
+  "prompt": "Проверь текстовую копию подхода Bench note check в SKILL.md: после экспорта её изменили извне. Хочу сначала понять различие с канонической версией. Затем явно импортируй предложенное изменение в новую версию того же Method, сохранив исходные внешние bytes как данные, если это действительно текстовая поправка. Объясни конкретное изменение и альтернативы перед моим решением. Не устанавливай код и не перезаписывай файл молча.",
+  "dialogReplies": [
+    {
+      "answer": true,
+      "note": "I approve exactly the displayed finite consequence, under the declared synthetic controller authority, not Anton.",
+      "expected": [
+        "Bench note check"
+      ]
+    }
+  ]
+}

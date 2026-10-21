@@ -1,0 +1,35 @@
+{
+  "executor_qualification_only": true,
+  "code_refs": {
+    "live-10/11": "85e44c1859421ff0815fb845b3c2c6553860c2a5",
+    "live-12/13": "d6a3187163c385c3c45f5fb89f7279dfbf636ced"
+  },
+  "checks": [
+    {
+      "attempt": "live-10",
+      "single_exact_correct_then_merge_batch": true,
+      "corrected_fields_actual": true,
+      "stable_ID_history_aliases_actual": true,
+      "preview_corrected_destination_actual": true
+    },
+    {
+      "attempt": "live-12",
+      "single_exact_correct_then_merge_batch": true,
+      "corrected_fields_actual": true,
+      "stable_ID_history_aliases_actual": true,
+      "preview_corrected_destination_actual": true
+    },
+    {
+      "attempt": "live-11",
+      "single_exact_purpose_then_activity_merge_batch": true,
+      "purpose_and_only_moved_Work_actual": true,
+      "origin_history_goal_priority_preserved": true
+    },
+    {
+      "attempt": "live-13",
+      "single_exact_purpose_then_activity_merge_batch": true,
+      "purpose_and_only_moved_Work_actual": true,
+      "origin_history_goal_priority_preserved": true
+    }
+  ]
+}

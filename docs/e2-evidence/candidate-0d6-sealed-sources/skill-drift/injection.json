@@ -1,0 +1,8 @@
+{
+  "source": "controlled external writer between completed attempts; not concurrent during native dispatch",
+  "before_sha256": "b9f2e7e9554338d94a6e550e6d86b987fb6311f50693e1799a2e4ca657335598",
+  "after_sha256": "d9d4a3400453cc607f11882c1584a7befca24d60ab28fb38cb36122352d9781d",
+  "old": "2. Confirm the bench identifier from the note. If it cannot be confirmed, state that explicitly rather than guessing.",
+  "new": "2. Confirm the bench identifier from the note. If it cannot be confirmed, state that explicitly rather than guessing. Also note the lamp colour if stated; otherwise mark it as missing.",
+  "executables_installed": false
+}

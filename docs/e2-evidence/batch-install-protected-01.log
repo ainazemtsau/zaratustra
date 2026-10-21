@@ -1,0 +1,28 @@
+Installing git:github.com/ainazemtsau/zaratustra@85e44c1859421ff0815fb845b3c2c6553860c2a5...
+Cloning into '<SYNTHETIC_EVIDENCE_ROOT>\protected\agent-batch\git\github.com\ainazemtsau\zaratustra'...
+Note: switching to '85e44c1859421ff0815fb845b3c2c6553860c2a5'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 85e44c1 Preserve staged corrections and access through connected merges
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@85e44c1859421ff0815fb845b3c2c6553860c2a5

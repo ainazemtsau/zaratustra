@@ -1,0 +1,26 @@
+(node:22736) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Found the original durable attempt, `independent-calibration-note-c73-20261020`, and inspected the actual file without writing or retrying.\n\n**Established:** `workspace/output/calibration-note.txt` matches the intended 91 UTF-8 bytes, including the final newline:\n```text\nOptics calibration C-73\nOriginal label: «Луч Ω»\nNext check: align the reference mark\n```\n\n**Still unknown:** who wrote those bytes and whether the interrupted native call completed. Matching content proves the current postcondition—not writer attribution.\n\n**Retained:** the same original attempt now has a confirmed inspection receipt. Its exact intent, preview reference, native call ID, interruption record and inspection observation remain attached; no replacement attempt was created.\n\nThis does not complete the separate calibration-label Work or establish physical calibration, Anton approval, owner usefulness or T31.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 16,
+    "requests": 121,
+    "input": 6105354,
+    "output": 18158,
+    "cache_read": 4566912,
+    "estimated_usd": 3.7151552000000003,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 121
+  }
+}

@@ -1,0 +1,26 @@
+(node:44076) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Выполнено одним атомарным изменением после подтверждения зарегистрированного синтетического контроллера в нативном диалоге.\n\nПроверено чтением сохранённых записей:\n- purpose **Optics calibration area**: `Labeling optical calibration notes`;\n- **Violet notes area** имеет статус `merged` и перенаправляет на Optics;\n- только **Prepare calibration label** перенесена в Optics и остаётся активной;\n- ID Work, origin в Violet, цель и приоритет `normal` сохранены;\n- прежние версии доступны: версия 1 Work подтверждает исходную принадлежность Violet, версия 2 — новую принадлежность Optics.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 14,
+    "requests": 112,
+    "input": 5647608,
+    "output": 17352,
+    "cache_read": 4262272,
+    "estimated_usd": 3.370419200000001,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 112
+  }
+}

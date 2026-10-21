@@ -1,0 +1,17 @@
+(node:21512) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:fs:561
+  return binding.open(
+                 ^
+
+Error: ENOENT: no such file or directory, open '<SYNTHETIC_EVIDENCE_ROOT>\native-03\workspace\output\report.txt'
+    at Object.openSync (node:fs:561:18)
+    at readFileSync (node:fs:445:35)
+    at file:///<PRODUCT_CHECKOUT>/scripts/e2-native.mjs:280:22 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '<SYNTHETIC_EVIDENCE_ROOT>\\native-03\\workspace\\output\\report.txt'
+}
+
+Node.js v22.19.0

@@ -1,0 +1,4 @@
+src/core/index.ts 243ms (unchanged)
+src/extension/preview.ts 21ms (unchanged)
+tests/effects.test.ts 82ms
+docs/E2-BATCH-FIX.md 19ms

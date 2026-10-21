@@ -1,0 +1,10 @@
+
+> zaratustra@0.3.0-dev.1 types
+> tsc --noEmit
+
+src/extension/index.ts(441,193): error TS2339: Property 'id' does not exist on type 'AddressedRow | { ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; } | { locator?: string | undefined; ... 13 more ...; untrusted_source_data: boolean; } | { ...; }'.
+  Property 'id' does not exist on type '{ ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; }'.
+src/extension/index.ts(441,217): error TS2339: Property 'revision' does not exist on type 'AddressedRow | { ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; } | { locator?: string | undefined; ... 13 more ...; untrusted_source_data: boolean; } | { ...; }'.
+  Property 'revision' does not exist on type '{ ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; }'.
+src/extension/index.ts(441,460): error TS2339: Property 'id' does not exist on type 'AddressedRow | { ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; } | { locator?: string | undefined; ... 13 more ...; untrusted_source_data: boolean; } | { ...; }'.
+  Property 'id' does not exist on type '{ ref: { id: string; revision: number; }; locator: string; text: string; has_more: boolean; next_start: number; range_unit: string; }'.

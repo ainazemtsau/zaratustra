@@ -1,0 +1,28 @@
+
+> zaratustra@0.4.0-dev.1 deliver
+> npm run check && node scripts/deliver.mjs
+
+
+> zaratustra@0.4.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.4.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.4.0-dev.1 lint
+> eslint src tests scripts
+
+
+> zaratustra@0.4.0-dev.1 types
+> tsc --noEmit
+
+src/core/index.ts(171,49): error TS2345: Argument of type 'AddressedRow[]' is not assignable to parameter of type 'RecordRow[]'.
+  Type 'AddressedRow' is not assignable to type 'RecordRow'.
+    Type 'SupportingRow' is not assignable to type 'RecordRow'.
+      Types of property 'kind' are incompatible.
+        Type '"evaluation" | "signal" | "signal_review" | "invocation" | "environment"' is not assignable to type '"work" | "activity" | "knowledge" | "concept" | "entity" | "method" | "evidence" | "run"'.
+          Type '"evaluation"' is not assignable to type '"work" | "activity" | "knowledge" | "concept" | "entity" | "method" | "evidence" | "run"'.

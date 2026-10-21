@@ -1,0 +1,26 @@
+(node:63640) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Изменение подтверждено зарегистрированным синтетическим контроллером и сохранено одной транзакцией — не как одобрение владельца.\n\nПроверено чтением сохранённых записей:\n- purpose Optics labeling area: `Labeling optical source notes`;\n- Copper notes area: `merged`, перенаправление в Optics;\n- только Prepare source label перенесена в Optics;\n- ID Work и origin в Copper сохранены;\n- цель `Prepare an addressed source label`, приоритет `normal`, статус `active` не изменены;\n- исходные версии всех трёх записей доступны и проверены.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "prompts": 12,
+    "requests": 90,
+    "input": 4511091,
+    "output": 13153,
+    "cache_read": 3351040,
+    "estimated_usd": 2.7867360000000008,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "input": 9007199254740991,
+      "output": 9007199254740991,
+      "estimated_usd": 20
+    },
+    "reported_usage_messages": 90
+  }
+}

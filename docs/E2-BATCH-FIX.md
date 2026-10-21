@@ -23,8 +23,12 @@ multiple aliases, restricted-chain propagation and low-reader denial, invalid or
 rollback and late Work creation before/after Activity merge. Initial test additions
 had a snapshot-sequence type/oracle mistake; corrected checks read actual Core sequence.
 
-Full check/new public freeze and affected installed M/L are required before the final
-handback. The original10 attempts/68 dispatches/USD2.16019 remain charged; continuation
+Checkout/installed final d6a3187 check:92 tests/90 pass/two inherited Windows skips.
+Native SDK4 groups/10 dialogs pass. Actual filled exact E1->d6a upgrade and old-writer
+rejection pass. Installed own RED/GREEN and final L12/13 confirm corrected connected
+Entity/Activity fields; L14–17 repeat affected recovery and textual import/export.
+The reviewer LOWs were fixed narrowly in d6a3187 (memory guidance and derived title),
+with material-byte regression assertions. Resumed independent qualification remains pending. The original10 attempts/68 dispatches/USD2.16019 remain charged; continuation
 uses the same ledger without reset. Old closed sources and both unpublished derivative
 sets are preserved in separate external snapshot roots. No independent reviewer files
 are modified. No new E3 feature or permission expansion.

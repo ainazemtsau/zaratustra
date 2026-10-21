@@ -1,0 +1,4 @@
+
+> zaratustra@0.3.0-dev.1 lint
+> eslint src tests scripts
+
