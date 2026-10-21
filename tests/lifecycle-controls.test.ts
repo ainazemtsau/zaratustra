@@ -556,6 +556,11 @@ test("E3 control tombstone preserves inherited restriction without declassifying
     code(() => low.read(entity)),
     "REFERENCE_NOT_FOUND",
   );
+  const nonexistent = "entity-control-never-existed";
+  assert.equal(
+    code(() => low.read(nonexistent, 777)),
+    "REFERENCE_NOT_FOUND",
+  );
   const d = f.core.storagePreview(
     { action: "tombstone", targets: [{ id: entity, revision: 1 }] },
     "Delete body; retain inherited privacy",
@@ -577,6 +582,34 @@ test("E3 control tombstone preserves inherited restriction without declassifying
     JSON.stringify(low.browse("operations")).includes(entity),
     false,
   );
+  assert.equal(
+    JSON.stringify(low.diagnostics()).includes(entity),
+    false,
+    "A redacted prior denied-read trace must not reveal hidden identity",
+  );
+  const key = f.disk.get<{ access_key: string }>(
+    "SELECT access_key FROM retrieval_trace WHERE json_extract(json,'$.input.id')=? LIMIT 1",
+    nonexistent,
+  )!.access_key;
+  for (const [marker, ids] of [
+    ["nested-protected-control", [[entity]]],
+    ["nested-public-control", [["ordinary-public-marker"]]],
+  ] as const) {
+    const seq = f.disk.get<{ n: number }>(
+      "SELECT coalesce(max(seq),0)+1 AS n FROM retrieval_trace",
+    )!.n;
+    f.disk.run(
+      "INSERT INTO retrieval_trace VALUES(?,?,?)",
+      seq,
+      key,
+      JSON.stringify({ operation: marker, nested: ids, refs: [] }),
+    );
+  }
+  const diagnostics = JSON.stringify(low.diagnostics());
+  assert.equal(diagnostics.includes("nested-protected-control"), false);
+  assert.equal(diagnostics.includes(entity), false);
+  assert.equal(diagnostics.includes("nested-public-control"), true);
+  assert.equal(diagnostics.includes(nonexistent), true);
   const visible = f.save([
       {
         op: "create_record",

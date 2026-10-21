@@ -205,7 +205,7 @@ test("E2 disk exact merge permission: old yes/new target or values refused; unre
   );
 });
 
-test("E2 disk approval invalidation: material revision, scopes, policy, epoch, runtime, expiry, revoked/expired source, refused/cancelled/forged reply", async (t) => {
+test("E2 disk approval invalidation: material revision, scopes, policy, epoch, runtime, expiry, revoked/expired source, refused/cancelled/forged reply", (t) => {
   for (const change of [
     "material",
     "scope",
@@ -227,12 +227,7 @@ test("E2 disk approval invalidation: material revision, scopes, policy, epoch, r
       [{ op: "merge_identity", from_ref: { id: a }, to_ref: { id: b } }],
       [a, b],
     );
-    const p = f.core.prepareCommit(
-      req,
-      "Exact merge",
-      "Leave separate",
-      change === "expiry" ? 1 : 900,
-    );
+    const p = f.core.prepareCommit(req, "Exact merge", "Leave separate", 900);
     if (change === "forged") {
       const s = f.core.capture("yes", "extension", null);
       rejects(
@@ -256,7 +251,6 @@ test("E2 disk approval invalidation: material revision, scopes, policy, epoch, r
     if (change === "policy") f.core.context.policy_revision = "next-policy";
     if (change === "epoch") f.core.context.epoch = "different-epoch";
     if (change === "runtime") f.core.context.runtime_id = "replacement";
-    if (change === "expiry") await new Promise((r) => setTimeout(r, 1050));
     if (change === "revoke") f.core.approvals.revoke(p.request_id);
     if (change === "source") f.core.expireSources();
     if (change === "tamper") {
@@ -268,11 +262,19 @@ test("E2 disk approval invalidation: material revision, scopes, policy, epoch, r
         p.request_id,
       );
     }
-    assert.throws(
-      () => f.core.commit({ ...req, preview_ref: p.request_id }),
-      /changed|mismatch|expired|approval|Preview|source/i,
-      change,
-    );
+    const realNow = Date.now;
+    // Expire AFTER the native grant without racing a one-second filesystem/UI
+    // round trip under concurrent disk-test load. Keep real production TTLs.
+    if (change === "expiry") Date.now = () => realNow() + 900001;
+    try {
+      assert.throws(
+        () => f.core.commit({ ...req, preview_ref: p.request_id }),
+        /changed|mismatch|expired|approval|Preview|source/i,
+        change,
+      );
+    } finally {
+      Date.now = realNow;
+    }
     f.core.context.epoch = f.disk.workspace.epoch;
     assert.equal(f.read(a).data.status, "active");
   }

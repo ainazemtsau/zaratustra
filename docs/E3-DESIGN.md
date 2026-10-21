@@ -46,3 +46,9 @@ checks; releasing an obligation does not pin all history forever. Tombstones pre
 effective inherited restriction. Redacted operations retain bounded metadata cards.
 Backup discovery has scope/generation-bound continuation; truncated recovery hints
 point to ordinary Work reads exposing every per-step barrier.
+
+Candidate01a111fd independent access finding: redacted denied-read traces carried
+affected_ids arrays which the JavaScript technical walker missed. The narrow correction
+recognizes string IDs at every depth, matching existing JSON-tree classification;
+nested protected arrays are filtered while unrelated low-visible traces remain.
+Own RED/source snapshot and GREEN are retained; no blanket diagnostics suppression.

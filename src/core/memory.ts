@@ -40,7 +40,10 @@ export const MemorySchemaSQL = `
 export function addressedIds(value: unknown): string[] {
   const found = new Set<string>();
   const walk = (v: unknown) => {
-    if (Array.isArray(v)) v.forEach(walk);
+    // Match the existing JSON-tree technical classifier at every depth,
+    // including string-ID arrays in redacted metadata such as affected_ids.
+    if (typeof v === "string") found.add(v);
+    else if (Array.isArray(v)) v.forEach(walk);
     else if (v && typeof v === "object") {
       const o = v as JsonObject;
       if (typeof o.id === "string") found.add(o.id);
