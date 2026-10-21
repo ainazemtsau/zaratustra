@@ -12,7 +12,7 @@ independent review and owner usefulness/T31 remain separate.
 In the intended project root, install the selected public commit once:
 
 ```powershell
-pi install --local git:github.com/ainazemtsau/zaratustra@<exact-public-commit>
+pi install --local git:github.com/ainazemtsau/zaratustra@ac662c0383f025c4e04cfb6fd9d8cbb90dd34b54
 pi
 ```
 
@@ -95,7 +95,7 @@ mode injection verifies confirmation mechanics and is not owner testimony.
 
 For installed proof, run `scripts/startup-native.mjs` with the absolute official
 SDK entry, installed package root, action (`init`, `read`, `health`, `inspect`,
-`untrusted` or `backup`) and new report path. Run it from the synthetic project
+`untrusted`, `integrity` or `backup`) and new report path. Run it from the synthetic project
 with normal project package discovery. `init` expects a synthetic `fixture.md`
 in the permitted imports directory; it commits observed Evidence, Activity and
 Knowledge, retains an import and verifies a confirmed native output. `read` is a
@@ -106,12 +106,55 @@ identities and retained results are recorded with the final readback.
 Evidence lives only in the newly created
 `C:/projects/zaratustra-v1-startup-evidence-20261021` and new isolated synthetic
 fixtures. Prior committed evidence is preserved by Git identity; no historical
-artifact recopy/reseal is required. The initial two focused runs retain fixture/API
-errors, including the `.mjs` peer discovery assumption and missing search match
-mode, rather than overwriting successful-looking evidence.
+artifact recopy/reseal is required. All failed attempts remain in ATTEMPTS.txt and their original logs: fixture/API
+errors, the initial strict lockfile comparison and the interrupted pre-final check.
+Self-review fixed leading-space ignore acceptance and a generic-metadata false
+positive before publication. No historical artifact was recopied or resealed.
 
 No live model proof is needed for directory selection: zero provider dispatches,
 zero model attempts, USD 0 Pi estimate for this assignment. This does not establish
 semantic model reliability, independent PASS, owner acceptance or T31.
 
 next: solmax
+
+## Executed public candidate
+
+Runtime candidate: `ac662c0383f025c4e04cfb6fd9d8cbb90dd34b54`, published only to
+`codex/zaratustra-v1`. The later report commit changes only this document and
+`RESULT.md`; final public/installed identities are recorded in external
+`FINAL-READBACK.json` to avoid a self-referential commit identity.
+
+The exact install command above was run in the newly created ordinary project
+`C:/projects/zaratustra-startup-native-20261021`, using the existing standard Pi
+host/auth configuration. All `ZARATUSTRA_*` and `PI_CODING_AGENT_DIR` overrides were
+absent. Plain `pi` prompted for native trust of that project only, then created all
+four roots and `.local/.gitignore`. It loaded one Zaratustra extension and two skills
+alongside the existing `wmux.js`; no extension was disabled, no extra project AGENTS
+file was created, no explicit extension path was supplied and no checkout fallback
+was used. The actual UI selected openai-codex/gpt-6.1-sol, medium, at USD0.000.
+
+The installed package is at
+`C:/projects/zaratustra-startup-native-20261021/.pi/git/github.com/ainazemtsau/zaratustra`.
+Its shipped SDK probe committed Activity, exact observed-stage Evidence and grounded
+English Knowledge, retained a local import, refused owner feedback/full backup at
+default authority, and verified a native confirmed output. A separately launched
+plain `pi` and fresh SDK read retained workspace
+`a199ac87-ea6e-42e9-b9b7-772e54e0682e`, epoch
+`155a6236-3ff9-4fbd-909f-a7dd3867f002` and committed sequence 2 without an old transcript.
+
+Final focused run: 7 passed, no failures/skips. Final `npm run deliver`: 132 tests,
+130 passed, 0 failed, 2 inherited Windows skips; formatting, ESLint, types,
+dependency boundary, build and RESULT structure passed. Native proof is mechanical,
+with no provider dispatch. Backup destination functionality with explicitly granted
+administrative scopes is covered separately by the focused native suite.
+
+Public Git/source/instruction identity is compared for all 30 inputs. Native npm
+rewrites only six `peer:true` lockfile metadata flags (parser, acorn, eslint,
+typescript, undici, zod); dependency versions/integrities are unchanged. All other
+installed inputs match public Git bytes exactly. Developer checkout line endings
+are recorded separately rather than mistaken for installed/public bytes. No
+repository lockfile/dependency update or installed-file rewrite was performed.
+The final report-only commit is compared against the candidate across every runtime
+and instruction input. Prior tracked documentation/fixtures have no modifications
+or deletions from the base commit. Public main remains
+`d956c6dfe18b49754fabd0773b798a01e5fcb017`.
