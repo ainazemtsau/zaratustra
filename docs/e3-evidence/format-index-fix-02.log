@@ -1,0 +1,7 @@
+src/storage/indexes.ts 43ms (unchanged)
+src/storage/index.ts 89ms (unchanged)
+src/storage/administration.ts 79ms (unchanged)
+src/extension/administration.ts 11ms (unchanged)
+src/extension/preview.ts 29ms (unchanged)
+tests/lifecycle.test.ts 70ms
+docs/E3-DESIGN.md 27ms

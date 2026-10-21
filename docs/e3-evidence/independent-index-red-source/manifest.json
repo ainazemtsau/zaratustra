@@ -1,0 +1,18 @@
+{
+  "storage_runtime_exact01a111fd": true,
+  "red_log": "independent-index-own-red-01.log",
+  "entries": [
+    {
+      "path": "src/storage/index.ts",
+      "sha256": "86e80cfde90df9d95cf46ca23e403b75214dbf88342f0013af2a5b5981db0c8c"
+    },
+    {
+      "path": "src/storage/administration.ts",
+      "sha256": "b339f798fe3cc591a0688c28199fcf942ff582d3a095c6e60c021c3c242c6cba"
+    },
+    {
+      "path": "tests/lifecycle.test.ts",
+      "sha256": "a809f53f6156a68a6fff04debce016211afbd6d8806344f6c52e6b4131f77574"
+    }
+  ]
+}

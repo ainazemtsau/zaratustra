@@ -1,0 +1,30 @@
+[
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Write synthetic report B\n\nAlternatives: Keep report absent\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-01\\protected\\output\\report.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\nA real native report was written after backup A.\n\nWork: Observatory report. Goal: Write a report file. \n\n\nExpires: 2026-10-21T06:15:31.687Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Restore snapshot A; later DB history lost, real report remains and requires reconciliation\n\nAlternatives: Keep unavailable memory\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-01\\protected\\backups\\backup-62b46ed7-9b56-4654-bca1-316eaebfafe2\nCaptured sequence: 1.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-01\\protected\\home\\generations\\1a4df407-6170-4064-a4e3-bbb7a87bd4a0\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T06:15:32.750Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Accept only this named observed report state without repeating it\n\nAlternatives: Keep unknown barrier\n\nReconcile this named Work/action: Observatory report. Step: Work action.\nDisposition: observed_satisfied. Current bytes match the required report; author is unknown\nObserved target: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-01\\protected\\output\\report.txt; 49 bytes. Matching current bytes never prove who wrote them. No file is repeated by this decision.\n\nExpires: 2026-10-21T06:15:34.658Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Recover corrupt active generation; later DB changes lost\n\nAlternatives: Keep corrupt generation\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-01\\protected\\backups\\backup-62b46ed7-9b56-4654-bca1-316eaebfafe2\nCaptured sequence: 1.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-01\\protected\\home\\generations\\c77adb65-a80f-428b-9a5b-eec9413ab99c\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T06:15:36.232Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  }
+]

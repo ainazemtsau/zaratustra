@@ -1,0 +1,65 @@
+{
+  "schema": 6,
+  "source_closed": true,
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\filled-spine-installed-code4-01\\closed-predecessor-copy\\generations\\3af7e71f-6bd7-4f1f-a724-bb144a508acb\\zara.sqlite",
+  "backup": {
+    "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\filled-spine-installed-code4-01\\backups\\backup-71af2045-d643-4b20-ad23-393bae15fa97",
+    "identity": "59c31f88f9c8fb9cdb2d9c4322f128ce2d96cd58d7eed59bfde79c500f441d74",
+    "complete": true,
+    "captured_seq": 8,
+    "export": "export.json",
+    "live_pin": null,
+    "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+    "index_repairs_required": [],
+    "schema_ready": true
+  },
+  "manifest": {
+    "format": "zaratustra.bundle.v1",
+    "schema": 6,
+    "workspace_id": "238af799-0e19-4534-8c90-5e2b70b5bd2a",
+    "captured_epoch": "8b793cb3-06ad-4fce-ad34-ff19dfcac279",
+    "captured_seq": 8,
+    "captured_at": "2026-10-21T07:36:34.705Z",
+    "complete": true,
+    "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+    "components": [
+      {
+        "path": "database.sqlite",
+        "length": 335872,
+        "sha256": "e2a49f64facfafead0ffae1c2685394fa5f08d63ef74f8d237021ed2c47b9af8"
+      },
+      {
+        "path": "export.json",
+        "length": 59710,
+        "sha256": "474695e7a71208a057f9fb895c708849254748dfa5effc7a4775b38421ffd746"
+      },
+      {
+        "path": "materials/a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27",
+        "length": 15060,
+        "sha256": "a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27"
+      }
+    ]
+  },
+  "canonical_support_history_receipts_claims_handoffs_exact": true,
+  "old_epoch": "8b793cb3-06ad-4fce-ad34-ff19dfcac279",
+  "new_epoch": "c1acd3fb-30c8-4513-9c56-c7cebae13fa8",
+  "table_counts": {
+    "records": 9,
+    "revisions": 12,
+    "changes": 8,
+    "intents": 8,
+    "receipts": 8,
+    "claims": 2,
+    "handoffs": 1,
+    "relations": 0,
+    "relation_history": 0,
+    "experience_rows": 3,
+    "experience_versions": 3
+  },
+  "recovery": [
+    {
+      "work_id": "work-fde8bcb5-9d62-49eb-a5a4-ef45d8b00b03",
+      "step_id": null
+    }
+  ]
+}

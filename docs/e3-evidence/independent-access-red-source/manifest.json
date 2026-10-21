@@ -1,0 +1,14 @@
+{
+  "public_runtime": "01a111fd4cb7e82be782a63499e60580f541e7cf",
+  "red_log": "independent-access-own-red-01.log",
+  "entries": [
+    {
+      "path": "src/core/memory.ts",
+      "sha256": "0780e894ea81d5f3d161e3a8d855114a8531ba43b0e7dd43e2eb5431375560b3"
+    },
+    {
+      "path": "tests/lifecycle-controls.test.ts",
+      "sha256": "0ea7023d1dad7140f01bad5b2ef9d96c131ee569d46e79df8d1ec36a07f48150"
+    }
+  ]
+}

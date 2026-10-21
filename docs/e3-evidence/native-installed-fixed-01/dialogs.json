@@ -1,0 +1,30 @@
+[
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Write synthetic report B\n\nAlternatives: Keep report absent\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-fixed-01\\protected\\output\\report.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\nA real native report was written after backup A.\n\nWork: Observatory report. Goal: Write a report file. \n\n\nExpires: 2026-10-21T07:04:06.917Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Restore snapshot A; later DB history lost, real report remains and requires reconciliation\n\nAlternatives: Keep unavailable memory\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-fixed-01\\protected\\backups\\backup-a40aedf2-a0bb-475b-ae8e-46ef2b98fe82\nBackup identity: 0ee30b6adc5c88e7741944b495afd9c5cd9ef2876a6b3e76d82e48022a5597b0\nCaptured sequence: 1.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-fixed-01\\protected\\home\\generations\\02379abc-63a2-4600-af6d-8f5b7b48b6b6\nRebuilt and verified derived query indexes: none required.\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T07:04:07.817Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Accept only this named observed report state without repeating it\n\nAlternatives: Keep unknown barrier\n\nReconcile this named Work/action: Observatory report. Step: Work action.\nDisposition: observed_satisfied. Current bytes match the required report; author is unknown\nObserved target: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-fixed-01\\protected\\output\\report.txt; 49 bytes. Matching current bytes never prove who wrote them. No file is repeated by this decision.\n\nExpires: 2026-10-21T07:04:09.572Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Recover corrupt active generation; later DB changes lost\n\nAlternatives: Keep corrupt generation\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-fixed-01\\protected\\backups\\backup-a40aedf2-a0bb-475b-ae8e-46ef2b98fe82\nBackup identity: 0ee30b6adc5c88e7741944b495afd9c5cd9ef2876a6b3e76d82e48022a5597b0\nCaptured sequence: 1.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-installed-fixed-01\\protected\\home\\generations\\ac1d2b50-a614-44a2-bd46-4dd8ce6ddb0a\nRebuilt and verified derived query indexes: none required.\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T07:04:10.893Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  }
+]

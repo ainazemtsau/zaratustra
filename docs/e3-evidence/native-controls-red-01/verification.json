@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {
+      "name": "recipient denial survives guessed restore/reopen healthy",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: A failed restore must not relabel existing recipient denial as startup consent\n+ actual - expected\n\n+ undefined\n- 'PERMISSION_DENIED'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: A failed restore must not relabel existing recipient denial as startup consent\n+ actual - expected\n\n+ undefined\n- 'PERMISSION_DENIED'\n\n    at file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:178:10\n    at async run (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:170:37)\n    at async file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:171:40"
+    },
+    {
+      "name": "recipient denial survives guessed restore/reopen unavailable",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: A failed restore must not relabel existing recipient denial as startup consent\n+ actual - expected\n\n+ undefined\n- 'PERMISSION_DENIED'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: A failed restore must not relabel existing recipient denial as startup consent\n+ actual - expected\n\n+ undefined\n- 'PERMISSION_DENIED'\n\n    at file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:178:10\n    at async run (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:170:37)\n    at async file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:171:40"
+    },
+    {
+      "name": "restore refuses real in-flight native write healthy",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'WORK_IN_USE'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'WORK_IN_USE'\n\n    at file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:193:89\n    at async run (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:170:37)\n    at async file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:184:40"
+    },
+    {
+      "name": "restore refuses real in-flight native write unavailable",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'WORK_IN_USE'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ undefined\n- 'WORK_IN_USE'\n\n    at file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:193:89\n    at async run (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:170:37)\n    at async file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:184:40"
+    }
+  ],
+  "provider_dispatches": 0,
+  "mechanical_only": true
+}

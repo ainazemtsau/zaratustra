@@ -1,0 +1,28 @@
+(node:78292) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сохранены открытая работа «Отчёт обсерватории» и связанная исходная записка как основание ожидаемого результата.\n\nСледующее действие — записать `observatory-report.txt` с заданной строкой и одним LF, затем проверить реальные байты. Файл сейчас не создавался.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 10,
+    "requests": 73,
+    "input": 3746104,
+    "output": 7951,
+    "cache_read": 2844544,
+    "estimated_usd": 2.1670843999999994,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 73
+  }
+}

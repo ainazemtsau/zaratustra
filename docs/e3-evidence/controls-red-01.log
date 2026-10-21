@@ -1,0 +1,162 @@
+TAP version 13
+# (node:72204) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 control operations cards remain readable after exact tombstone redacts a preview payload
+not ok 1 - E3 control operations cards remain readable after exact tombstone redacts a preview payload
+  ---
+  duration_ms: 858.8023
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:2593'
+  failureType: 'testCodeFailure'
+  error: |-
+    Got unwanted exception.
+    Actual message: "Cannot read properties of undefined (reading 'action')"
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+  error: "Cannot read properties of undefined (reading 'action')"
+  name: 'TypeError'
+  stack: |-
+    <anonymous> (<PRODUCT_CHECKOUT>\src\core\memory.ts:755:27)
+    Array.map (<anonymous>)
+    Memory.browse (<PRODUCT_CHECKOUT>\src\core\memory.ts:715:27)
+    <anonymous> (<PRODUCT_CHECKOUT>\src\core\index.ts:820:35)
+    Core.retrieval (<PRODUCT_CHECKOUT>\src\core\index.ts:826:22)
+    Core.browse (<PRODUCT_CHECKOUT>\src\core\index.ts:816:17)
+    <anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:23:33)
+    getActual (node:assert:609:5)
+    Function.doesNotThrow (node:assert:777:32)
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:23:9)
+  operator: 'doesNotThrow'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:23:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: E3 control unreferenced Concept has a valid tombstone and its bundle verifies/restores
+not ok 2 - E3 control unreferenced Concept has a valid tombstone and its bundle verifies/restores
+  ---
+  duration_ms: 390.5874
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:3415'
+  failureType: 'testCodeFailure'
+  error: 'r.data.broader_ids is not iterable'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    refreshMemory (<PRODUCT_CHECKOUT>\src\core\memory.ts:354:30)
+    Lifecycle.apply (<PRODUCT_CHECKOUT>\src\core\lifecycle.ts:390:7)
+    Core.applyStorage (<PRODUCT_CHECKOUT>\src\core\index.ts:1245:7)
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:27:152)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: E3 control exact Method dependency pinned by open Work survives current Method revision; releasing obligation does not pin all history
+not ok 3 - E3 control exact Method dependency pinned by open Work survives current Method revision; releasing obligation does not pin all history
+  ---
+  duration_ms: 662.6345
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:4094'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'DEPENDENCY_UNSATISFIED'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:33:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: E3 control exact historical Knowledge grounds remain pinned by open Work after current correction
+not ok 4 - E3 control exact historical Knowledge grounds remain pinned by open Work after current correction
+  ---
+  duration_ms: 969.6725
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:5429'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'DEPENDENCY_UNSATISFIED'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:41:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: E3 control hidden primary guessed missing revision is indistinguishable from nonexistent ID
+not ok 5 - E3 control hidden primary guessed missing revision is indistinguishable from nonexistent ID
+  ---
+  duration_ms: 248.6487
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:6454'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'CONTENT_NOT_RETAINED'
+    - 'REFERENCE_NOT_FOUND'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFERENCE_NOT_FOUND'
+  actual: 'CONTENT_NOT_RETAINED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:45:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: E3 control stable lease survives SQLite close; a real interleaving writer cannot commit unpreviewed data
+not ok 6 - E3 control stable lease survives SQLite close; a real interleaving writer cannot commit unpreviewed data
+  ---
+  duration_ms: 437.9173
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:7096'
+  failureType: 'testCodeFailure'
+  error: |-
+    A legitimate writer must remain blocked across the connection-close/pointer gap
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:52:83)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 0
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4253.4439

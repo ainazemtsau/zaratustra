@@ -1,0 +1,28 @@
+(node:53452) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Нашёл в журнале попытку `generation-check-file-02` со статусом `unknown` после обрыва процесса.\n\nПроверка фактического файла:\n- `output/generation-check.txt` — ровно 29 байт: `Generation check: confirmed.` и один LF, без BOM. Постусловие подтверждено; попытка теперь имеет статус `confirmed`.\n- `output/observatory-report.txt` — ровно 43 байта: `Observatory: optics checked; result ready.` и один LF; соответствует ожидаемому выводу.\n\n**Неизвестно:** кто записал файлы и завершился ли прежний вызов `write` успешно. Совпадение байтов этого не доказывает.\n\nПовторных записей не выполнял. Работы не закрывал; для восстановленной Observatory Report остаются ограничения сверки всей работы и шага `verify-bytes`. Старые указания «записать файл» нельзя воспринимать как разрешение повторить запись.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 16,
+    "requests": 119,
+    "input": 6103970,
+    "output": 12953,
+    "cache_read": 4665600,
+    "estimated_usd": 3.47283,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 119
+  }
+}

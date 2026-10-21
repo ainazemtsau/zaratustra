@@ -1,0 +1,3 @@
+(node:48880) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Confirmed restored receipt remains historical; changed output detected; repeat and false satisfaction refused; zero provider dispatch

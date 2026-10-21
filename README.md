@@ -22,7 +22,9 @@ Every restored Work requires current-world reconciliation before effectful conti
 including when the backup predates all action receipts. Archive is not deletion;
 external backups, exports and Pi transcripts remain separate copies.
 
-Current E3 design: [E3](docs/E3-DESIGN.md). Accepted E2 evidence is preserved in
+E3 design and scoped executor evidence: [design](docs/E3-DESIGN.md),
+[validation](docs/E3-VALIDATION.md), [reproduce](docs/E3-REPRODUCE.md),
+[actual chat demo](docs/E3-HUMAN-DEMO.md). Accepted E2 evidence is preserved in
 [E2 validation](docs/E2-VALIDATION-094c0df4.md).
 Accepted D evidence remains [here](docs/D-VALIDATION.md). Accepted C predecessor
 and remaining release obligations: [R1 status](docs/R1-STATUS.md).

@@ -1,0 +1,5 @@
+{
+  "test_sha256": "05cc5d866648521a802fccd97789a5926e6728b81635a353f29caa833d38ab7d",
+  "log": "restricted-storage-scope-red-02.log",
+  "purpose": "Activity prefix forces docid displacement ahead of public Entity rows on full rebuild"
+}

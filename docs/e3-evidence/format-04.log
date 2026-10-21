@@ -1,0 +1,28 @@
+src/core/AGENTS.md 17ms (unchanged)
+src/core/approval.ts 66ms (unchanged)
+src/core/contracts.ts 77ms (unchanged)
+src/core/effects.ts 21ms (unchanged)
+src/core/experience.ts 45ms (unchanged)
+src/core/index.ts 192ms (unchanged)
+src/core/lifecycle.ts 19ms
+src/core/memory.ts 52ms (unchanged)
+src/core/work.ts 12ms (unchanged)
+src/extension/administration.ts 10ms (unchanged)
+src/extension/AGENTS.md 2ms (unchanged)
+src/extension/authority.ts 2ms (unchanged)
+src/extension/index.ts 55ms (unchanged)
+src/extension/managed.ts 5ms (unchanged)
+src/extension/preview.ts 13ms (unchanged)
+src/storage/administration.ts 39ms
+src/storage/AGENTS.md 2ms (unchanged)
+src/storage/control.ts 5ms (unchanged)
+src/storage/extract.ts 3ms (unchanged)
+src/storage/index.ts 41ms (unchanged)
+src/storage/output.ts 5ms (unchanged)
+src/storage/parser-worker.mjs 31ms (unchanged)
+tests/lifecycle.test.ts 51ms
+tests/materials.test.ts 15ms
+instructions/bootstrap.md 26ms
+docs/DEVELOPMENT.md 6ms
+docs/E3-DESIGN.md 8ms
+RESULT.md 2ms

@@ -1,0 +1,42 @@
+TAP version 13
+# (node:80712) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 control deleting an exported Method redacts managed payload copies while preserving receipt identity and disclosing external coverage
+not ok 1 - E3 control deleting an exported Method redacts managed payload copies while preserving receipt identity and disclosing external coverage
+  ---
+  duration_ms: 1507.3246
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:14367'
+  failureType: 'testCodeFailure'
+  error: |-
+    [
+      {
+        "code": "unrecognized_keys",
+        "keys": [
+          "text"
+        ],
+        "path": [],
+        "message": "Unrecognized key: \"text\""
+      }
+    ]
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Memory.search (<PRODUCT_CHECKOUT>\src\core\memory.ts:933:28)
+    <anonymous> (<PRODUCT_CHECKOUT>\src\core\index.ts:846:33)
+    Core.retrieval (<PRODUCT_CHECKOUT>\src\core\index.ts:834:22)
+    Core.search (<PRODUCT_CHECKOUT>\src\core\index.ts:845:17)
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:708:38)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1840.4125

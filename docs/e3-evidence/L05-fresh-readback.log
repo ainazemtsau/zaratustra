@@ -1,0 +1,28 @@
+(node:53008) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Адресная сверка `write-report` сохранена после native-подтверждения тестового controller.\n\nФайл уже соответствует требуемым 43 байтам; я его не переписывал. Автор прежней записи неизвестен, проверка оптики не подтверждена.\n\nРабота остаётся открытой. Барьеры всей работы и `verify-bytes` сохранены для следующей проверки.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 5,
+    "requests": 37,
+    "input": 1894036,
+    "output": 4169,
+    "cache_read": 1447296,
+    "estimated_usd": 1.0798995999999998,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 37
+  }
+}

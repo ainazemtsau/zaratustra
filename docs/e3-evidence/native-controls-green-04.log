@@ -1,0 +1,35 @@
+(node:57232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "checks": [
+    {
+      "name": "recipient denial survives guessed restore/reopen healthy",
+      "passed": true
+    },
+    {
+      "name": "recipient denial survives guessed restore/reopen unavailable",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write healthy",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write unavailable",
+      "passed": true
+    },
+    {
+      "name": "pending native decision cannot survive recipient denial or permit concurrent restore",
+      "passed": true
+    },
+    {
+      "name": "pending actual PDF import blocks restore until settlement false",
+      "passed": true
+    },
+    {
+      "name": "pending actual PDF import blocks restore until settlement true",
+      "passed": true
+    }
+  ],
+  "provider_dispatches": 0
+}

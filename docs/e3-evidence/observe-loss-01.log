@@ -1,0 +1,3 @@
+{"mode":"loss","active_database":"<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\zara.sqlite","real_bytes":true,"requested_attempt":"observatory-write-20261021-2","current_missing":true}
+(node:83468) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

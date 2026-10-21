@@ -1,0 +1,14 @@
+{
+  "phase": "unpublished scoped-index correction before generic technical-key extension",
+  "red_log": "all-depth-technical-keys-red-01.log",
+  "entries": [
+    {
+      "path": "src/core/memory.ts",
+      "sha256": "ba0becc954bb216070b62e089dcd85f57da7b3baec103c4174e201c4482c9e56"
+    },
+    {
+      "path": "tests/lifecycle-controls.test.ts",
+      "sha256": "0b0b3e8654aff0bf149be738088c4efbbb0a231e8e5628945e10665e993057ef"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+
+> zaratustra@0.4.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.4.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+[warn] AGENTS.md
+[warn] src/storage/administration.ts
+[warn] Code style issues found in 2 files. Run Prettier with --write to fix.

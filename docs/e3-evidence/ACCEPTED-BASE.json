@@ -1,0 +1,55 @@
+{
+  "sha": "094c0df4ef893a0668ee87dcff92e5abbad3514d",
+  "copies": [
+    {
+      "source": "RESULT.md",
+      "copy": "docs\\E2-RESULT-094c0df4.md",
+      "sha256": "02e75ccdbca749513588c8338d63bf781db144b968739df77ad8c3c3c5dee6e3"
+    },
+    {
+      "source": "AGENTS.md",
+      "copy": "docs\\E2-AGENTS-094c0df4.md",
+      "sha256": "aa6c18e2e7a52c672d147ae2ef0d0dfac021719152765d7841ba1399866dd6ae"
+    },
+    {
+      "source": "docs/DEVELOPMENT.md",
+      "copy": "docs\\E2-DEVELOPMENT-094c0df4.md",
+      "sha256": "197aed41492fc65d30781bfd0fbd620d755e1b82cde39d4734bf18fa83a478da"
+    },
+    {
+      "source": "docs/R1-STATUS.md",
+      "copy": "docs\\E2-R1-STATUS-094c0df4.md",
+      "sha256": "6f057cba58bbfef5b61d1481edf7af9e927092e62331d45751bd7d45d20ecab8"
+    },
+    {
+      "source": "docs/E2-DESIGN.md",
+      "copy": "docs\\E2-DESIGN-094c0df4.md",
+      "sha256": "9094924d44bad0f3313fa65016a9251808109eff4bc02ae69d2400e3976ad82c"
+    },
+    {
+      "source": "docs/E2-BATCH-FIX.md",
+      "copy": "docs\\E2-BATCH-FIX-094c0df4.md",
+      "sha256": "f2f7daf5da143ae7d1d3b512dd2a90a80f61af6e67b89bb3136acacd18d6f37e"
+    },
+    {
+      "source": "docs/E2-VALIDATION.md",
+      "copy": "docs\\E2-VALIDATION-094c0df4.md",
+      "sha256": "485871b2f0b30b34a2e04e2270cba381e1b49b7fdcc2cca0857964b15e64296e"
+    },
+    {
+      "source": "docs/E2-REPRODUCE.md",
+      "copy": "docs\\E2-REPRODUCE-094c0df4.md",
+      "sha256": "4028c6b4f9c9120a3ccc06fe91e22f75c49ca8c5c12c8e6c7811ff31b69ba03b"
+    },
+    {
+      "source": "docs/E2-ATTEMPTS.md",
+      "copy": "docs\\E2-ATTEMPTS-094c0df4.md",
+      "sha256": "4493c97c3dfc3b43fd868b8119b4650a47d2e3721c8274ae17941ea2b47e243c"
+    },
+    {
+      "source": "docs/E2-HUMAN-DEMO.md",
+      "copy": "docs\\E2-HUMAN-DEMO-094c0df4.md",
+      "sha256": "3e5fbb02b7c6b344499e0f848800372fb31aea8bcceb24b263f8ab92d9e3bc68"
+    }
+  ]
+}

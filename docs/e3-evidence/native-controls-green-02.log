@@ -1,0 +1,39 @@
+(node:74640) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "checks": [
+    {
+      "name": "recipient denial survives guessed restore/reopen healthy",
+      "passed": true
+    },
+    {
+      "name": "recipient denial survives guessed restore/reopen unavailable",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write healthy",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write unavailable",
+      "passed": true
+    },
+    {
+      "name": "pending native decision cannot survive recipient denial or permit concurrent restore",
+      "passed": true
+    },
+    {
+      "name": "pending actual import blocks restore until settlement false",
+      "passed": false,
+      "error": "Error: Actual import delay was not reached",
+      "stack": "Error: Actual import delay was not reached\n    at Timeout.<anonymous> (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:216:136)\n    at listOnTimeout (node:internal/timers:588:17)\n    at process.processTimers (node:internal/timers:523:7)"
+    },
+    {
+      "name": "pending actual import blocks restore until settlement true",
+      "passed": false,
+      "error": "Error: Actual import delay was not reached",
+      "stack": "Error: Actual import delay was not reached\n    at Timeout.<anonymous> (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:216:136)\n    at listOnTimeout (node:internal/timers:588:17)\n    at process.processTimers (node:internal/timers:523:7)"
+    }
+  ],
+  "provider_dispatches": 0
+}

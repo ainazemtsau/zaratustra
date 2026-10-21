@@ -1,0 +1,28 @@
+(node:60904) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Сверка работы целиком сохранена после native-подтверждения.\n\n- `output/observatory-report.txt`: ровно 43 ожидаемых UTF-8 байта, один LF, без BOM и лишних данных.\n- Это подтверждает текущее содержимое, но не автора, время или исполнение в потерянный период.\n- Файл не переписывался, возможное действие не повторялось.\n- Работа остаётся открытой. Снят только общий барьер восстановления; отдельный барьер `verify-bytes` и остальные ограничения сохранены.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 19,
+    "requests": 139,
+    "input": 7155782,
+    "output": 15236,
+    "cache_read": 5433728,
+    "estimated_usd": 4.139840799999998,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 139
+  }
+}

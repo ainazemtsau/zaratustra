@@ -1,0 +1,63 @@
+{
+  "schema": 6,
+  "source_closed": true,
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\filled-spine-checkout-01\\closed-predecessor-copy\\generations\\abe506ca-d552-425a-9f4c-eabe37327976\\zara.sqlite",
+  "backup": {
+    "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\filled-spine-checkout-01\\backups\\backup-919556a5-4abf-4479-b17d-1b962676f51a",
+    "identity": "91202bf598b22f31f52e992aae3f63f60bc4b987f159a8563835238657938ecb",
+    "complete": true,
+    "captured_seq": 8,
+    "export": "export.json",
+    "live_pin": null,
+    "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+  },
+  "manifest": {
+    "format": "zaratustra.bundle.v1",
+    "schema": 6,
+    "workspace_id": "238af799-0e19-4534-8c90-5e2b70b5bd2a",
+    "captured_epoch": "8b793cb3-06ad-4fce-ad34-ff19dfcac279",
+    "captured_seq": 8,
+    "captured_at": "2026-10-21T05:38:47.296Z",
+    "complete": true,
+    "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+    "components": [
+      {
+        "path": "database.sqlite",
+        "length": 335872,
+        "sha256": "787ad6df66b5ece8d985af132e5129a3f734a9dd53e68ce9870fcdcfdf98bdbc"
+      },
+      {
+        "path": "export.json",
+        "length": 59734,
+        "sha256": "92671776da676ed6a5435aa007839ac27092636750be5cf03b37a279ea7d0ee8"
+      },
+      {
+        "path": "materials/a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27",
+        "length": 15060,
+        "sha256": "a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27"
+      }
+    ]
+  },
+  "canonical_support_history_receipts_claims_handoffs_exact": true,
+  "old_epoch": "8b793cb3-06ad-4fce-ad34-ff19dfcac279",
+  "new_epoch": "6f1260ef-4e46-4134-87c6-7818eacd6059",
+  "table_counts": {
+    "records": 9,
+    "revisions": 12,
+    "changes": 8,
+    "intents": 8,
+    "receipts": 8,
+    "claims": 2,
+    "handoffs": 1,
+    "relations": 0,
+    "relation_history": 0,
+    "experience_rows": 3,
+    "experience_versions": 3
+  },
+  "recovery": [
+    {
+      "work_id": "work-fde8bcb5-9d62-49eb-a5a4-ef45d8b00b03",
+      "step_id": null
+    }
+  ]
+}

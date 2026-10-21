@@ -1,0 +1,58 @@
+{
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\confirmed-receipt-installed-code4-01\\home\\generations\\cfed561c-eb62-4be8-aed1-4df6a5ceec9d\\zara.sqlite",
+  "actual_native_result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Successfully wrote to <SYNTHETIC_EVIDENCE_ROOT>\\confirmed-receipt-installed-code4-01\\output\\known.txt"
+      }
+    ]
+  },
+  "restored_receipt": {
+    "operation_id": "known-confirmed",
+    "request_id": "known-confirmed",
+    "state": "confirmed",
+    "postcondition_observed": true,
+    "writer_attribution": "unknown",
+    "native_call_id": "real-native-call",
+    "tool_error": false,
+    "last_observation": {
+      "hash": "e27a29c8d8963c9fafb6e723bf9c50d0db0d43aca1386ca1dacf2e5785a9f1ec",
+      "byte_length": 23,
+      "boundary": {
+        "root": "<SYNTHETIC_EVIDENCE_ROOT>\\confirmed-receipt-installed-code4-01\\output",
+        "root_identity": "2896187235:844424938742011",
+        "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\confirmed-receipt-installed-code4-01\\output",
+        "parent_identity": "2896187235:844424938742011",
+        "file_identity": "2896187235:281474985320720"
+      },
+      "native_result": {
+        "id": "real-native-call",
+        "runtime_id": "native-M",
+        "is_error": false
+      },
+      "observed_at": "2026-10-21T07:36:33.625Z"
+    },
+    "epoch": "352535d7-3128-4209-ae28-6562fdcbb4ac",
+    "receipt_id": "effect-receipt-58dfe6d6-0a99-4a83-9508-64a334eb1fbb"
+  },
+  "current_observation": {
+    "hash": "83fbe59273980ae1a70ad3b3cb43dc627a46952714693d22951c8f6ed2fc757a",
+    "byte_length": 32,
+    "boundary": {
+      "root": "<SYNTHETIC_EVIDENCE_ROOT>\\confirmed-receipt-installed-code4-01\\output",
+      "root_identity": "2896187235:844424938742011",
+      "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\confirmed-receipt-installed-code4-01\\output",
+      "parent_identity": "2896187235:844424938742011",
+      "file_identity": "2896187235:281474985320720"
+    },
+    "native_result": null,
+    "observed_at": "2026-10-21T07:36:34.121Z",
+    "postcondition_matches": false,
+    "drift_from_confirmed": true
+  },
+  "old_receipt_preserved": true,
+  "repeat_barred": true,
+  "mismatched_current_state_not_satisfied": true,
+  "provider_dispatches": 0
+}

@@ -1,0 +1,14 @@
+{
+  "core_runtime_exact01a111fd": true,
+  "red_log": "new-step-barrier-red-01.log",
+  "entries": [
+    {
+      "path": "src/core/index.ts",
+      "sha256": "22fa6c7ded6fb4bd4112aaee7dfaa9b028030219124e7940f9f441dbbe5be1d6"
+    },
+    {
+      "path": "tests/lifecycle.test.ts",
+      "sha256": "2289b0ec2d22523091ef8aba4c27c1013f55fb00957e78035d9e20491c211213"
+    }
+  ]
+}

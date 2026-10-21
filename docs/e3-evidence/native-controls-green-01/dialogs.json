@@ -1,0 +1,72 @@
+[
+  {
+    "profile": "protected-recipient-false",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/gpt-6.1-sol-unexplained-fixture. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-recipient-false",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/gpt-6.1-sol. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/gpt-6.1-sol-unexplained-fixture. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/gpt-6.1-sol. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-flight-false",
+    "title": "Confirm these exact changes?",
+    "message": "Write synthetic delayed report\n\nAlternatives: Keep absent\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-false\\output\\late-report.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\nActual public native write completes only after the controlled gate.\n\nIndependent action: New independent isolated fixture action\n\n\nExpires: 2026-10-21T05:18:56.191Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-flight-false",
+    "title": "Confirm these exact changes?",
+    "message": "Restore snapshot; external action must first settle\n\nAlternatives: Keep current\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-false\\backups\\backup-c1be4d8e-3002-420a-8e71-65d2253b444e\nCaptured sequence: 0.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-false\\home\\generations\\559415ab-0278-47f6-8ccc-60f2e3f23726\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T05:18:56.402Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-flight-false",
+    "title": "Confirm these exact changes?",
+    "message": "Native action has settled; restore earlier DB while preserving real output\n\nAlternatives: Keep current\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-false\\backups\\backup-c1be4d8e-3002-420a-8e71-65d2253b444e\nCaptured sequence: 0.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-false\\home\\generations\\6032b527-bd00-46ca-93b0-864313f64798\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T05:18:56.697Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-flight-true",
+    "title": "Confirm these exact changes?",
+    "message": "Write synthetic delayed report\n\nAlternatives: Keep absent\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-true\\output\\late-report.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\nActual public native write completes only after the controlled gate.\n\nIndependent action: New independent isolated fixture action\n\n\nExpires: 2026-10-21T05:18:57.366Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-flight-true",
+    "title": "Confirm these exact changes?",
+    "message": "Restore snapshot; external action must first settle\n\nAlternatives: Keep current\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-true\\backups\\backup-c3fca1a1-962e-4f0b-99e8-672b7c86cff1\nCaptured sequence: 0.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-true\\home\\generations\\6666cfe9-1446-48b3-bc31-003dc8cab7ad\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T05:18:57.907Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  },
+  {
+    "profile": "protected-flight-true",
+    "title": "Confirm these exact changes?",
+    "message": "Native action has settled; restore earlier DB while preserving real output\n\nAlternatives: Keep current\n\nRestore backup: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-true\\backups\\backup-c3fca1a1-962e-4f0b-99e8-672b7c86cff1\nCaptured sequence: 0.\nVerified destination: <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-green-01\\protected-flight-true\\home\\generations\\adc887f7-1239-4a35-a8e5-c01490e0a88b\nCoverage: full current and retained historical/deleted metadata; historical authority is not runnable\nLoss/switch consequences: All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\nOriginal generation remains retained; restored authority does not revive.\n\nExpires: 2026-10-21T05:18:58.037Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "answer": true,
+    "principal": "predeclared isolated synthetic controller, not owner"
+  }
+]

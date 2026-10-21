@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "name": "recipient denial survives guessed restore/reopen healthy",
+      "passed": true
+    },
+    {
+      "name": "recipient denial survives guessed restore/reopen unavailable",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write healthy",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write unavailable",
+      "passed": true
+    }
+  ],
+  "provider_dispatches": 0,
+  "mechanical_only": true
+}

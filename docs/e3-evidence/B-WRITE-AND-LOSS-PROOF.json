@@ -1,0 +1,91 @@
+{
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\zara.sqlite",
+  "target": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output\\observatory-report.txt",
+  "length": 43,
+  "sha256": "7dcfe90e6eca37d77b1a57bd003c258b7214dba2412e9bd13a5158c668ab68ee",
+  "attempt": {
+    "request_id": "observatory-write-20261021-2",
+    "kind": "managed_file",
+    "status": "requested",
+    "operation_digest": "3da886a5241e7e063a14e653e8f61517d9d3564c9ff86d03ef29bdea733558e7",
+    "payload": {
+      "request_id": "observatory-write-20261021-2",
+      "tool": "write",
+      "arguments": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output\\observatory-report.txt",
+        "content": "Observatory: optics checked; result ready.\n"
+      },
+      "target": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output\\observatory-report.txt",
+      "boundary": {
+        "root": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output",
+        "root_identity": "2896187235:281474985168286",
+        "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output",
+        "parent_identity": "2896187235:281474985168286",
+        "file_identity": null
+      },
+      "before_hash": null,
+      "before_length": 0,
+      "final_hash": "7dcfe90e6eca37d77b1a57bd003c258b7214dba2412e9bd13a5158c668ab68ee",
+      "final_length": 43,
+      "final_text": "Observatory: optics checked; result ready.\n",
+      "work_ref": {
+        "id": "work-4c5fa0e3-1106-436d-937e-5c4bbbbf4287",
+        "revision": 2
+      },
+      "step_id": "write-report",
+      "independent_basis": null,
+      "material_guards": [
+        {
+          "ref": {
+            "id": "evidence-be386c88-9bf9-4055-adad-7184e6f30cc0"
+          },
+          "expected_revision": 1
+        }
+      ],
+      "work_snapshot": {
+        "title": "Observatory report",
+        "objective": "Write observatory-report.txt in the designated managed output folder with exactly the UTF-8 bytes of \"Observatory: optics checked; result ready.\\n\", then verify the actual bytes.",
+        "plan_version": 1,
+        "step_intent": "After separate exact native confirmation, write the expected report bytes to the designated output path."
+      },
+      "method_export": null,
+      "retry_of": null,
+      "retry_risk": null
+    },
+    "epoch": "7eff0136-2785-4e19-acc9-0b6f4d8eea3c",
+    "preview_ref": "preview-fdb9da4c-b469-45e3-954c-485d5275a551",
+    "tool_call_id": "call_3fe4bb35a040487aa8d4294939d9ec7e|fc_07de7fcfc3face2b016ad855d98f5481918a48e3cf73fa8ff3",
+    "runtime_id": "203b9eea-9561-4c2f-9e80-361ddb33b5d0",
+    "observations": [],
+    "receipt": null,
+    "receipt_history": []
+  },
+  "actual_world_bytes": true,
+  "retained_loss": [
+    {
+      "source": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\zara.sqlite",
+      "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\lost-current-after-B\\zara.sqlite",
+      "length": 290816,
+      "sha256": "7552f777e5b2bdea6b648701ef110bbe594cbd15b0aaa41011272585a77d45dc",
+      "dev": "2896187235",
+      "ino": "281474985197073"
+    },
+    {
+      "source": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\zara.sqlite-wal",
+      "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\lost-current-after-B\\zara.sqlite-wal",
+      "length": 276072,
+      "sha256": "82b0a68832545273948be9ca3da0ac0f7c76bd6db5cd3ba0d343ecc36175dabd",
+      "dev": "2896187235",
+      "ino": "1125899915318270"
+    },
+    {
+      "source": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\zara.sqlite-shm",
+      "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\lost-current-after-B\\zara.sqlite-shm",
+      "length": 32768,
+      "sha256": "d7bcc2c9d185ea7133df7b1aa455e9f8a05a0b42d8b12ed16c21572bfc380f00",
+      "dev": "2896187235",
+      "ino": "1970324845462245"
+    }
+  ],
+  "current_database_missing": true
+}

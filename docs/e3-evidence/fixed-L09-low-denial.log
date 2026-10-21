@@ -1,0 +1,28 @@
+(node:85152) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Полная резервная копия не создана: штатный `zara_backup` вернул `PERMISSION_DENIED`.\n\nДля полного копирования заранее должен быть настроен доступ на чтение всей памяти (`full-read`). Текущих прав недостаточно; подтверждение в диалоге их не расширяет. Настройки прав не менял, файловые обходы не использовал.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 18,
+    "requests": 132,
+    "input": 6773721,
+    "output": 14110,
+    "cache_read": 5162624,
+    "estimated_usd": 3.8795563999999993,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 132
+  }
+}

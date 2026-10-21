@@ -1,0 +1,28 @@
+(node:43556) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Восстановление выполнено: активна проверенная копия от 21 октября 2026, 06:02:16 UTC, включена новая эпоха управления.\n\nВнешние файлы не изменены. Работа не продолжалась; перед её продолжением обязательна сверка текущего состояния, даже при отсутствии квитанций.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 4,
+    "requests": 30,
+    "input": 1515481,
+    "output": 3258,
+    "cache_read": 1176960,
+    "estimated_usd": 0.8273179999999999,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 30
+  }
+}

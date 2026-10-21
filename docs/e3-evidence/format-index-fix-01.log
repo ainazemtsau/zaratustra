@@ -1,0 +1,6 @@
+src/storage/index.ts 130ms (unchanged)
+src/storage/indexes.ts 7ms
+src/storage/administration.ts 80ms
+src/extension/administration.ts 12ms
+src/extension/preview.ts 27ms (unchanged)
+tests/lifecycle.test.ts 71ms

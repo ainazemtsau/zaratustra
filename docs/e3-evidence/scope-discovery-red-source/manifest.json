@@ -1,0 +1,17 @@
+[
+  {
+    "path": "src/core/lifecycle.ts",
+    "sha256": "7aa6fecce81f4d05f676976050c8f308c3687ddf0fa278ac0f4adb0b0da8b7bc",
+    "length": 18302
+  },
+  {
+    "path": "src/storage/administration.ts",
+    "sha256": "a802395218c17c2881942613ed2e7e76cfb267ddf51aeb6670b51d992daca6bd",
+    "length": 32961
+  },
+  {
+    "path": "tests/lifecycle-controls.test.ts",
+    "sha256": "b65b60d7737ffe5e037f41a120c335e0a3ad1bf79ff90827acaee95887614764",
+    "length": 13412
+  }
+]

@@ -1,0 +1,24 @@
+src/core/AGENTS.md 21ms (unchanged)
+src/core/approval.ts 91ms
+src/core/contracts.ts 101ms
+src/core/effects.ts 27ms (unchanged)
+src/core/experience.ts 57ms
+src/core/index.ts 250ms
+src/core/lifecycle.ts 20ms
+src/core/memory.ts 64ms
+src/core/work.ts 19ms
+src/extension/administration.ts 15ms
+src/extension/AGENTS.md 3ms (unchanged)
+src/extension/authority.ts 2ms (unchanged)
+src/extension/index.ts 58ms
+src/extension/managed.ts 5ms (unchanged)
+src/extension/preview.ts 15ms
+src/storage/administration.ts 41ms
+src/storage/AGENTS.md 2ms
+src/storage/control.ts 6ms
+src/storage/extract.ts 3ms (unchanged)
+src/storage/index.ts 50ms
+src/storage/output.ts 6ms (unchanged)
+src/storage/parser-worker.mjs 37ms (unchanged)
+tests/lifecycle.test.ts 39ms
+scripts/live.mjs 17ms

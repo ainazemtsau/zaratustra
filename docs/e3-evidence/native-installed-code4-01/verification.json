@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "Fixed low-scope negative before source/bundle inspection; no escalation",
+    "A-before-intent/B-real-native-write/lost-current-DB/quarantine switch/no-receipt barrier/actual readback/named decision; one native write only",
+    "Agent-accessible native exact restore with genuinely corrupt current DB; prior generation retained"
+  ],
+  "provider_dispatches": 0,
+  "mechanical_only": true
+}

@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@de96b982b8d5348563fa3318de27144f32dd0b4c...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            de96b982b8d5348563fa3318de27144f32dd0b4c -> FETCH_HEAD
+HEAD is now at de96b98 Preserve scoped lifecycle cursors and classify legacy technical ID maps
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@de96b982b8d5348563fa3318de27144f32dd0b4c

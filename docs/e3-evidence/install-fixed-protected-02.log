@@ -1,0 +1,13 @@
+Installing git:github.com/ainazemtsau/zaratustra@b93f5ca6fd6fd576009d0744e71439bd4dac670f...
+From https://github.com/ainazemtsau/zaratustra
+ * branch            b93f5ca6fd6fd576009d0744e71439bd4dac670f -> FETCH_HEAD
+HEAD is now at b93f5ca Verify restore index readiness and inherit reconciliation for dependent new IDs
+Removing node_modules/
+
+added 12 packages, and audited 13 packages in 2s
+
+9 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Installed git:github.com/ainazemtsau/zaratustra@b93f5ca6fd6fd576009d0744e71439bd4dac670f

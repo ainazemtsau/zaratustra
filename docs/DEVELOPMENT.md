@@ -27,6 +27,6 @@ use separate external agent/home/cwd/output/backup roots. The registered control
 approve only those fixtures; it never supplies owner testimony or T31. No escalation
 inside a refused history. Existing E2/reviewer/raw evidence and Direction OS remain frozen.
 
-Current E3 implementation/qualification is in progress. See E3-VALIDATION/REPRODUCE/ATTEMPTS
-for executed version-attributed results at handback. Known braces dev advisory and two
+E3 is implemented and executor-qualified on de96b982 in the declared profile. See E3-VALIDATION/REPRODUCE/ATTEMPTS
+for actual version-attributed results and limits; independent exact final qualification/acceptance stays with root. Known braces dev advisory and two
 Windows controls remain separate. next: solmax.

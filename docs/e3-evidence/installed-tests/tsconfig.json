@@ -1,0 +1,11 @@
+{
+  "extends": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\agent\\git\\github.com\\ainazemtsau\\zaratustra\\tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "<SYNTHETIC_EVIDENCE_ROOT>\\installed-tests",
+    "paths": {
+      "@earendil-works/pi-coding-agent": [
+        "<USER_HOME>/AppData/Roaming/npm/node_modules/@earendil-works/pi-coding-agent/dist/index.js"
+      ]
+    }
+  }
+}

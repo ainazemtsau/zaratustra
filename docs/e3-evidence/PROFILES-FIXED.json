@@ -1,0 +1,26 @@
+{
+  "profiles": {
+    "protected": {
+      "agent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\agent",
+      "home": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\home",
+      "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\cwd",
+      "output": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\output",
+      "backups": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\backups",
+      "scopes": [
+        "restricted:read",
+        "restricted:write"
+      ]
+    },
+    "low": {
+      "agent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-low\\agent",
+      "home": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-low\\home",
+      "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-low\\cwd",
+      "output": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-low\\output",
+      "backups": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-low\\backups",
+      "scopes": []
+    }
+  },
+  "reason": "narrow independent access correction; connected affected L repeats",
+  "ledger": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "principal": "same predeclared isolated fixture controller, never owner/T31"
+}

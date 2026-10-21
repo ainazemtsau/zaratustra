@@ -1,0 +1,30 @@
+TAP version 13
+# (node:19492) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 disk a new step ID in restored Work inherits the unreconciled Work barrier; genuinely independent new Work remains allowed
+not ok 1 - E3 disk a new step ID in restored Work inherits the unreconciled Work barrier; genuinely independent new Work remains allowed
+  ---
+  duration_ms: 2319.1333
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle.test.ts:1:29184'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected exception.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    code: 'RESTORE_RECONCILIATION_REQUIRED'
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle.test.ts:1149:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2694.2212

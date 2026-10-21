@@ -1,0 +1,2239 @@
+[
+  {
+    "profile": "protected-recipient-false",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-guessed"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_map",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Provider processing authority is unresolved.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Provider processing authority is unresolved.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-false",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backups\":[],\"has_more\":false,\"next_cursor\":null,\"limit\":50,\"generation\":\"90912c5cec3467bd4f344ff6391374b40157011427869eab0353499324bc46ab\",\"applied_filters\":{\"scope\":\"fixed full-read\",\"root\":\"designated backup root\"}}"
+        }
+      ],
+      "details": {
+        "backups": [],
+        "has_more": false,
+        "next_cursor": null,
+        "limit": 50,
+        "generation": "90912c5cec3467bd4f344ff6391374b40157011427869eab0353499324bc46ab",
+        "applied_filters": {
+          "scope": "fixed full-read",
+          "root": "designated backup root"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "notification": "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-guessed"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backups\":[],\"has_more\":false,\"next_cursor\":null,\"limit\":50,\"generation\":\"a49609d97b1453bb554a5f1aab37678f86d537726105731a4e14ced307dd38cb\",\"applied_filters\":{\"scope\":\"fixed full-read\",\"root\":\"designated backup root\"}}"
+        }
+      ],
+      "details": {
+        "backups": [],
+        "has_more": false,
+        "next_cursor": null,
+        "limit": 50,
+        "generation": "a49609d97b1453bb554a5f1aab37678f86d537726105731a4e14ced307dd38cb",
+        "applied_filters": {
+          "scope": "fixed full-read",
+          "root": "designated backup root"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"identity\":\"abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+        "identity": "abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_file_preview",
+    "args": {
+      "request_id": "delayed-native-B",
+      "tool": "write",
+      "arguments": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output\\late-report.txt",
+        "content": "Actual public native write completes only after the controlled gate.\n"
+      },
+      "independent_basis": "New independent isolated fixture action",
+      "consequence": "Write synthetic delayed report",
+      "alternatives": "Keep absent"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-334ac24f-40f5-4150-b9fd-66bb81471314\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"epoch\":\"79fc2677-595c-4bac-8cf1-b89bc8fde35a\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-2779-744b-840f-fc0ceab43dd9\",\"runtime_id\":\"e932c4d8-499c-4713-a106-056bcf2727ea\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\",\"root_identity\":\"2896187235:562949961907301\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\",\"parent_identity\":\"2896187235:562949961907301\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T06:15:40.527Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"7618d4506c985099f49fcd367a60e4fa1be710a5cb0c68a04e6707401acb474d\"}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-334ac24f-40f5-4150-b9fd-66bb81471314",
+        "kind": "preview",
+        "status": "draft",
+        "payload": {
+          "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+          "epoch": "79fc2677-595c-4bac-8cf1-b89bc8fde35a",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-2779-744b-840f-fc0ceab43dd9",
+          "runtime_id": "e932c4d8-499c-4713-a106-056bcf2727ea",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output",
+              "root_identity": "2896187235:562949961907301",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output",
+              "parent_identity": "2896187235:562949961907301",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T06:15:40.527Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "7618d4506c985099f49fcd367a60e4fa1be710a5cb0c68a04e6707401acb474d"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-334ac24f-40f5-4150-b9fd-66bb81471314"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-334ac24f-40f5-4150-b9fd-66bb81471314\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"epoch\":\"79fc2677-595c-4bac-8cf1-b89bc8fde35a\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-2779-744b-840f-fc0ceab43dd9\",\"runtime_id\":\"e932c4d8-499c-4713-a106-056bcf2727ea\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\",\"root_identity\":\"2896187235:562949961907301\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\output\",\"parent_identity\":\"2896187235:562949961907301\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T06:15:40.527Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"7618d4506c985099f49fcd367a60e4fa1be710a5cb0c68a04e6707401acb474d\",\"answer\":{\"source_ref\":\"native-dialog-6a3adb3b-8b9f-4976-a8ca-9887e87a9e5d\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:40.657Z\",\"presentation_digest\":\"7618d4506c985099f49fcd367a60e4fa1be710a5cb0c68a04e6707401acb474d\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-334ac24f-40f5-4150-b9fd-66bb81471314",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+          "epoch": "79fc2677-595c-4bac-8cf1-b89bc8fde35a",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-2779-744b-840f-fc0ceab43dd9",
+          "runtime_id": "e932c4d8-499c-4713-a106-056bcf2727ea",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output",
+              "root_identity": "2896187235:562949961907301",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\output",
+              "parent_identity": "2896187235:562949961907301",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T06:15:40.527Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "7618d4506c985099f49fcd367a60e4fa1be710a5cb0c68a04e6707401acb474d",
+        "answer": {
+          "source_ref": "native-dialog-6a3adb3b-8b9f-4976-a8ca-9887e87a9e5d",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:40.657Z",
+          "presentation_digest": "7618d4506c985099f49fcd367a60e4fa1be710a5cb0c68a04e6707401acb474d",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+      "consequence": "Restore snapshot; external action must first settle",
+      "alternatives": "Keep current"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-06035432-9772-4b54-a969-c6aa1497a13b\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"epoch\":\"79fc2677-595c-4bac-8cf1-b89bc8fde35a\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-2779-744b-840f-fc0ceab43dd9\",\"runtime_id\":\"e932c4d8-499c-4713-a106-056bcf2727ea\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"4c085b3cd98da02145743a339cdfe10038f79cc5104a93635ad9758ac38a0f74\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"2f777c0c1987b48f9272423c1a73b82ce261134ccde86ba1de8a70914f33e800\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"backup_identity\":\"abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\home\\\\generations\\\\b8109dc8-88ac-4c5f-97e3-96ba44af6114\",\"new_epoch\":\"b66dbfd9-7b03-48f9-8493-4e5182857fd9\",\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"captured_seq\":0,\"current_fingerprint\":\"4f6bc74decde6cb47c785dc4ab1b0dddf53f690c954d42f3aa8ab7420d7f8a45\",\"restoration_id\":\"497bcfb9-de28-4275-9bb0-7332bc8f5cda\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:41.048Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"3f1b79de8f7a65505cecf4eeb79535ead9906b8d289ed42d9710a4db622debf0\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\home\\\\generations\\\\b8109dc8-88ac-4c5f-97e3-96ba44af6114\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-06035432-9772-4b54-a969-c6aa1497a13b",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+            "epoch": "79fc2677-595c-4bac-8cf1-b89bc8fde35a",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-2779-744b-840f-fc0ceab43dd9",
+            "runtime_id": "e932c4d8-499c-4713-a106-056bcf2727ea",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "4c085b3cd98da02145743a339cdfe10038f79cc5104a93635ad9758ac38a0f74"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "2f777c0c1987b48f9272423c1a73b82ce261134ccde86ba1de8a70914f33e800"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+              "backup_identity": "abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\home\\generations\\b8109dc8-88ac-4c5f-97e3-96ba44af6114",
+              "new_epoch": "b66dbfd9-7b03-48f9-8493-4e5182857fd9",
+              "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+              "captured_seq": 0,
+              "current_fingerprint": "4f6bc74decde6cb47c785dc4ab1b0dddf53f690c954d42f3aa8ab7420d7f8a45",
+              "restoration_id": "497bcfb9-de28-4275-9bb0-7332bc8f5cda",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore snapshot; external action must first settle",
+            "alternatives": "Keep current",
+            "expires_at": "2026-10-21T06:15:41.048Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "3f1b79de8f7a65505cecf4eeb79535ead9906b8d289ed42d9710a4db622debf0"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\home\\generations\\b8109dc8-88ac-4c5f-97e3-96ba44af6114",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-06035432-9772-4b54-a969-c6aa1497a13b"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-06035432-9772-4b54-a969-c6aa1497a13b\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"epoch\":\"79fc2677-595c-4bac-8cf1-b89bc8fde35a\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-2779-744b-840f-fc0ceab43dd9\",\"runtime_id\":\"e932c4d8-499c-4713-a106-056bcf2727ea\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"4c085b3cd98da02145743a339cdfe10038f79cc5104a93635ad9758ac38a0f74\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"2f777c0c1987b48f9272423c1a73b82ce261134ccde86ba1de8a70914f33e800\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"backup_identity\":\"abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\home\\\\generations\\\\b8109dc8-88ac-4c5f-97e3-96ba44af6114\",\"new_epoch\":\"b66dbfd9-7b03-48f9-8493-4e5182857fd9\",\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"captured_seq\":0,\"current_fingerprint\":\"4f6bc74decde6cb47c785dc4ab1b0dddf53f690c954d42f3aa8ab7420d7f8a45\",\"restoration_id\":\"497bcfb9-de28-4275-9bb0-7332bc8f5cda\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:41.048Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"3f1b79de8f7a65505cecf4eeb79535ead9906b8d289ed42d9710a4db622debf0\",\"answer\":{\"source_ref\":\"native-dialog-fd567d52-ec6e-4dbb-aa0d-d372be389ade\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:41.151Z\",\"presentation_digest\":\"3f1b79de8f7a65505cecf4eeb79535ead9906b8d289ed42d9710a4db622debf0\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-06035432-9772-4b54-a969-c6aa1497a13b",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+          "epoch": "79fc2677-595c-4bac-8cf1-b89bc8fde35a",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-2779-744b-840f-fc0ceab43dd9",
+          "runtime_id": "e932c4d8-499c-4713-a106-056bcf2727ea",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "4c085b3cd98da02145743a339cdfe10038f79cc5104a93635ad9758ac38a0f74"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "2f777c0c1987b48f9272423c1a73b82ce261134ccde86ba1de8a70914f33e800"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+            "backup_identity": "abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\home\\generations\\b8109dc8-88ac-4c5f-97e3-96ba44af6114",
+            "new_epoch": "b66dbfd9-7b03-48f9-8493-4e5182857fd9",
+            "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+            "captured_seq": 0,
+            "current_fingerprint": "4f6bc74decde6cb47c785dc4ab1b0dddf53f690c954d42f3aa8ab7420d7f8a45",
+            "restoration_id": "497bcfb9-de28-4275-9bb0-7332bc8f5cda",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Restore snapshot; external action must first settle",
+          "alternatives": "Keep current",
+          "expires_at": "2026-10-21T06:15:41.048Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "3f1b79de8f7a65505cecf4eeb79535ead9906b8d289ed42d9710a4db622debf0",
+        "answer": {
+          "source_ref": "native-dialog-fd567d52-ec6e-4dbb-aa0d-d372be389ade",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:41.151Z",
+          "presentation_digest": "3f1b79de8f7a65505cecf4eeb79535ead9906b8d289ed42d9710a4db622debf0",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-06035432-9772-4b54-a969-c6aa1497a13b"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"WORK_IN_USE\",\"message\":\"A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "WORK_IN_USE",
+        "message": "A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+      "consequence": "Native action has settled; restore earlier DB while preserving real output",
+      "alternatives": "Keep current"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-93ba381d-2892-4555-890f-c1d753d25032\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"epoch\":\"79fc2677-595c-4bac-8cf1-b89bc8fde35a\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-2779-744b-840f-fc0ceab43dd9\",\"runtime_id\":\"e932c4d8-499c-4713-a106-056bcf2727ea\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"6cdc98885eb012f39a44bb249d7cc5efc4279182d9c7e82f140a901eed35de7f\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"baaaea0bcc99ae27af7526d885459f34a6146be2b4f56a43d6ac0e866f91f7ed\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"backup_identity\":\"abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\home\\\\generations\\\\3f631e54-0140-40f7-ad1b-e838044eaaf4\",\"new_epoch\":\"c026d892-0232-4d48-9dc6-b5b3654d2edf\",\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"captured_seq\":0,\"current_fingerprint\":\"42299b52fa8fb75ee5cfd9656d7ef4af00093c8c855a2fb42cfb480fc27046ed\",\"restoration_id\":\"63f9d05b-0fc0-4e8d-aa36-54f6e2e36b4b\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Native action has settled; restore earlier DB while preserving real output\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:42.483Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"0ba0c619f4e11e948d92837570717ec46d7a8cb7e3abe2c05439b4d840c05bf7\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\home\\\\generations\\\\3f631e54-0140-40f7-ad1b-e838044eaaf4\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-93ba381d-2892-4555-890f-c1d753d25032",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+            "epoch": "79fc2677-595c-4bac-8cf1-b89bc8fde35a",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-2779-744b-840f-fc0ceab43dd9",
+            "runtime_id": "e932c4d8-499c-4713-a106-056bcf2727ea",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "6cdc98885eb012f39a44bb249d7cc5efc4279182d9c7e82f140a901eed35de7f"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "baaaea0bcc99ae27af7526d885459f34a6146be2b4f56a43d6ac0e866f91f7ed"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+              "backup_identity": "abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\home\\generations\\3f631e54-0140-40f7-ad1b-e838044eaaf4",
+              "new_epoch": "c026d892-0232-4d48-9dc6-b5b3654d2edf",
+              "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+              "captured_seq": 0,
+              "current_fingerprint": "42299b52fa8fb75ee5cfd9656d7ef4af00093c8c855a2fb42cfb480fc27046ed",
+              "restoration_id": "63f9d05b-0fc0-4e8d-aa36-54f6e2e36b4b",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Native action has settled; restore earlier DB while preserving real output",
+            "alternatives": "Keep current",
+            "expires_at": "2026-10-21T06:15:42.483Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "0ba0c619f4e11e948d92837570717ec46d7a8cb7e3abe2c05439b4d840c05bf7"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\home\\generations\\3f631e54-0140-40f7-ad1b-e838044eaaf4",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-93ba381d-2892-4555-890f-c1d753d25032"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-93ba381d-2892-4555-890f-c1d753d25032\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"epoch\":\"79fc2677-595c-4bac-8cf1-b89bc8fde35a\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-2779-744b-840f-fc0ceab43dd9\",\"runtime_id\":\"e932c4d8-499c-4713-a106-056bcf2727ea\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"6cdc98885eb012f39a44bb249d7cc5efc4279182d9c7e82f140a901eed35de7f\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"baaaea0bcc99ae27af7526d885459f34a6146be2b4f56a43d6ac0e866f91f7ed\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\backups\\\\backup-fb351502-ca78-4897-877f-d87d57e2eedc\",\"backup_identity\":\"abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-false\\\\home\\\\generations\\\\3f631e54-0140-40f7-ad1b-e838044eaaf4\",\"new_epoch\":\"c026d892-0232-4d48-9dc6-b5b3654d2edf\",\"workspace_id\":\"acaddaa0-8163-4be5-b54b-74cb40412186\",\"captured_seq\":0,\"current_fingerprint\":\"42299b52fa8fb75ee5cfd9656d7ef4af00093c8c855a2fb42cfb480fc27046ed\",\"restoration_id\":\"63f9d05b-0fc0-4e8d-aa36-54f6e2e36b4b\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Native action has settled; restore earlier DB while preserving real output\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:42.483Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"0ba0c619f4e11e948d92837570717ec46d7a8cb7e3abe2c05439b4d840c05bf7\",\"answer\":{\"source_ref\":\"native-dialog-b474beae-5315-4ceb-8c98-b47a87bbfa5a\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:42.584Z\",\"presentation_digest\":\"0ba0c619f4e11e948d92837570717ec46d7a8cb7e3abe2c05439b4d840c05bf7\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-93ba381d-2892-4555-890f-c1d753d25032",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+          "epoch": "79fc2677-595c-4bac-8cf1-b89bc8fde35a",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-2779-744b-840f-fc0ceab43dd9",
+          "runtime_id": "e932c4d8-499c-4713-a106-056bcf2727ea",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "6cdc98885eb012f39a44bb249d7cc5efc4279182d9c7e82f140a901eed35de7f"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "baaaea0bcc99ae27af7526d885459f34a6146be2b4f56a43d6ac0e866f91f7ed"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\backups\\backup-fb351502-ca78-4897-877f-d87d57e2eedc",
+            "backup_identity": "abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-false\\home\\generations\\3f631e54-0140-40f7-ad1b-e838044eaaf4",
+            "new_epoch": "c026d892-0232-4d48-9dc6-b5b3654d2edf",
+            "workspace_id": "acaddaa0-8163-4be5-b54b-74cb40412186",
+            "captured_seq": 0,
+            "current_fingerprint": "42299b52fa8fb75ee5cfd9656d7ef4af00093c8c855a2fb42cfb480fc27046ed",
+            "restoration_id": "63f9d05b-0fc0-4e8d-aa36-54f6e2e36b4b",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Native action has settled; restore earlier DB while preserving real output",
+          "alternatives": "Keep current",
+          "expires_at": "2026-10-21T06:15:42.483Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "0ba0c619f4e11e948d92837570717ec46d7a8cb7e3abe2c05439b4d840c05bf7",
+        "answer": {
+          "source_ref": "native-dialog-b474beae-5315-4ceb-8c98-b47a87bbfa5a",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:42.584Z",
+          "presentation_digest": "0ba0c619f4e11e948d92837570717ec46d7a8cb7e3abe2c05439b4d840c05bf7",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-93ba381d-2892-4555-890f-c1d753d25032"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"switched\":true,\"epoch\":\"c026d892-0232-4d48-9dc6-b5b3654d2edf\",\"backup_identity\":\"abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416\",\"captured_seq\":0,\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"reconciliation_required\":true}"
+        }
+      ],
+      "details": {
+        "switched": true,
+        "epoch": "c026d892-0232-4d48-9dc6-b5b3654d2edf",
+        "backup_identity": "abe2d7b2d97ad072d7c84facd962c4cda869ad7d9fddd277f044ec1394fa5416",
+        "captured_seq": 0,
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+        "reconciliation_required": true
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"identity\":\"4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+        "identity": "4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_file_preview",
+    "args": {
+      "request_id": "delayed-native-B",
+      "tool": "write",
+      "arguments": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output\\late-report.txt",
+        "content": "Actual public native write completes only after the controlled gate.\n"
+      },
+      "independent_basis": "New independent isolated fixture action",
+      "consequence": "Write synthetic delayed report",
+      "alternatives": "Keep absent"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-0df6a435-16f4-41c1-b514-aed4a7b48a8c\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"epoch\":\"e42b9c63-ad24-4bca-815e-75b28d3c4fea\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3432-744b-840f-fc0ece5014a8\",\"runtime_id\":\"cbf31436-2c5e-4bab-a197-6b73ebd5f3fd\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\",\"root_identity\":\"2896187235:562949961907348\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\",\"parent_identity\":\"2896187235:562949961907348\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T06:15:43.845Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"1697112cd7da493cdfae2335e7591e9b02fdc9f564c002583715c4f274f96747\"}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-0df6a435-16f4-41c1-b514-aed4a7b48a8c",
+        "kind": "preview",
+        "status": "draft",
+        "payload": {
+          "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+          "epoch": "e42b9c63-ad24-4bca-815e-75b28d3c4fea",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-3432-744b-840f-fc0ece5014a8",
+          "runtime_id": "cbf31436-2c5e-4bab-a197-6b73ebd5f3fd",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output",
+              "root_identity": "2896187235:562949961907348",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output",
+              "parent_identity": "2896187235:562949961907348",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T06:15:43.845Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "1697112cd7da493cdfae2335e7591e9b02fdc9f564c002583715c4f274f96747"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-0df6a435-16f4-41c1-b514-aed4a7b48a8c"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-0df6a435-16f4-41c1-b514-aed4a7b48a8c\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"epoch\":\"e42b9c63-ad24-4bca-815e-75b28d3c4fea\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3432-744b-840f-fc0ece5014a8\",\"runtime_id\":\"cbf31436-2c5e-4bab-a197-6b73ebd5f3fd\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\",\"root_identity\":\"2896187235:562949961907348\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\output\",\"parent_identity\":\"2896187235:562949961907348\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T06:15:43.845Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"1697112cd7da493cdfae2335e7591e9b02fdc9f564c002583715c4f274f96747\",\"answer\":{\"source_ref\":\"native-dialog-5f25ed3c-6299-4035-9c45-a2644764f28f\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:43.975Z\",\"presentation_digest\":\"1697112cd7da493cdfae2335e7591e9b02fdc9f564c002583715c4f274f96747\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-0df6a435-16f4-41c1-b514-aed4a7b48a8c",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+          "epoch": "e42b9c63-ad24-4bca-815e-75b28d3c4fea",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-3432-744b-840f-fc0ece5014a8",
+          "runtime_id": "cbf31436-2c5e-4bab-a197-6b73ebd5f3fd",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output",
+              "root_identity": "2896187235:562949961907348",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\output",
+              "parent_identity": "2896187235:562949961907348",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T06:15:43.845Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "1697112cd7da493cdfae2335e7591e9b02fdc9f564c002583715c4f274f96747",
+        "answer": {
+          "source_ref": "native-dialog-5f25ed3c-6299-4035-9c45-a2644764f28f",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:43.975Z",
+          "presentation_digest": "1697112cd7da493cdfae2335e7591e9b02fdc9f564c002583715c4f274f96747",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "notification": "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+      "consequence": "Restore snapshot; external action must first settle",
+      "alternatives": "Keep current"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-c2bdce8c-0743-4755-802d-446a32c89c91\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"epoch\":\"e42b9c63-ad24-4bca-815e-75b28d3c4fea\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3432-744b-840f-fc0ece5014a8\",\"runtime_id\":\"cbf31436-2c5e-4bab-a197-6b73ebd5f3fd\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"d4893ec16d04d52c9da16d7aecc9b4e357d8cf1db06588a13ac9e3bfb224a49f\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"42bb13184c5bf18fe340e46f1d06af232f585bbfb2126de4532800d553168de6\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"backup_identity\":\"4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\home\\\\generations\\\\4e99089e-25ed-4a80-b590-cc6c3eee7702\",\"new_epoch\":\"2cbf8acf-cda3-4c62-8570-7d073476f456\",\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"captured_seq\":0,\"current_fingerprint\":\"4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd\",\"restoration_id\":\"08150c31-2f0e-4d76-b035-8a7c39369449\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:44.490Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"74ede3a08ff715d9fe5268731caa2808405ecbf001367698509ea0b5b1e3bb1a\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\home\\\\generations\\\\4e99089e-25ed-4a80-b590-cc6c3eee7702\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-c2bdce8c-0743-4755-802d-446a32c89c91",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+            "epoch": "e42b9c63-ad24-4bca-815e-75b28d3c4fea",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-3432-744b-840f-fc0ece5014a8",
+            "runtime_id": "cbf31436-2c5e-4bab-a197-6b73ebd5f3fd",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "d4893ec16d04d52c9da16d7aecc9b4e357d8cf1db06588a13ac9e3bfb224a49f"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "42bb13184c5bf18fe340e46f1d06af232f585bbfb2126de4532800d553168de6"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+              "backup_identity": "4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\home\\generations\\4e99089e-25ed-4a80-b590-cc6c3eee7702",
+              "new_epoch": "2cbf8acf-cda3-4c62-8570-7d073476f456",
+              "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+              "captured_seq": 0,
+              "current_fingerprint": "4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd",
+              "restoration_id": "08150c31-2f0e-4d76-b035-8a7c39369449",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore snapshot; external action must first settle",
+            "alternatives": "Keep current",
+            "expires_at": "2026-10-21T06:15:44.490Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "74ede3a08ff715d9fe5268731caa2808405ecbf001367698509ea0b5b1e3bb1a"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\home\\generations\\4e99089e-25ed-4a80-b590-cc6c3eee7702",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-c2bdce8c-0743-4755-802d-446a32c89c91"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-c2bdce8c-0743-4755-802d-446a32c89c91\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"epoch\":\"e42b9c63-ad24-4bca-815e-75b28d3c4fea\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3432-744b-840f-fc0ece5014a8\",\"runtime_id\":\"cbf31436-2c5e-4bab-a197-6b73ebd5f3fd\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"d4893ec16d04d52c9da16d7aecc9b4e357d8cf1db06588a13ac9e3bfb224a49f\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"42bb13184c5bf18fe340e46f1d06af232f585bbfb2126de4532800d553168de6\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"backup_identity\":\"4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\home\\\\generations\\\\4e99089e-25ed-4a80-b590-cc6c3eee7702\",\"new_epoch\":\"2cbf8acf-cda3-4c62-8570-7d073476f456\",\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"captured_seq\":0,\"current_fingerprint\":\"4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd\",\"restoration_id\":\"08150c31-2f0e-4d76-b035-8a7c39369449\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:44.490Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"74ede3a08ff715d9fe5268731caa2808405ecbf001367698509ea0b5b1e3bb1a\",\"answer\":{\"source_ref\":\"native-dialog-41591bef-610e-494b-88e1-954bf4730fa9\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:44.561Z\",\"presentation_digest\":\"74ede3a08ff715d9fe5268731caa2808405ecbf001367698509ea0b5b1e3bb1a\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-c2bdce8c-0743-4755-802d-446a32c89c91",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+          "epoch": "e42b9c63-ad24-4bca-815e-75b28d3c4fea",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-3432-744b-840f-fc0ece5014a8",
+          "runtime_id": "cbf31436-2c5e-4bab-a197-6b73ebd5f3fd",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "d4893ec16d04d52c9da16d7aecc9b4e357d8cf1db06588a13ac9e3bfb224a49f"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "42bb13184c5bf18fe340e46f1d06af232f585bbfb2126de4532800d553168de6"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+            "backup_identity": "4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\home\\generations\\4e99089e-25ed-4a80-b590-cc6c3eee7702",
+            "new_epoch": "2cbf8acf-cda3-4c62-8570-7d073476f456",
+            "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+            "captured_seq": 0,
+            "current_fingerprint": "4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd",
+            "restoration_id": "08150c31-2f0e-4d76-b035-8a7c39369449",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Restore snapshot; external action must first settle",
+          "alternatives": "Keep current",
+          "expires_at": "2026-10-21T06:15:44.490Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "74ede3a08ff715d9fe5268731caa2808405ecbf001367698509ea0b5b1e3bb1a",
+        "answer": {
+          "source_ref": "native-dialog-41591bef-610e-494b-88e1-954bf4730fa9",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:44.561Z",
+          "presentation_digest": "74ede3a08ff715d9fe5268731caa2808405ecbf001367698509ea0b5b1e3bb1a",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-c2bdce8c-0743-4755-802d-446a32c89c91"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"WORK_IN_USE\",\"message\":\"A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "WORK_IN_USE",
+        "message": "A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+      "consequence": "Native action has settled; restore earlier DB while preserving real output",
+      "alternatives": "Keep current"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-513a893d-48ec-4686-b09c-ee14ca35f10c\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"epoch\":\"e42b9c63-ad24-4bca-815e-75b28d3c4fea\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3432-744b-840f-fc0ece5014a8\",\"runtime_id\":\"cbf31436-2c5e-4bab-a197-6b73ebd5f3fd\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"54493b6516c75d44ee60038b12c3104d522a1a59d28579a577d63824abf90329\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"798902dff62e6d5cd19ab0d71bfabae04c96c98ffd3cc9b4ce662d60ca837c29\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"backup_identity\":\"4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\home\\\\generations\\\\f4bc8c1b-a20b-4d83-9678-520aecd85212\",\"new_epoch\":\"e64b5014-f2d5-4477-ac08-5386757756d1\",\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"captured_seq\":0,\"current_fingerprint\":\"4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd\",\"restoration_id\":\"17cd8742-d2d5-41fd-bbb1-97e324d3e0ac\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Native action has settled; restore earlier DB while preserving real output\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:44.739Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"15b0be7c6473a9ced2850876d8f62e441b8fc4a86b8b66a4c3e60b5a9c25572b\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\home\\\\generations\\\\f4bc8c1b-a20b-4d83-9678-520aecd85212\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-513a893d-48ec-4686-b09c-ee14ca35f10c",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+            "epoch": "e42b9c63-ad24-4bca-815e-75b28d3c4fea",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-3432-744b-840f-fc0ece5014a8",
+            "runtime_id": "cbf31436-2c5e-4bab-a197-6b73ebd5f3fd",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "54493b6516c75d44ee60038b12c3104d522a1a59d28579a577d63824abf90329"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "798902dff62e6d5cd19ab0d71bfabae04c96c98ffd3cc9b4ce662d60ca837c29"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+              "backup_identity": "4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\home\\generations\\f4bc8c1b-a20b-4d83-9678-520aecd85212",
+              "new_epoch": "e64b5014-f2d5-4477-ac08-5386757756d1",
+              "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+              "captured_seq": 0,
+              "current_fingerprint": "4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd",
+              "restoration_id": "17cd8742-d2d5-41fd-bbb1-97e324d3e0ac",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Native action has settled; restore earlier DB while preserving real output",
+            "alternatives": "Keep current",
+            "expires_at": "2026-10-21T06:15:44.739Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "15b0be7c6473a9ced2850876d8f62e441b8fc4a86b8b66a4c3e60b5a9c25572b"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\home\\generations\\f4bc8c1b-a20b-4d83-9678-520aecd85212",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-513a893d-48ec-4686-b09c-ee14ca35f10c"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-513a893d-48ec-4686-b09c-ee14ca35f10c\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"epoch\":\"e42b9c63-ad24-4bca-815e-75b28d3c4fea\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3432-744b-840f-fc0ece5014a8\",\"runtime_id\":\"cbf31436-2c5e-4bab-a197-6b73ebd5f3fd\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"54493b6516c75d44ee60038b12c3104d522a1a59d28579a577d63824abf90329\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"798902dff62e6d5cd19ab0d71bfabae04c96c98ffd3cc9b4ce662d60ca837c29\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\backups\\\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b\",\"backup_identity\":\"4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-flight-true\\\\home\\\\generations\\\\f4bc8c1b-a20b-4d83-9678-520aecd85212\",\"new_epoch\":\"e64b5014-f2d5-4477-ac08-5386757756d1\",\"workspace_id\":\"819028a3-cb6a-4b8f-b69f-1f191f062c0d\",\"captured_seq\":0,\"current_fingerprint\":\"4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd\",\"restoration_id\":\"17cd8742-d2d5-41fd-bbb1-97e324d3e0ac\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Native action has settled; restore earlier DB while preserving real output\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T06:15:44.739Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"15b0be7c6473a9ced2850876d8f62e441b8fc4a86b8b66a4c3e60b5a9c25572b\",\"answer\":{\"source_ref\":\"native-dialog-b2426261-ec15-465f-9d87-52aa9c8ddfe9\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:44.804Z\",\"presentation_digest\":\"15b0be7c6473a9ced2850876d8f62e441b8fc4a86b8b66a4c3e60b5a9c25572b\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-513a893d-48ec-4686-b09c-ee14ca35f10c",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+          "epoch": "e42b9c63-ad24-4bca-815e-75b28d3c4fea",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-3432-744b-840f-fc0ece5014a8",
+          "runtime_id": "cbf31436-2c5e-4bab-a197-6b73ebd5f3fd",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "54493b6516c75d44ee60038b12c3104d522a1a59d28579a577d63824abf90329"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "798902dff62e6d5cd19ab0d71bfabae04c96c98ffd3cc9b4ce662d60ca837c29"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\backups\\backup-27f5bc1f-5a85-4168-9d28-0bcd22272f0b",
+            "backup_identity": "4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-flight-true\\home\\generations\\f4bc8c1b-a20b-4d83-9678-520aecd85212",
+            "new_epoch": "e64b5014-f2d5-4477-ac08-5386757756d1",
+            "workspace_id": "819028a3-cb6a-4b8f-b69f-1f191f062c0d",
+            "captured_seq": 0,
+            "current_fingerprint": "4d684a409fc92a7b99bd3c951640b0a47d19fdeb645d2073088999f50b58d1dd",
+            "restoration_id": "17cd8742-d2d5-41fd-bbb1-97e324d3e0ac",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Native action has settled; restore earlier DB while preserving real output",
+          "alternatives": "Keep current",
+          "expires_at": "2026-10-21T06:15:44.739Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "15b0be7c6473a9ced2850876d8f62e441b8fc4a86b8b66a4c3e60b5a9c25572b",
+        "answer": {
+          "source_ref": "native-dialog-b2426261-ec15-465f-9d87-52aa9c8ddfe9",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:44.804Z",
+          "presentation_digest": "15b0be7c6473a9ced2850876d8f62e441b8fc4a86b8b66a4c3e60b5a9c25572b",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-513a893d-48ec-4686-b09c-ee14ca35f10c"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"switched\":true,\"epoch\":\"e64b5014-f2d5-4477-ac08-5386757756d1\",\"backup_identity\":\"4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc\",\"captured_seq\":0,\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"reconciliation_required\":true}"
+        }
+      ],
+      "details": {
+        "switched": true,
+        "epoch": "e64b5014-f2d5-4477-ac08-5386757756d1",
+        "backup_identity": "4672c442e6a628786b48b685277ec71554476ed2645a66a6e197f14950ce88fc",
+        "captured_seq": 0,
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+        "reconciliation_required": true
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-ui",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-ui\\\\backups\\\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb\",\"identity\":\"3ffeb04e48f63e79cdddadef9057ff81f5da225c4e02234c43c2c15c186ab57d\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-ui\\backups\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb",
+        "identity": "3ffeb04e48f63e79cdddadef9057ff81f5da225c4e02234c43c2c15c186ab57d",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-ui",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-ui\\backups\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb",
+      "consequence": "Restore exact fixture",
+      "alternatives": "Keep"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-30e56f76-f047-4da3-b5dc-55868fad06a8\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"2b83965f-90c2-47ee-ba3b-51cbb3d9fa5b\",\"epoch\":\"60143deb-5fbb-4e9b-a26c-01adcbb49068\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-3cb6-744b-840f-fc10f1889538\",\"runtime_id\":\"e9489a9f-ae83-4118-8e4f-7a54d93a06de\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"28975700c1e8c18772863c8069c56833fa504cc9f8ab1066ac1362ec69058267\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"920cbefa599855bab647f684cfa2fa5b6113f56ceefa0770efc82c2389a4ea4a\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-ui\\\\backups\\\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb\",\"backup_identity\":\"3ffeb04e48f63e79cdddadef9057ff81f5da225c4e02234c43c2c15c186ab57d\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-ui\\\\home\\\\generations\\\\a937d844-3ad8-4a03-a39d-bcf73fb26a12\",\"new_epoch\":\"f3f93cd7-8506-46b1-86cb-2e72057e4dca\",\"workspace_id\":\"2b83965f-90c2-47ee-ba3b-51cbb3d9fa5b\",\"captured_seq\":0,\"current_fingerprint\":\"d6f59ea6f88ce6ce43039f720a0e38ee3ccbee9f716f7fc4fafabbd0fcbc3311\",\"restoration_id\":\"8ac58c15-482d-4bd8-9472-3c3e3b04f7be\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore exact fixture\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:46.001Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"79b722631cfe9b6bb13659ab04fb097e3788d6d95042ebb131317f13e9221906\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-ui\\\\backups\\\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-ui\\\\home\\\\generations\\\\a937d844-3ad8-4a03-a39d-bcf73fb26a12\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-30e56f76-f047-4da3-b5dc-55868fad06a8",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "2b83965f-90c2-47ee-ba3b-51cbb3d9fa5b",
+            "epoch": "60143deb-5fbb-4e9b-a26c-01adcbb49068",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-3cb6-744b-840f-fc10f1889538",
+            "runtime_id": "e9489a9f-ae83-4118-8e4f-7a54d93a06de",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "28975700c1e8c18772863c8069c56833fa504cc9f8ab1066ac1362ec69058267"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "920cbefa599855bab647f684cfa2fa5b6113f56ceefa0770efc82c2389a4ea4a"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-ui\\backups\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb",
+              "backup_identity": "3ffeb04e48f63e79cdddadef9057ff81f5da225c4e02234c43c2c15c186ab57d",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-ui\\home\\generations\\a937d844-3ad8-4a03-a39d-bcf73fb26a12",
+              "new_epoch": "f3f93cd7-8506-46b1-86cb-2e72057e4dca",
+              "workspace_id": "2b83965f-90c2-47ee-ba3b-51cbb3d9fa5b",
+              "captured_seq": 0,
+              "current_fingerprint": "d6f59ea6f88ce6ce43039f720a0e38ee3ccbee9f716f7fc4fafabbd0fcbc3311",
+              "restoration_id": "8ac58c15-482d-4bd8-9472-3c3e3b04f7be",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore exact fixture",
+            "alternatives": "Keep",
+            "expires_at": "2026-10-21T06:15:46.001Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "79b722631cfe9b6bb13659ab04fb097e3788d6d95042ebb131317f13e9221906"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-ui\\backups\\backup-360f0068-3cd8-4a65-88e9-cbb966a0fdfb",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-ui\\home\\generations\\a937d844-3ad8-4a03-a39d-bcf73fb26a12",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-ui",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-30e56f76-f047-4da3-b5dc-55868fad06a8"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"WORK_IN_USE\",\"message\":\"A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "WORK_IN_USE",
+        "message": "A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-ui",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-pending-ui",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-30e56f76-f047-4da3-b5dc-55868fad06a8"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"APPROVAL_STALE\",\"message\":\"Runtime replaced during dialog.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "APPROVAL_STALE",
+        "message": "Runtime replaced during dialog.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-ui",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-ui",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-pending-ui",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-30e56f76-f047-4da3-b5dc-55868fad06a8"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"APPROVAL_STALE\",\"message\":\"No current approval for these exact values/targets/recipient/conditions.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "APPROVAL_STALE",
+        "message": "No current approval for these exact values/targets/recipient/conditions.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"identity\":\"995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+        "identity": "995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+      "consequence": "Restore after import has settled",
+      "alternatives": "Keep"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-7f40f119-f9f9-4237-aef7-c72653501bd1\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"epoch\":\"0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-41af-744b-840f-fc1256c15e2b\",\"runtime_id\":\"b9488664-c7c2-4e4b-9b08-0fb6fb97a773\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"dff7b5c28cd7b1e172dea2dc41f49d58191281e18150a3341813bbc3089b4d6e\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"27cfa183a9418c1de024622292a2288a6e55c38273ec120cede1ea82a26c9272\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"backup_identity\":\"995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\home\\\\generations\\\\0d9c45c5-4fd9-42af-ba87-91f5b1e8902f\",\"new_epoch\":\"43b659a5-e92a-463f-9a53-219a6f98ae15\",\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"captured_seq\":0,\"current_fingerprint\":\"c032c8e0512fe108cb40ad7f539cee7673506e517fc571646e25f5392ebeee52\",\"restoration_id\":\"2330c382-49ff-407d-b10e-18fd22ce5fc4\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore after import has settled\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:47.262Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"5e9c03cf4c0184b57dc7e41d704ff74d68fe6133ce2fc58c1c237e6f58a279eb\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\home\\\\generations\\\\0d9c45c5-4fd9-42af-ba87-91f5b1e8902f\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-7f40f119-f9f9-4237-aef7-c72653501bd1",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+            "epoch": "0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-41af-744b-840f-fc1256c15e2b",
+            "runtime_id": "b9488664-c7c2-4e4b-9b08-0fb6fb97a773",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "dff7b5c28cd7b1e172dea2dc41f49d58191281e18150a3341813bbc3089b4d6e"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "27cfa183a9418c1de024622292a2288a6e55c38273ec120cede1ea82a26c9272"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+              "backup_identity": "995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\home\\generations\\0d9c45c5-4fd9-42af-ba87-91f5b1e8902f",
+              "new_epoch": "43b659a5-e92a-463f-9a53-219a6f98ae15",
+              "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+              "captured_seq": 0,
+              "current_fingerprint": "c032c8e0512fe108cb40ad7f539cee7673506e517fc571646e25f5392ebeee52",
+              "restoration_id": "2330c382-49ff-407d-b10e-18fd22ce5fc4",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore after import has settled",
+            "alternatives": "Keep",
+            "expires_at": "2026-10-21T06:15:47.262Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "5e9c03cf4c0184b57dc7e41d704ff74d68fe6133ce2fc58c1c237e6f58a279eb"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\home\\generations\\0d9c45c5-4fd9-42af-ba87-91f5b1e8902f",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-7f40f119-f9f9-4237-aef7-c72653501bd1"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-7f40f119-f9f9-4237-aef7-c72653501bd1\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"epoch\":\"0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-41af-744b-840f-fc1256c15e2b\",\"runtime_id\":\"b9488664-c7c2-4e4b-9b08-0fb6fb97a773\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"dff7b5c28cd7b1e172dea2dc41f49d58191281e18150a3341813bbc3089b4d6e\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"27cfa183a9418c1de024622292a2288a6e55c38273ec120cede1ea82a26c9272\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"backup_identity\":\"995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\home\\\\generations\\\\0d9c45c5-4fd9-42af-ba87-91f5b1e8902f\",\"new_epoch\":\"43b659a5-e92a-463f-9a53-219a6f98ae15\",\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"captured_seq\":0,\"current_fingerprint\":\"c032c8e0512fe108cb40ad7f539cee7673506e517fc571646e25f5392ebeee52\",\"restoration_id\":\"2330c382-49ff-407d-b10e-18fd22ce5fc4\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore after import has settled\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:47.262Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"5e9c03cf4c0184b57dc7e41d704ff74d68fe6133ce2fc58c1c237e6f58a279eb\",\"answer\":{\"source_ref\":\"native-dialog-57a5eb40-5e0e-4f2b-b773-d3b4bc429a3a\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:47.357Z\",\"presentation_digest\":\"5e9c03cf4c0184b57dc7e41d704ff74d68fe6133ce2fc58c1c237e6f58a279eb\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-7f40f119-f9f9-4237-aef7-c72653501bd1",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+          "epoch": "0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-41af-744b-840f-fc1256c15e2b",
+          "runtime_id": "b9488664-c7c2-4e4b-9b08-0fb6fb97a773",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "dff7b5c28cd7b1e172dea2dc41f49d58191281e18150a3341813bbc3089b4d6e"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "27cfa183a9418c1de024622292a2288a6e55c38273ec120cede1ea82a26c9272"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+            "backup_identity": "995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\home\\generations\\0d9c45c5-4fd9-42af-ba87-91f5b1e8902f",
+            "new_epoch": "43b659a5-e92a-463f-9a53-219a6f98ae15",
+            "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+            "captured_seq": 0,
+            "current_fingerprint": "c032c8e0512fe108cb40ad7f539cee7673506e517fc571646e25f5392ebeee52",
+            "restoration_id": "2330c382-49ff-407d-b10e-18fd22ce5fc4",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Restore after import has settled",
+          "alternatives": "Keep",
+          "expires_at": "2026-10-21T06:15:47.262Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "5e9c03cf4c0184b57dc7e41d704ff74d68fe6133ce2fc58c1c237e6f58a279eb",
+        "answer": {
+          "source_ref": "native-dialog-57a5eb40-5e0e-4f2b-b773-d3b4bc429a3a",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:47.357Z",
+          "presentation_digest": "5e9c03cf4c0184b57dc7e41d704ff74d68fe6133ce2fc58c1c237e6f58a279eb",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-7f40f119-f9f9-4237-aef7-c72653501bd1"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"WORK_IN_USE\",\"message\":\"A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "WORK_IN_USE",
+        "message": "A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_import",
+    "args": {
+      "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\cwd\\pending.pdf"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":true,\"source_handle\":\"source-16782cf8-abe6-4326-871d-d78d73e2fcc2\",\"source_ref\":\"observed-ed886d76-f5ce-4a25-9b19-7cadf4295031\",\"transport\":\"file\",\"channel_identity\":null,\"capture_stage\":\"validated-file-bytes\",\"content_hash\":\"51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406\",\"byte_length\":1266,\"input_integrity\":\"observed_stage_only\",\"owner_channel_eligible\":false,\"extraction\":{\"format\":\"pdf\",\"status\":\"readable\",\"parser\":\"pdfjs-dist\",\"parser_version\":\"6.4.299\",\"sections\":[{\"locator\":\"page:1\",\"label\":\"Page 1\",\"start\":0,\"end\":57,\"available\":true},{\"locator\":\"page:2\",\"label\":\"Page 2\",\"start\":57,\"end\":132,\"available\":true},{\"locator\":\"page:3\",\"label\":\"Page 3\",\"start\":132,\"end\":187,\"available\":true}],\"warnings\":[],\"total_characters\":187,\"text_blob_ref\":\"2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4\",\"text_hash\":\"2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4\"},\"readable_format\":\"readable\",\"committed\":false}"
+        }
+      ],
+      "details": {
+        "ok": true,
+        "source_handle": "source-16782cf8-abe6-4326-871d-d78d73e2fcc2",
+        "source_ref": "observed-ed886d76-f5ce-4a25-9b19-7cadf4295031",
+        "transport": "file",
+        "channel_identity": null,
+        "capture_stage": "validated-file-bytes",
+        "content_hash": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+        "byte_length": 1266,
+        "input_integrity": "observed_stage_only",
+        "owner_channel_eligible": false,
+        "extraction": {
+          "format": "pdf",
+          "status": "readable",
+          "parser": "pdfjs-dist",
+          "parser_version": "6.4.299",
+          "sections": [
+            {
+              "locator": "page:1",
+              "label": "Page 1",
+              "start": 0,
+              "end": 57,
+              "available": true
+            },
+            {
+              "locator": "page:2",
+              "label": "Page 2",
+              "start": 57,
+              "end": 132,
+              "available": true
+            },
+            {
+              "locator": "page:3",
+              "label": "Page 3",
+              "start": 132,
+              "end": 187,
+              "available": true
+            }
+          ],
+          "warnings": [],
+          "total_characters": 187,
+          "text_blob_ref": "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4",
+          "text_hash": "2f5bae3b46f1e42eb794b9a7c4b1b747b69e013810d878356970fee1d19311e4"
+        },
+        "readable_format": "readable",
+        "committed": false
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+      "consequence": "Real import promise settled; restore earlier fixture",
+      "alternatives": "Keep"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-f7e10007-8ade-4917-970b-3d38bbdd20ad\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"epoch\":\"0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-41af-744b-840f-fc1256c15e2b\",\"runtime_id\":\"b9488664-c7c2-4e4b-9b08-0fb6fb97a773\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"380361ef7cbfdd5c91e752f289245ce1c52008e28ca26ff94e81d3aa8ac2803d\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"307e6a6c505dd0c4e67d419332c45302381c8d194e1e261852fded53046c0762\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"backup_identity\":\"995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\home\\\\generations\\\\ef2feb3e-81ac-4803-948c-4ef465ca2e90\",\"new_epoch\":\"9c55090e-f04b-4693-b0b3-78d997cf5a7c\",\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"captured_seq\":0,\"current_fingerprint\":\"006e565a7eabb14fdf55df1332fae20b136a69f81ce7cfc0bd9ccd0c40632e48\",\"restoration_id\":\"e2f02644-dcb4-4e3d-ab42-a5e259f98ae3\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Real import promise settled; restore earlier fixture\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:48.102Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"6fd426cfb760474a14aaff22555d6de0cb4cb9265141b92e13f4850df11f5050\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\home\\\\generations\\\\ef2feb3e-81ac-4803-948c-4ef465ca2e90\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-f7e10007-8ade-4917-970b-3d38bbdd20ad",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+            "epoch": "0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-41af-744b-840f-fc1256c15e2b",
+            "runtime_id": "b9488664-c7c2-4e4b-9b08-0fb6fb97a773",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "380361ef7cbfdd5c91e752f289245ce1c52008e28ca26ff94e81d3aa8ac2803d"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "307e6a6c505dd0c4e67d419332c45302381c8d194e1e261852fded53046c0762"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+              "backup_identity": "995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\home\\generations\\ef2feb3e-81ac-4803-948c-4ef465ca2e90",
+              "new_epoch": "9c55090e-f04b-4693-b0b3-78d997cf5a7c",
+              "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+              "captured_seq": 0,
+              "current_fingerprint": "006e565a7eabb14fdf55df1332fae20b136a69f81ce7cfc0bd9ccd0c40632e48",
+              "restoration_id": "e2f02644-dcb4-4e3d-ab42-a5e259f98ae3",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Real import promise settled; restore earlier fixture",
+            "alternatives": "Keep",
+            "expires_at": "2026-10-21T06:15:48.102Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "6fd426cfb760474a14aaff22555d6de0cb4cb9265141b92e13f4850df11f5050"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\home\\generations\\ef2feb3e-81ac-4803-948c-4ef465ca2e90",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-f7e10007-8ade-4917-970b-3d38bbdd20ad"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-f7e10007-8ade-4917-970b-3d38bbdd20ad\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"epoch\":\"0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-41af-744b-840f-fc1256c15e2b\",\"runtime_id\":\"b9488664-c7c2-4e4b-9b08-0fb6fb97a773\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"380361ef7cbfdd5c91e752f289245ce1c52008e28ca26ff94e81d3aa8ac2803d\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"307e6a6c505dd0c4e67d419332c45302381c8d194e1e261852fded53046c0762\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\backups\\\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9\",\"backup_identity\":\"995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-false\\\\home\\\\generations\\\\ef2feb3e-81ac-4803-948c-4ef465ca2e90\",\"new_epoch\":\"9c55090e-f04b-4693-b0b3-78d997cf5a7c\",\"workspace_id\":\"2bd30af1-51cc-48f9-a5c6-802642e41347\",\"captured_seq\":0,\"current_fingerprint\":\"006e565a7eabb14fdf55df1332fae20b136a69f81ce7cfc0bd9ccd0c40632e48\",\"restoration_id\":\"e2f02644-dcb4-4e3d-ab42-a5e259f98ae3\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Real import promise settled; restore earlier fixture\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:48.102Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"6fd426cfb760474a14aaff22555d6de0cb4cb9265141b92e13f4850df11f5050\",\"answer\":{\"source_ref\":\"native-dialog-314f310b-7c0b-46da-8c81-b5e374936367\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:48.184Z\",\"presentation_digest\":\"6fd426cfb760474a14aaff22555d6de0cb4cb9265141b92e13f4850df11f5050\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-f7e10007-8ade-4917-970b-3d38bbdd20ad",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+          "epoch": "0f3c1f03-ca3a-496e-9ca7-4b3bd2eb44d0",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-41af-744b-840f-fc1256c15e2b",
+          "runtime_id": "b9488664-c7c2-4e4b-9b08-0fb6fb97a773",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "380361ef7cbfdd5c91e752f289245ce1c52008e28ca26ff94e81d3aa8ac2803d"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "307e6a6c505dd0c4e67d419332c45302381c8d194e1e261852fded53046c0762"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\backups\\backup-d86087b5-bc75-40d2-bd12-b9871e2793d9",
+            "backup_identity": "995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-false\\home\\generations\\ef2feb3e-81ac-4803-948c-4ef465ca2e90",
+            "new_epoch": "9c55090e-f04b-4693-b0b3-78d997cf5a7c",
+            "workspace_id": "2bd30af1-51cc-48f9-a5c6-802642e41347",
+            "captured_seq": 0,
+            "current_fingerprint": "006e565a7eabb14fdf55df1332fae20b136a69f81ce7cfc0bd9ccd0c40632e48",
+            "restoration_id": "e2f02644-dcb4-4e3d-ab42-a5e259f98ae3",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Real import promise settled; restore earlier fixture",
+          "alternatives": "Keep",
+          "expires_at": "2026-10-21T06:15:48.102Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "6fd426cfb760474a14aaff22555d6de0cb4cb9265141b92e13f4850df11f5050",
+        "answer": {
+          "source_ref": "native-dialog-314f310b-7c0b-46da-8c81-b5e374936367",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:48.184Z",
+          "presentation_digest": "6fd426cfb760474a14aaff22555d6de0cb4cb9265141b92e13f4850df11f5050",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-f7e10007-8ade-4917-970b-3d38bbdd20ad"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"switched\":true,\"epoch\":\"9c55090e-f04b-4693-b0b3-78d997cf5a7c\",\"backup_identity\":\"995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172\",\"captured_seq\":0,\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"reconciliation_required\":true}"
+        }
+      ],
+      "details": {
+        "switched": true,
+        "epoch": "9c55090e-f04b-4693-b0b3-78d997cf5a7c",
+        "backup_identity": "995a250047363eb0b38a087af4094b8470226442ff3f8826e96664c36d586172",
+        "captured_seq": 0,
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+        "reconciliation_required": true
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"identity\":\"d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+        "identity": "d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+      "consequence": "Restore after import has settled",
+      "alternatives": "Keep"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-ee3f62cd-81e4-41b3-a66b-8d9ad172888d\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"epoch\":\"47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-49e0-744b-840f-fc14ed0a143a\",\"runtime_id\":\"9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"42435b2691450c744e4091db33cd67d1dc87f7b406b3da6b0565cfff6ba4ddda\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"71410b349577b071e85bf725f056ca95465be46e6fbb89ca5f4499e26626768e\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"backup_identity\":\"d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\home\\\\generations\\\\6c3d392e-ec33-4fb5-bda1-61e7d2492959\",\"new_epoch\":\"f6540338-29d1-4237-8613-11ec5c6b4313\",\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"captured_seq\":0,\"current_fingerprint\":\"0d94f9b694e510f61e4d8725f6ecd76309599f01410f8a22d6b0e3d15354a8af\",\"restoration_id\":\"9083988c-7fe5-4edd-8bcd-22802a66068e\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore after import has settled\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:49.387Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"e8499fae4ee595af33760ba52fb9f2ec2d09d4376b6cb73796b9dd80d26e9b45\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\home\\\\generations\\\\6c3d392e-ec33-4fb5-bda1-61e7d2492959\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-ee3f62cd-81e4-41b3-a66b-8d9ad172888d",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+            "epoch": "47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-49e0-744b-840f-fc14ed0a143a",
+            "runtime_id": "9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "42435b2691450c744e4091db33cd67d1dc87f7b406b3da6b0565cfff6ba4ddda"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "71410b349577b071e85bf725f056ca95465be46e6fbb89ca5f4499e26626768e"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+              "backup_identity": "d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\home\\generations\\6c3d392e-ec33-4fb5-bda1-61e7d2492959",
+              "new_epoch": "f6540338-29d1-4237-8613-11ec5c6b4313",
+              "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+              "captured_seq": 0,
+              "current_fingerprint": "0d94f9b694e510f61e4d8725f6ecd76309599f01410f8a22d6b0e3d15354a8af",
+              "restoration_id": "9083988c-7fe5-4edd-8bcd-22802a66068e",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore after import has settled",
+            "alternatives": "Keep",
+            "expires_at": "2026-10-21T06:15:49.387Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "e8499fae4ee595af33760ba52fb9f2ec2d09d4376b6cb73796b9dd80d26e9b45"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\home\\generations\\6c3d392e-ec33-4fb5-bda1-61e7d2492959",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-ee3f62cd-81e4-41b3-a66b-8d9ad172888d"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-ee3f62cd-81e4-41b3-a66b-8d9ad172888d\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"epoch\":\"47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-49e0-744b-840f-fc14ed0a143a\",\"runtime_id\":\"9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"42435b2691450c744e4091db33cd67d1dc87f7b406b3da6b0565cfff6ba4ddda\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"71410b349577b071e85bf725f056ca95465be46e6fbb89ca5f4499e26626768e\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"backup_identity\":\"d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\home\\\\generations\\\\6c3d392e-ec33-4fb5-bda1-61e7d2492959\",\"new_epoch\":\"f6540338-29d1-4237-8613-11ec5c6b4313\",\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"captured_seq\":0,\"current_fingerprint\":\"0d94f9b694e510f61e4d8725f6ecd76309599f01410f8a22d6b0e3d15354a8af\",\"restoration_id\":\"9083988c-7fe5-4edd-8bcd-22802a66068e\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore after import has settled\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:49.387Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"e8499fae4ee595af33760ba52fb9f2ec2d09d4376b6cb73796b9dd80d26e9b45\",\"answer\":{\"source_ref\":\"native-dialog-32fd3aac-972d-4a7e-95a5-babd7a558b98\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:49.483Z\",\"presentation_digest\":\"e8499fae4ee595af33760ba52fb9f2ec2d09d4376b6cb73796b9dd80d26e9b45\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-ee3f62cd-81e4-41b3-a66b-8d9ad172888d",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+          "epoch": "47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-49e0-744b-840f-fc14ed0a143a",
+          "runtime_id": "9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "42435b2691450c744e4091db33cd67d1dc87f7b406b3da6b0565cfff6ba4ddda"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "71410b349577b071e85bf725f056ca95465be46e6fbb89ca5f4499e26626768e"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+            "backup_identity": "d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\home\\generations\\6c3d392e-ec33-4fb5-bda1-61e7d2492959",
+            "new_epoch": "f6540338-29d1-4237-8613-11ec5c6b4313",
+            "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+            "captured_seq": 0,
+            "current_fingerprint": "0d94f9b694e510f61e4d8725f6ecd76309599f01410f8a22d6b0e3d15354a8af",
+            "restoration_id": "9083988c-7fe5-4edd-8bcd-22802a66068e",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Restore after import has settled",
+          "alternatives": "Keep",
+          "expires_at": "2026-10-21T06:15:49.387Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "e8499fae4ee595af33760ba52fb9f2ec2d09d4376b6cb73796b9dd80d26e9b45",
+        "answer": {
+          "source_ref": "native-dialog-32fd3aac-972d-4a7e-95a5-babd7a558b98",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:49.483Z",
+          "presentation_digest": "e8499fae4ee595af33760ba52fb9f2ec2d09d4376b6cb73796b9dd80d26e9b45",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "notification": "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_import",
+    "args": {
+      "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\cwd\\pending.pdf"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"STORE_UNAVAILABLE\",\"message\":\"Storage operation failed; inspect current operations before retrying any uncertain commit.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "STORE_UNAVAILABLE",
+        "message": "Storage operation failed; inspect current operations before retrying any uncertain commit.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-ee3f62cd-81e4-41b3-a66b-8d9ad172888d"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"APPROVAL_STALE\",\"message\":\"No current approval for these exact values/targets/recipient/conditions.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "APPROVAL_STALE",
+        "message": "No current approval for these exact values/targets/recipient/conditions.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+      "consequence": "Real import promise settled; restore earlier fixture",
+      "alternatives": "Keep"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-a027c4f8-d70a-4181-837e-79bf93114893\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"epoch\":\"47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-49e0-744b-840f-fc14ed0a143a\",\"runtime_id\":\"9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"b81c7a0cbf893541660c56261c95b6e43400af9065e436fe36937514e62d28ad\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"2f9f4497b2338abbf52eebb55e31dde72b1608386cdaa8d9cc290f10cdaaddc1\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"backup_identity\":\"d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\home\\\\generations\\\\0745a3a4-e273-447a-8654-f706e555608f\",\"new_epoch\":\"6914ba18-975d-481f-9379-72d156ac57c3\",\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"captured_seq\":0,\"current_fingerprint\":\"53f1a7fd5cc4cc1ea597200a5c837e24057337a813b9c176a60ede545a0af150\",\"restoration_id\":\"09453e01-c9f3-4208-ab5c-1213a67a0556\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Real import promise settled; restore earlier fixture\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:49.943Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"5bffaa4feb85d85db0d0b74f2e7b87640381a8d604f519f7019422db2975a3ab\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\home\\\\generations\\\\0745a3a4-e273-447a-8654-f706e555608f\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-a027c4f8-d70a-4181-837e-79bf93114893",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+            "epoch": "47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15d0c-49e0-744b-840f-fc14ed0a143a",
+            "runtime_id": "9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "b81c7a0cbf893541660c56261c95b6e43400af9065e436fe36937514e62d28ad"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "2f9f4497b2338abbf52eebb55e31dde72b1608386cdaa8d9cc290f10cdaaddc1"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+              "backup_identity": "d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\home\\generations\\0745a3a4-e273-447a-8654-f706e555608f",
+              "new_epoch": "6914ba18-975d-481f-9379-72d156ac57c3",
+              "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+              "captured_seq": 0,
+              "current_fingerprint": "53f1a7fd5cc4cc1ea597200a5c837e24057337a813b9c176a60ede545a0af150",
+              "restoration_id": "09453e01-c9f3-4208-ab5c-1213a67a0556",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Real import promise settled; restore earlier fixture",
+            "alternatives": "Keep",
+            "expires_at": "2026-10-21T06:15:49.943Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "5bffaa4feb85d85db0d0b74f2e7b87640381a8d604f519f7019422db2975a3ab"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\home\\generations\\0745a3a4-e273-447a-8654-f706e555608f",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-a027c4f8-d70a-4181-837e-79bf93114893"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-a027c4f8-d70a-4181-837e-79bf93114893\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"epoch\":\"47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15d0c-49e0-744b-840f-fc14ed0a143a\",\"runtime_id\":\"9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"b81c7a0cbf893541660c56261c95b6e43400af9065e436fe36937514e62d28ad\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"2f9f4497b2338abbf52eebb55e31dde72b1608386cdaa8d9cc290f10cdaaddc1\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\backups\\\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e\",\"backup_identity\":\"d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-installed-01\\\\protected-pending-import-true\\\\home\\\\generations\\\\0745a3a4-e273-447a-8654-f706e555608f\",\"new_epoch\":\"6914ba18-975d-481f-9379-72d156ac57c3\",\"workspace_id\":\"e71f7a2c-264e-4105-bc64-2103d3585d13\",\"captured_seq\":0,\"current_fingerprint\":\"53f1a7fd5cc4cc1ea597200a5c837e24057337a813b9c176a60ede545a0af150\",\"restoration_id\":\"09453e01-c9f3-4208-ab5c-1213a67a0556\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Real import promise settled; restore earlier fixture\",\"alternatives\":\"Keep\",\"expires_at\":\"2026-10-21T06:15:49.943Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"5bffaa4feb85d85db0d0b74f2e7b87640381a8d604f519f7019422db2975a3ab\",\"answer\":{\"source_ref\":\"native-dialog-3118eecc-f1e6-4f14-a000-575e484ce7f8\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T06:00:50.012Z\",\"presentation_digest\":\"5bffaa4feb85d85db0d0b74f2e7b87640381a8d604f519f7019422db2975a3ab\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-a027c4f8-d70a-4181-837e-79bf93114893",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+          "epoch": "47dd0ca4-6cf6-4d9c-91a6-7216b54ecd06",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d0c-49e0-744b-840f-fc14ed0a143a",
+          "runtime_id": "9cb0c73e-68e1-4e9a-b0e3-02df3a57f51c",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "b81c7a0cbf893541660c56261c95b6e43400af9065e436fe36937514e62d28ad"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "2f9f4497b2338abbf52eebb55e31dde72b1608386cdaa8d9cc290f10cdaaddc1"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\backups\\backup-6d25930e-df02-45bb-a6f6-a69f3d22939e",
+            "backup_identity": "d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-installed-01\\protected-pending-import-true\\home\\generations\\0745a3a4-e273-447a-8654-f706e555608f",
+            "new_epoch": "6914ba18-975d-481f-9379-72d156ac57c3",
+            "workspace_id": "e71f7a2c-264e-4105-bc64-2103d3585d13",
+            "captured_seq": 0,
+            "current_fingerprint": "53f1a7fd5cc4cc1ea597200a5c837e24057337a813b9c176a60ede545a0af150",
+            "restoration_id": "09453e01-c9f3-4208-ab5c-1213a67a0556",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Real import promise settled; restore earlier fixture",
+          "alternatives": "Keep",
+          "expires_at": "2026-10-21T06:15:49.943Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "5bffaa4feb85d85db0d0b74f2e7b87640381a8d604f519f7019422db2975a3ab",
+        "answer": {
+          "source_ref": "native-dialog-3118eecc-f1e6-4f14-a000-575e484ce7f8",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:00:50.012Z",
+          "presentation_digest": "5bffaa4feb85d85db0d0b74f2e7b87640381a8d604f519f7019422db2975a3ab",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-pending-import-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-a027c4f8-d70a-4181-837e-79bf93114893"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"switched\":true,\"epoch\":\"6914ba18-975d-481f-9379-72d156ac57c3\",\"backup_identity\":\"d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc\",\"captured_seq\":0,\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"reconciliation_required\":true}"
+        }
+      ],
+      "details": {
+        "switched": true,
+        "epoch": "6914ba18-975d-481f-9379-72d156ac57c3",
+        "backup_identity": "d5949faa79b8e9c92be388f2acb9865a88bf4cba225e403f6a5ca406642e7bcc",
+        "captured_seq": 0,
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+        "reconciliation_required": true
+      }
+    }
+  }
+]

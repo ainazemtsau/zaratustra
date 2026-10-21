@@ -1,0 +1,28 @@
+(node:29396) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Резервная копия создана и отдельно проверена:\n\n`<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\backups\\backup-69f76016-53cc-4e44-9229-1547cf03f0bc`\n\nВ artifact включены:\n- `database.sqlite` — согласованный снимок текущей памяти, сохранённой истории и метаданных удалённых записей;\n- `export.json` — версионированный экспорт для другой программы.\n\nПроверка `zara_backup_verify` подтвердила полноту: `complete:true`, готовность схемы: `schema_ready:true`; исправление индексов не требуется. Манифест содержит размеры и SHA-256 компонентов. Отдельных файлов материалов в этом bundle нет.\n\nПолноту можно повторно проверить тем же инструментом для указанной папки. Это копия управляемой памяти, не всего диска: внешние файлы и Pi-транскрипты в её покрытие не входят.\n\n**Отчёт обсерватории не записывал.**",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 11,
+    "requests": 78,
+    "input": 3989314,
+    "output": 8375,
+    "cache_read": 3025280,
+    "estimated_usd": 2.314345999999999,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 78
+  }
+}

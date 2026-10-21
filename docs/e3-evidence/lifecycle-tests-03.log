@@ -1,0 +1,72 @@
+TAP version 13
+# (node:80956) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 disk finished snapshot is the sole manifest/JSON source, exact raw bytes independent of later live mutations
+ok 1 - E3 disk finished snapshot is the sole manifest/JSON source, exact raw bytes independent of later live mutations
+  ---
+  duration_ms: 942.332
+  type: 'test'
+  ...
+# Subtest: E3 disk health restore preserves old generation and receipts, changes authoritative epoch and blocks a no-receipt Work before current bytes inspection
+ok 2 - E3 disk health restore preserves old generation and receipts, changes authoritative epoch and blocks a no-receipt Work before current bytes inspection
+  ---
+  duration_ms: 724.8676
+  type: 'test'
+  ...
+# Subtest: E3 disk real missing current DB recovers via control metadata without empty replacement or old receipt
+ok 3 - E3 disk real missing current DB recovers via control metadata without empty replacement or old receipt
+  ---
+  duration_ms: 457.3851
+  type: 'test'
+  ...
+# Subtest: E3 disk fixed full-read policy refuses before inspecting hidden data or bundle paths
+ok 4 - E3 disk fixed full-read policy refuses before inspecting hidden data or bundle paths
+  ---
+  duration_ms: 173.7268
+  type: 'test'
+  ...
+# Subtest: E3 disk missing/corrupt materials and modified hash/length/JSON/schema never verify complete
+ok 5 - E3 disk missing/corrupt materials and modified hash/length/JSON/schema never verify complete
+  ---
+  duration_ms: 244.3805
+  type: 'test'
+  ...
+# Subtest: E3 disk archive remains discoverable, all retained tombstone versions/technical payloads/index/export stop exposing old body
+ok 6 - E3 disk archive remains discoverable, all retained tombstone versions/technical payloads/index/export stop exposing old body
+  ---
+  duration_ms: 1231.8623
+  type: 'test'
+  ...
+# Subtest: E3 disk retained reverse dependency and explicit library pin refuse precise destructive preview; unrelated new work remains permitted
+ok 7 - E3 disk retained reverse dependency and explicit library pin refuse precise destructive preview; unrelated new work remains permitted
+  ---
+  duration_ms: 581.2326
+  type: 'test'
+  ...
+# Subtest: E3 disk cleanup protects pending sources/shared blob/history/held backup and removes only expired orphan files
+ok 8 - E3 disk cleanup protects pending sources/shared blob/history/held backup and removes only expired orphan files
+  ---
+  duration_ms: 579.938
+  type: 'test'
+  ...
+# Subtest: E3 disk interrupted restore copy/verify/control switch leaves old active or a verified new generation with barriers
+ok 9 - E3 disk interrupted restore copy/verify/control switch leaves old active or a verified new generation with barriers
+  ---
+  duration_ms: 1566.1166
+  type: 'test'
+  ...
+# Subtest: E3 disk actual corrupt current DB recovers; stale bound approval and old callback cannot cross authoritative switch
+ok 10 - E3 disk actual corrupt current DB recovers; stale bound approval and old callback cannot cross authoritative switch
+  ---
+  duration_ms: 385.7066
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7231.0866

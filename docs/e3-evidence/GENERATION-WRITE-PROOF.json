@@ -1,0 +1,56 @@
+{
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\generations\\3ff0a107-9cf0-4f9a-a20b-c4ba5444c6e7\\zara.sqlite",
+  "target": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output\\generation-check.txt",
+  "length": 29,
+  "sha256": "5c4ca1f23393126e0e2387dce8cf943795be014945e3fc67c82abd49871584ee",
+  "attempt": {
+    "request_id": "generation-check-file-02",
+    "kind": "managed_file",
+    "status": "requested",
+    "operation_digest": "1cc6c4a1c89fe0e48770fb794749dc4f3dffc6289dd2376399ac3ae2a73fa33d",
+    "payload": {
+      "request_id": "generation-check-file-02",
+      "tool": "write",
+      "arguments": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output\\generation-check.txt",
+        "content": "Generation check: confirmed.\n"
+      },
+      "target": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output\\generation-check.txt",
+      "boundary": {
+        "root": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output",
+        "root_identity": "2896187235:281474985168286",
+        "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output",
+        "parent_identity": "2896187235:281474985168286",
+        "file_identity": null
+      },
+      "before_hash": null,
+      "before_length": 0,
+      "final_hash": "5c4ca1f23393126e0e2387dce8cf943795be014945e3fc67c82abd49871584ee",
+      "final_length": 29,
+      "final_text": "Generation check: confirmed.\n",
+      "work_ref": {
+        "id": "work-02a74d7d-27cd-480d-a03f-c0aa49d5dc6b",
+        "revision": 2
+      },
+      "step_id": "write-verify",
+      "independent_basis": null,
+      "work_snapshot": {
+        "title": "New generation check",
+        "objective": "Create generation-check.txt in the designated output root containing exactly Generation check: confirmed. followed by one LF newline, then verify actual bytes. This is independent of the restored Observatory report.",
+        "plan_version": 1,
+        "step_intent": "After exact native confirmation, write generation-check.txt and verify its actual bytes."
+      },
+      "method_export": null,
+      "retry_of": null,
+      "retry_risk": null
+    },
+    "epoch": "b9b592fb-71db-4e02-8546-ed72381f8d45",
+    "preview_ref": "preview-7c234c76-4ba0-4664-8d67-a48e7e0cc172",
+    "tool_call_id": "call_d6117710a8c4465bb92db549e0be135e|fc_0df114e260e73364016ad8578d4a188191b21011b34c169631",
+    "runtime_id": "b9787066-12af-45d3-ab0e-7099aed611fa",
+    "observations": [],
+    "receipt": null,
+    "receipt_history": []
+  },
+  "actual_world_bytes": true
+}

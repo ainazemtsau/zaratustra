@@ -1,0 +1,30 @@
+TAP version 13
+# (node:65996) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 control operations cards remain readable after exact tombstone redacts a preview payload
+ok 1 - E3 control operations cards remain readable after exact tombstone redacts a preview payload
+  ---
+  duration_ms: 1034.2608
+  type: 'test'
+  ...
+# Subtest: E3 control unreferenced Concept has a valid tombstone and its bundle verifies/restores
+ok 2 - E3 control unreferenced Concept has a valid tombstone and its bundle verifies/restores
+  ---
+  duration_ms: 976.9308
+  type: 'test'
+  ...
+# Subtest: E3 control hidden primary guessed missing revision is indistinguishable from nonexistent ID
+ok 3 - E3 control hidden primary guessed missing revision is indistinguishable from nonexistent ID
+  ---
+  duration_ms: 514.6152
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2833.1105

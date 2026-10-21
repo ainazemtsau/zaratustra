@@ -1,0 +1,18 @@
+{
+  "runtime_exact_b93f5ca6": true,
+  "red_log": "restricted-storage-scope-red-01.log",
+  "entries": [
+    {
+      "path": "src/core/memory.ts",
+      "sha256": "a093ba92d0d4b1752dbc637cc181d4ff5cfbfa937698913bb6ba5f2bec32f97c"
+    },
+    {
+      "path": "src/core/lifecycle.ts",
+      "sha256": "cc85dc8a01bc8be591d55225a77321693de68e7ac1fe2a6ca6f3e0dbad216cee"
+    },
+    {
+      "path": "tests/lifecycle-controls.test.ts",
+      "sha256": "a23c232799aa011b408161d905acf29dba19e954abb4fcf3cce6af037fff9be0"
+    }
+  ]
+}

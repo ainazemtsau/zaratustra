@@ -1,0 +1,52 @@
+[
+  {
+    "path": "src/core/index.ts",
+    "sha256": "f846190ca0072280769ad2cf9405c1cceac481fac71d003f91265b86b3b3f3dd",
+    "length": 114444
+  },
+  {
+    "path": "src/core/lifecycle.ts",
+    "sha256": "450f2a444d82e4a288660942f2b38f6dcefe7f171c7ee13c8d2bd72d651bc910",
+    "length": 14631
+  },
+  {
+    "path": "src/core/memory.ts",
+    "sha256": "ad7b2f459fdd4d0590b76fea626ffe8a08da46006dcdc24e0521d5741ce09153",
+    "length": 38107
+  },
+  {
+    "path": "src/core/approval.ts",
+    "sha256": "33697bcf79006ccfeee7a31cad58df98b732f43040c5ace299560ec47d240ad5",
+    "length": 8744
+  },
+  {
+    "path": "src/storage/index.ts",
+    "sha256": "5989e74e6261656c902d571c7312aeb79a7cc9256d506ee2e00cb4ac0523dbf5",
+    "length": 30528
+  },
+  {
+    "path": "src/storage/control.ts",
+    "sha256": "97565a670ac54feaff173c94d86dc68fa60e6d10838f654a1079d580043d94b0",
+    "length": 3910
+  },
+  {
+    "path": "src/storage/administration.ts",
+    "sha256": "7df1d201cb91f8b5e563449982b10715d34ef4f87850fe25436b13805fa6cd20",
+    "length": 31577
+  },
+  {
+    "path": "src/extension/index.ts",
+    "sha256": "da6350780fc648a14ae36560d2b20edd67912fafceb74c43264d64d746514b91",
+    "length": 41124
+  },
+  {
+    "path": "src/extension/administration.ts",
+    "sha256": "445a57ec88ed0081510d71287bd57040f809cb72bb262181198364526e3785cd",
+    "length": 9016
+  },
+  {
+    "path": "tests/lifecycle-controls.test.ts",
+    "sha256": "3dc57cd714a35649212fae8e3621b14ddb89b03df2332398775beb91cd424cc6",
+    "length": 8864
+  }
+]

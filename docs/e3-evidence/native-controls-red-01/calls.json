@@ -1,0 +1,853 @@
+[
+  {
+    "profile": "protected-recipient-false",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-guessed"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-false",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backups\":[],\"has_more\":false,\"limit\":50}"
+        }
+      ],
+      "details": {
+        "backups": [],
+        "has_more": false,
+        "limit": 50
+      }
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "notification": "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "notification": "Получатель Pi изменился. Новые managed reads/imports остановлены; уже загруженный transcript сохраняется. Автоматический router без доказанного gate или bounded policy не поддерживается.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "notification": "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-guessed"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"ok\":false,\"code\":\"PERMISSION_DENIED\",\"message\":\"Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.\",\"retryable\":false}"
+        }
+      ],
+      "details": {
+        "ok": false,
+        "code": "PERMISSION_DENIED",
+        "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized.",
+        "retryable": false
+      },
+      "isError": true
+    }
+  },
+  {
+    "profile": "protected-recipient-true",
+    "name": "zara_backups",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backups\":[],\"has_more\":false,\"limit\":50}"
+        }
+      ],
+      "details": {
+        "backups": [],
+        "has_more": false,
+        "limit": 50
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\backups\\\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3\",\"identity\":\"910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\backups\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3",
+        "identity": "910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_file_preview",
+    "args": {
+      "request_id": "delayed-native-B",
+      "tool": "write",
+      "arguments": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt",
+        "content": "Actual public native write completes only after the controlled gate.\n"
+      },
+      "independent_basis": "New independent isolated fixture action",
+      "consequence": "Write synthetic delayed report",
+      "alternatives": "Keep absent"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-73367fd6-872c-497f-8732-ec6a71b9a28e\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"9e319c84-3ca5-4e08-94af-d94dfa8c46e2\",\"epoch\":\"e0f82742-6dba-4da0-9e5b-7a736d4710e0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-646c-743d-b509-62f3d692dfe8\",\"runtime_id\":\"def9afa7-58c2-44d9-a1ef-7fed7026c3e5\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\",\"root_identity\":\"2896187235:562949961886362\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\",\"parent_identity\":\"2896187235:562949961886362\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T05:13:40.263Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"ded88072bb85510a64271ce826794235278ce4a46de36c87bac4b02bcdafdf94\"}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-73367fd6-872c-497f-8732-ec6a71b9a28e",
+        "kind": "preview",
+        "status": "draft",
+        "payload": {
+          "workspace_id": "9e319c84-3ca5-4e08-94af-d94dfa8c46e2",
+          "epoch": "e0f82742-6dba-4da0-9e5b-7a736d4710e0",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15cd3-646c-743d-b509-62f3d692dfe8",
+          "runtime_id": "def9afa7-58c2-44d9-a1ef-7fed7026c3e5",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output",
+              "root_identity": "2896187235:562949961886362",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output",
+              "parent_identity": "2896187235:562949961886362",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T05:13:40.263Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "ded88072bb85510a64271ce826794235278ce4a46de36c87bac4b02bcdafdf94"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-73367fd6-872c-497f-8732-ec6a71b9a28e"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-73367fd6-872c-497f-8732-ec6a71b9a28e\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"9e319c84-3ca5-4e08-94af-d94dfa8c46e2\",\"epoch\":\"e0f82742-6dba-4da0-9e5b-7a736d4710e0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-646c-743d-b509-62f3d692dfe8\",\"runtime_id\":\"def9afa7-58c2-44d9-a1ef-7fed7026c3e5\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\",\"root_identity\":\"2896187235:562949961886362\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\output\",\"parent_identity\":\"2896187235:562949961886362\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T05:13:40.263Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"ded88072bb85510a64271ce826794235278ce4a46de36c87bac4b02bcdafdf94\",\"answer\":{\"source_ref\":\"native-dialog-91df8f36-b0bf-410f-9ff1-0096c270b791\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T04:58:40.286Z\",\"presentation_digest\":\"ded88072bb85510a64271ce826794235278ce4a46de36c87bac4b02bcdafdf94\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-73367fd6-872c-497f-8732-ec6a71b9a28e",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "9e319c84-3ca5-4e08-94af-d94dfa8c46e2",
+          "epoch": "e0f82742-6dba-4da0-9e5b-7a736d4710e0",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15cd3-646c-743d-b509-62f3d692dfe8",
+          "runtime_id": "def9afa7-58c2-44d9-a1ef-7fed7026c3e5",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output",
+              "root_identity": "2896187235:562949961886362",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output",
+              "parent_identity": "2896187235:562949961886362",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T05:13:40.263Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "ded88072bb85510a64271ce826794235278ce4a46de36c87bac4b02bcdafdf94",
+        "answer": {
+          "source_ref": "native-dialog-91df8f36-b0bf-410f-9ff1-0096c270b791",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T04:58:40.286Z",
+          "presentation_digest": "ded88072bb85510a64271ce826794235278ce4a46de36c87bac4b02bcdafdf94",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\backups\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3",
+      "consequence": "Restore snapshot; external action must first settle",
+      "alternatives": "Keep current"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-e2bd1eae-7731-4207-8df4-f25e4e983ba4\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"9e319c84-3ca5-4e08-94af-d94dfa8c46e2\",\"epoch\":\"e0f82742-6dba-4da0-9e5b-7a736d4710e0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-646c-743d-b509-62f3d692dfe8\",\"runtime_id\":\"def9afa7-58c2-44d9-a1ef-7fed7026c3e5\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"9e0de2639e7a94e153d6faba67faacc8eb799fa5d55c4cb391b891defb0b424b\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"7db037da0b7a8d6d5bd2208613dbe890169e3085fe1efa6d2a52c962ce92ec49\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\backups\\\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3\",\"backup_identity\":\"910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\home\\\\generations\\\\35ffd737-46a6-42d9-b31a-b24db61ed5dc\",\"new_epoch\":\"e60d2e8c-32c1-490d-b9ae-e15b9dc2c54a\",\"workspace_id\":\"9e319c84-3ca5-4e08-94af-d94dfa8c46e2\",\"captured_seq\":0,\"current_fingerprint\":\"8a92b2c7608ac5954cd6fbeddfb2b30e17af74bd3d86484ba1faa7ab3c3e31d4\",\"restoration_id\":\"be5ff6b1-4318-41bd-a62e-24d6d581bcf6\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T05:13:40.376Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"12083e04046c63bba10780418cb8bae38adcf13c601c9b332d7bce24c601ee5d\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\backups\\\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\home\\\\generations\\\\35ffd737-46a6-42d9-b31a-b24db61ed5dc\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-e2bd1eae-7731-4207-8df4-f25e4e983ba4",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "9e319c84-3ca5-4e08-94af-d94dfa8c46e2",
+            "epoch": "e0f82742-6dba-4da0-9e5b-7a736d4710e0",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15cd3-646c-743d-b509-62f3d692dfe8",
+            "runtime_id": "def9afa7-58c2-44d9-a1ef-7fed7026c3e5",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "9e0de2639e7a94e153d6faba67faacc8eb799fa5d55c4cb391b891defb0b424b"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "7db037da0b7a8d6d5bd2208613dbe890169e3085fe1efa6d2a52c962ce92ec49"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\backups\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3",
+              "backup_identity": "910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\home\\generations\\35ffd737-46a6-42d9-b31a-b24db61ed5dc",
+              "new_epoch": "e60d2e8c-32c1-490d-b9ae-e15b9dc2c54a",
+              "workspace_id": "9e319c84-3ca5-4e08-94af-d94dfa8c46e2",
+              "captured_seq": 0,
+              "current_fingerprint": "8a92b2c7608ac5954cd6fbeddfb2b30e17af74bd3d86484ba1faa7ab3c3e31d4",
+              "restoration_id": "be5ff6b1-4318-41bd-a62e-24d6d581bcf6",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore snapshot; external action must first settle",
+            "alternatives": "Keep current",
+            "expires_at": "2026-10-21T05:13:40.376Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "12083e04046c63bba10780418cb8bae38adcf13c601c9b332d7bce24c601ee5d"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\backups\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\home\\generations\\35ffd737-46a6-42d9-b31a-b24db61ed5dc",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-e2bd1eae-7731-4207-8df4-f25e4e983ba4"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-e2bd1eae-7731-4207-8df4-f25e4e983ba4\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"9e319c84-3ca5-4e08-94af-d94dfa8c46e2\",\"epoch\":\"e0f82742-6dba-4da0-9e5b-7a736d4710e0\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-646c-743d-b509-62f3d692dfe8\",\"runtime_id\":\"def9afa7-58c2-44d9-a1ef-7fed7026c3e5\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"9e0de2639e7a94e153d6faba67faacc8eb799fa5d55c4cb391b891defb0b424b\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"7db037da0b7a8d6d5bd2208613dbe890169e3085fe1efa6d2a52c962ce92ec49\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\backups\\\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3\",\"backup_identity\":\"910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-false\\\\home\\\\generations\\\\35ffd737-46a6-42d9-b31a-b24db61ed5dc\",\"new_epoch\":\"e60d2e8c-32c1-490d-b9ae-e15b9dc2c54a\",\"workspace_id\":\"9e319c84-3ca5-4e08-94af-d94dfa8c46e2\",\"captured_seq\":0,\"current_fingerprint\":\"8a92b2c7608ac5954cd6fbeddfb2b30e17af74bd3d86484ba1faa7ab3c3e31d4\",\"restoration_id\":\"be5ff6b1-4318-41bd-a62e-24d6d581bcf6\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T05:13:40.376Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"12083e04046c63bba10780418cb8bae38adcf13c601c9b332d7bce24c601ee5d\",\"answer\":{\"source_ref\":\"native-dialog-60489512-7e92-4609-8b89-109fdbecb564\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T04:58:40.389Z\",\"presentation_digest\":\"12083e04046c63bba10780418cb8bae38adcf13c601c9b332d7bce24c601ee5d\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-e2bd1eae-7731-4207-8df4-f25e4e983ba4",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "9e319c84-3ca5-4e08-94af-d94dfa8c46e2",
+          "epoch": "e0f82742-6dba-4da0-9e5b-7a736d4710e0",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15cd3-646c-743d-b509-62f3d692dfe8",
+          "runtime_id": "def9afa7-58c2-44d9-a1ef-7fed7026c3e5",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "9e0de2639e7a94e153d6faba67faacc8eb799fa5d55c4cb391b891defb0b424b"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "7db037da0b7a8d6d5bd2208613dbe890169e3085fe1efa6d2a52c962ce92ec49"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\backups\\backup-468221e4-e5f8-43bb-b239-ff7fe5fb94a3",
+            "backup_identity": "910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\home\\generations\\35ffd737-46a6-42d9-b31a-b24db61ed5dc",
+            "new_epoch": "e60d2e8c-32c1-490d-b9ae-e15b9dc2c54a",
+            "workspace_id": "9e319c84-3ca5-4e08-94af-d94dfa8c46e2",
+            "captured_seq": 0,
+            "current_fingerprint": "8a92b2c7608ac5954cd6fbeddfb2b30e17af74bd3d86484ba1faa7ab3c3e31d4",
+            "restoration_id": "be5ff6b1-4318-41bd-a62e-24d6d581bcf6",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Restore snapshot; external action must first settle",
+          "alternatives": "Keep current",
+          "expires_at": "2026-10-21T05:13:40.376Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "12083e04046c63bba10780418cb8bae38adcf13c601c9b332d7bce24c601ee5d",
+        "answer": {
+          "source_ref": "native-dialog-60489512-7e92-4609-8b89-109fdbecb564",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T04:58:40.389Z",
+          "presentation_digest": "12083e04046c63bba10780418cb8bae38adcf13c601c9b332d7bce24c601ee5d",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-false",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-e2bd1eae-7731-4207-8df4-f25e4e983ba4"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"switched\":true,\"epoch\":\"e60d2e8c-32c1-490d-b9ae-e15b9dc2c54a\",\"backup_identity\":\"910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f\",\"captured_seq\":0,\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"reconciliation_required\":true}"
+        }
+      ],
+      "details": {
+        "switched": true,
+        "epoch": "e60d2e8c-32c1-490d-b9ae-e15b9dc2c54a",
+        "backup_identity": "910c122ba1ccab2b36e4f347a63da1de0c983e5af86034e9b35c76373892911f",
+        "captured_seq": 0,
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+        "reconciliation_required": true
+      }
+    }
+  },
+  {
+    "late_real_result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Successfully wrote to <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt"
+        }
+      ]
+    },
+    "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-false\\output\\late-report.txt",
+    "bytes": "Actual public native write completes only after the controlled gate.\n"
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_backup",
+    "args": {},
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\backups\\\\backup-8f1befd8-5390-45bd-9395-d4a865626475\",\"identity\":\"76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab\",\"complete\":true,\"captured_seq\":0,\"export\":\"export.json\",\"live_pin\":null,\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\"}"
+        }
+      ],
+      "details": {
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\backups\\backup-8f1befd8-5390-45bd-9395-d4a865626475",
+        "identity": "76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab",
+        "complete": true,
+        "captured_seq": 0,
+        "export": "export.json",
+        "live_pin": null,
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_file_preview",
+    "args": {
+      "request_id": "delayed-native-B",
+      "tool": "write",
+      "arguments": {
+        "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt",
+        "content": "Actual public native write completes only after the controlled gate.\n"
+      },
+      "independent_basis": "New independent isolated fixture action",
+      "consequence": "Write synthetic delayed report",
+      "alternatives": "Keep absent"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-3da0bf5d-519a-4f51-bfa6-6de308317fc1\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"9b176155-9208-4519-87e2-875641ca069f\",\"epoch\":\"e104f307-91a8-404a-adc8-4ab4ce21fa34\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-6620-743d-b509-62f43847c322\",\"runtime_id\":\"40ad69c1-c59c-4c43-9ed0-0d99551b5ee1\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\",\"root_identity\":\"2896187235:281474985175737\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\",\"parent_identity\":\"2896187235:281474985175737\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T05:13:40.699Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"7887c6bc806dc8377ba1bafbed6a190447a0a347854102d60984604762bf9c95\"}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-3da0bf5d-519a-4f51-bfa6-6de308317fc1",
+        "kind": "preview",
+        "status": "draft",
+        "payload": {
+          "workspace_id": "9b176155-9208-4519-87e2-875641ca069f",
+          "epoch": "e104f307-91a8-404a-adc8-4ab4ce21fa34",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15cd3-6620-743d-b509-62f43847c322",
+          "runtime_id": "40ad69c1-c59c-4c43-9ed0-0d99551b5ee1",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output",
+              "root_identity": "2896187235:281474985175737",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output",
+              "parent_identity": "2896187235:281474985175737",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T05:13:40.699Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "7887c6bc806dc8377ba1bafbed6a190447a0a347854102d60984604762bf9c95"
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-3da0bf5d-519a-4f51-bfa6-6de308317fc1"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-3da0bf5d-519a-4f51-bfa6-6de308317fc1\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"9b176155-9208-4519-87e2-875641ca069f\",\"epoch\":\"e104f307-91a8-404a-adc8-4ab4ce21fa34\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-6620-743d-b509-62f43847c322\",\"runtime_id\":\"40ad69c1-c59c-4c43-9ed0-0d99551b5ee1\",\"action\":\"managed_file\",\"exact\":{\"request_id\":\"delayed-native-B\",\"tool\":\"write\",\"arguments\":{\"path\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"content\":\"Actual public native write completes only after the controlled gate.\\n\"},\"target\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\\\\late-report.txt\",\"boundary\":{\"root\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\",\"root_identity\":\"2896187235:281474985175737\",\"parent\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\output\",\"parent_identity\":\"2896187235:281474985175737\",\"file_identity\":null},\"before_hash\":null,\"before_length\":0,\"final_hash\":\"4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf\",\"final_length\":69,\"final_text\":\"Actual public native write completes only after the controlled gate.\\n\",\"work_ref\":null,\"step_id\":null,\"independent_basis\":\"New independent isolated fixture action\",\"method_export\":null,\"retry_of\":null,\"retry_risk\":null},\"dependencies\":[],\"consequence\":\"Write synthetic delayed report\",\"alternatives\":\"Keep absent\",\"expires_at\":\"2026-10-21T05:13:40.699Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"7887c6bc806dc8377ba1bafbed6a190447a0a347854102d60984604762bf9c95\",\"answer\":{\"source_ref\":\"native-dialog-5d907d12-4afb-4196-b583-beb3cad15eee\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T04:58:40.722Z\",\"presentation_digest\":\"7887c6bc806dc8377ba1bafbed6a190447a0a347854102d60984604762bf9c95\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-3da0bf5d-519a-4f51-bfa6-6de308317fc1",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "9b176155-9208-4519-87e2-875641ca069f",
+          "epoch": "e104f307-91a8-404a-adc8-4ab4ce21fa34",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15cd3-6620-743d-b509-62f43847c322",
+          "runtime_id": "40ad69c1-c59c-4c43-9ed0-0d99551b5ee1",
+          "action": "managed_file",
+          "exact": {
+            "request_id": "delayed-native-B",
+            "tool": "write",
+            "arguments": {
+              "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt",
+              "content": "Actual public native write completes only after the controlled gate.\n"
+            },
+            "target": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt",
+            "boundary": {
+              "root": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output",
+              "root_identity": "2896187235:281474985175737",
+              "parent": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output",
+              "parent_identity": "2896187235:281474985175737",
+              "file_identity": null
+            },
+            "before_hash": null,
+            "before_length": 0,
+            "final_hash": "4c475d5e5a3f85849e17fe4f663fed197456febda79cb9c42de88b8133b6c0cf",
+            "final_length": 69,
+            "final_text": "Actual public native write completes only after the controlled gate.\n",
+            "work_ref": null,
+            "step_id": null,
+            "independent_basis": "New independent isolated fixture action",
+            "method_export": null,
+            "retry_of": null,
+            "retry_risk": null
+          },
+          "dependencies": [],
+          "consequence": "Write synthetic delayed report",
+          "alternatives": "Keep absent",
+          "expires_at": "2026-10-21T05:13:40.699Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "7887c6bc806dc8377ba1bafbed6a190447a0a347854102d60984604762bf9c95",
+        "answer": {
+          "source_ref": "native-dialog-5d907d12-4afb-4196-b583-beb3cad15eee",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T04:58:40.722Z",
+          "presentation_digest": "7887c6bc806dc8377ba1bafbed6a190447a0a347854102d60984604762bf9c95",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "notification": "Zaratustra store unavailable. Dependent actions are blocked; ordinary Pi remains available.",
+    "type": "warning"
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_restore_preview",
+    "args": {
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\backups\\backup-8f1befd8-5390-45bd-9395-d4a865626475",
+      "consequence": "Restore snapshot; external action must first settle",
+      "alternatives": "Keep current"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"preview\":{\"request_id\":\"preview-f34908ff-700e-49c8-bd5d-f8508f048d41\",\"kind\":\"preview\",\"status\":\"draft\",\"payload\":{\"workspace_id\":\"9b176155-9208-4519-87e2-875641ca069f\",\"epoch\":\"e104f307-91a8-404a-adc8-4ab4ce21fa34\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-6620-743d-b509-62f43847c322\",\"runtime_id\":\"40ad69c1-c59c-4c43-9ed0-0d99551b5ee1\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"ffcf5fd3f4a66bac7b310358f105305f8eb4a0d9ba7828f60cf1d446aaff79c9\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"777a20f107526ec17cf13f3721f2c35ff6779b3746cf5de3ca83da02ab00e53b\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\backups\\\\backup-8f1befd8-5390-45bd-9395-d4a865626475\",\"backup_identity\":\"76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\home\\\\generations\\\\47555e0e-1a91-4cdb-b008-033fdb160e02\",\"new_epoch\":\"2a8171a0-4a8d-496f-a6e9-cf128531ef06\",\"workspace_id\":\"9b176155-9208-4519-87e2-875641ca069f\",\"captured_seq\":0,\"current_fingerprint\":\"473130900d235d06ad0a5102e96076b05c1e37a8f6b4899ba427f94a7fdc2146\",\"restoration_id\":\"7c2f9777-d8a3-4b94-86f7-6fc7e572a3d5\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T05:13:40.845Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"e69b95196dc2d127bebd6aaf793207d85c31510c21e5dc26adc835d27a2cd7bb\"},\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\backups\\\\backup-8f1befd8-5390-45bd-9395-d4a865626475\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\home\\\\generations\\\\47555e0e-1a91-4cdb-b008-033fdb160e02\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\"}"
+        }
+      ],
+      "details": {
+        "preview": {
+          "request_id": "preview-f34908ff-700e-49c8-bd5d-f8508f048d41",
+          "kind": "preview",
+          "status": "draft",
+          "payload": {
+            "workspace_id": "9b176155-9208-4519-87e2-875641ca069f",
+            "epoch": "e104f307-91a8-404a-adc8-4ab4ce21fa34",
+            "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+            "scopes": [
+              "restricted:read",
+              "restricted:write"
+            ],
+            "policy_revision": "E2-exact-v1",
+            "session_id": "01a15cd3-6620-743d-b509-62f43847c322",
+            "runtime_id": "40ad69c1-c59c-4c43-9ed0-0d99551b5ee1",
+            "action": "restore",
+            "exact": {
+              "quarantine_components": [
+                {
+                  "path": "zara.sqlite",
+                  "length": 270336,
+                  "sha256": "ffcf5fd3f4a66bac7b310358f105305f8eb4a0d9ba7828f60cf1d446aaff79c9"
+                },
+                {
+                  "path": "workspace.json",
+                  "length": 134,
+                  "sha256": "777a20f107526ec17cf13f3721f2c35ff6779b3746cf5de3ca83da02ab00e53b"
+                }
+              ],
+              "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\backups\\backup-8f1befd8-5390-45bd-9395-d4a865626475",
+              "backup_identity": "76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab",
+              "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\home\\generations\\47555e0e-1a91-4cdb-b008-033fdb160e02",
+              "new_epoch": "2a8171a0-4a8d-496f-a6e9-cf128531ef06",
+              "workspace_id": "9b176155-9208-4519-87e2-875641ca069f",
+              "captured_seq": 0,
+              "current_fingerprint": "473130900d235d06ad0a5102e96076b05c1e37a8f6b4899ba427f94a7fdc2146",
+              "restoration_id": "7c2f9777-d8a3-4b94-86f7-6fc7e572a3d5",
+              "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+              "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+              "previous_generation": "."
+            },
+            "dependencies": [],
+            "consequence": "Restore snapshot; external action must first settle",
+            "alternatives": "Keep current",
+            "expires_at": "2026-10-21T05:13:40.845Z",
+            "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+          },
+          "operation_digest": "e69b95196dc2d127bebd6aaf793207d85c31510c21e5dc26adc835d27a2cd7bb"
+        },
+        "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\backups\\backup-8f1befd8-5390-45bd-9395-d4a865626475",
+        "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\home\\generations\\47555e0e-1a91-4cdb-b008-033fdb160e02",
+        "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts."
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_confirm",
+    "args": {
+      "preview_ref": "preview-f34908ff-700e-49c8-bd5d-f8508f048d41"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"request_id\":\"preview-f34908ff-700e-49c8-bd5d-f8508f048d41\",\"kind\":\"preview\",\"status\":\"approved-transient\",\"payload\":{\"workspace_id\":\"9b176155-9208-4519-87e2-875641ca069f\",\"epoch\":\"e104f307-91a8-404a-adc8-4ab4ce21fa34\",\"principal\":\"synthetic-controller:predeclared-E3-native-fixtures\",\"scopes\":[\"restricted:read\",\"restricted:write\"],\"policy_revision\":\"E2-exact-v1\",\"session_id\":\"01a15cd3-6620-743d-b509-62f43847c322\",\"runtime_id\":\"40ad69c1-c59c-4c43-9ed0-0d99551b5ee1\",\"action\":\"restore\",\"exact\":{\"quarantine_components\":[{\"path\":\"zara.sqlite\",\"length\":270336,\"sha256\":\"ffcf5fd3f4a66bac7b310358f105305f8eb4a0d9ba7828f60cf1d446aaff79c9\"},{\"path\":\"workspace.json\",\"length\":134,\"sha256\":\"777a20f107526ec17cf13f3721f2c35ff6779b3746cf5de3ca83da02ab00e53b\"}],\"backup\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\backups\\\\backup-8f1befd8-5390-45bd-9395-d4a865626475\",\"backup_identity\":\"76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab\",\"destination\":\"<SYNTHETIC_EVIDENCE_ROOT>\\\\native-controls-red-01\\\\protected-flight-true\\\\home\\\\generations\\\\47555e0e-1a91-4cdb-b008-033fdb160e02\",\"new_epoch\":\"2a8171a0-4a8d-496f-a6e9-cf128531ef06\",\"workspace_id\":\"9b176155-9208-4519-87e2-875641ca069f\",\"captured_seq\":0,\"current_fingerprint\":\"473130900d235d06ad0a5102e96076b05c1e37a8f6b4899ba427f94a7fdc2146\",\"restoration_id\":\"7c2f9777-d8a3-4b94-86f7-6fc7e572a3d5\",\"coverage\":\"full current and retained historical/deleted metadata; historical authority is not runnable\",\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"previous_generation\":\".\"},\"dependencies\":[],\"consequence\":\"Restore snapshot; external action must first settle\",\"alternatives\":\"Keep current\",\"expires_at\":\"2026-10-21T05:13:40.845Z\",\"revocation\":\"Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission.\"},\"operation_digest\":\"e69b95196dc2d127bebd6aaf793207d85c31510c21e5dc26adc835d27a2cd7bb\",\"answer\":{\"source_ref\":\"native-dialog-62cf421e-5de6-4b44-abe7-adf44e501393\",\"transport\":\"native-dialog\",\"channel_identity\":\"predeclared-E3-native-fixtures\",\"stage\":\"pi-confirm-return\",\"affirmative\":true,\"observed_at\":\"2026-10-21T04:58:40.855Z\",\"presentation_digest\":\"e69b95196dc2d127bebd6aaf793207d85c31510c21e5dc26adc835d27a2cd7bb\",\"authority\":\"registered-synthetic-controller-not-owner\"}}"
+        }
+      ],
+      "details": {
+        "request_id": "preview-f34908ff-700e-49c8-bd5d-f8508f048d41",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "9b176155-9208-4519-87e2-875641ca069f",
+          "epoch": "e104f307-91a8-404a-adc8-4ab4ce21fa34",
+          "principal": "synthetic-controller:predeclared-E3-native-fixtures",
+          "scopes": [
+            "restricted:read",
+            "restricted:write"
+          ],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15cd3-6620-743d-b509-62f43847c322",
+          "runtime_id": "40ad69c1-c59c-4c43-9ed0-0d99551b5ee1",
+          "action": "restore",
+          "exact": {
+            "quarantine_components": [
+              {
+                "path": "zara.sqlite",
+                "length": 270336,
+                "sha256": "ffcf5fd3f4a66bac7b310358f105305f8eb4a0d9ba7828f60cf1d446aaff79c9"
+              },
+              {
+                "path": "workspace.json",
+                "length": 134,
+                "sha256": "777a20f107526ec17cf13f3721f2c35ff6779b3746cf5de3ca83da02ab00e53b"
+              }
+            ],
+            "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\backups\\backup-8f1befd8-5390-45bd-9395-d4a865626475",
+            "backup_identity": "76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab",
+            "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\home\\generations\\47555e0e-1a91-4cdb-b008-033fdb160e02",
+            "new_epoch": "2a8171a0-4a8d-496f-a6e9-cf128531ef06",
+            "workspace_id": "9b176155-9208-4519-87e2-875641ca069f",
+            "captured_seq": 0,
+            "current_fingerprint": "473130900d235d06ad0a5102e96076b05c1e37a8f6b4899ba427f94a7fdc2146",
+            "restoration_id": "7c2f9777-d8a3-4b94-86f7-6fc7e572a3d5",
+            "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+            "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+            "previous_generation": "."
+          },
+          "dependencies": [],
+          "consequence": "Restore snapshot; external action must first settle",
+          "alternatives": "Keep current",
+          "expires_at": "2026-10-21T05:13:40.845Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "e69b95196dc2d127bebd6aaf793207d85c31510c21e5dc26adc835d27a2cd7bb",
+        "answer": {
+          "source_ref": "native-dialog-62cf421e-5de6-4b44-abe7-adf44e501393",
+          "transport": "native-dialog",
+          "channel_identity": "predeclared-E3-native-fixtures",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T04:58:40.855Z",
+          "presentation_digest": "e69b95196dc2d127bebd6aaf793207d85c31510c21e5dc26adc835d27a2cd7bb",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      }
+    }
+  },
+  {
+    "profile": "protected-flight-true",
+    "name": "zara_restore",
+    "args": {
+      "preview_ref": "preview-f34908ff-700e-49c8-bd5d-f8508f048d41"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"switched\":true,\"epoch\":\"2a8171a0-4a8d-496f-a6e9-cf128531ef06\",\"backup_identity\":\"76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab\",\"captured_seq\":0,\"loss\":\"All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.\",\"reconciliation_required\":true}"
+        }
+      ],
+      "details": {
+        "switched": true,
+        "epoch": "2a8171a0-4a8d-496f-a6e9-cf128531ef06",
+        "backup_identity": "76ef23de0f7fda5342a2eff7db175e150bd4ddc35adabc9325329f988f97e8ab",
+        "captured_seq": 0,
+        "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+        "reconciliation_required": true
+      }
+    }
+  },
+  {
+    "late_real_result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Successfully wrote to <SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt"
+        }
+      ]
+    },
+    "path": "<SYNTHETIC_EVIDENCE_ROOT>\\native-controls-red-01\\protected-flight-true\\output\\late-report.txt",
+    "bytes": "Actual public native write completes only after the controlled gate.\n"
+  }
+]

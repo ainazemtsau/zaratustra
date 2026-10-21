@@ -1,0 +1,36 @@
+{
+  "checks": [
+    {
+      "name": "recipient denial survives guessed restore/reopen healthy",
+      "passed": true
+    },
+    {
+      "name": "recipient denial survives guessed restore/reopen unavailable",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write healthy",
+      "passed": true
+    },
+    {
+      "name": "restore refuses real in-flight native write unavailable",
+      "passed": true
+    },
+    {
+      "name": "pending native decision cannot survive recipient denial or permit concurrent restore",
+      "passed": true
+    },
+    {
+      "name": "pending actual PDF import blocks restore until settlement false",
+      "passed": true
+    },
+    {
+      "name": "pending actual PDF import blocks restore until settlement true",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'APPROVAL_STALE'\n- 'WORK_IN_USE'\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'APPROVAL_STALE'\n- 'WORK_IN_USE'\n\n    at file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:429:10\n    at async run (file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:341:37)\n    at async file:///<PRODUCT_CHECKOUT>/scripts/e3-native-controls.mjs:421:40"
+    }
+  ],
+  "provider_dispatches": 0,
+  "mechanical_only": true
+}

@@ -1,0 +1,3 @@
+{"mode":"generation","active_database":"<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home\\generations\\3ff0a107-9cf0-4f9a-a20b-c4ba5444c6e7\\zara.sqlite","real_bytes":true,"requested_attempt":"generation-check-file-02","current_missing":false}
+(node:43876) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

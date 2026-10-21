@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<SYNTHETIC_EVIDENCE_ROOT>\verify-live.py", line 22, in <module>
+    ok(n+' native package resources',not resources['errors'] and all('agent' in p for p in resources['extension_paths']))
+    ~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<SYNTHETIC_EVIDENCE_ROOT>\verify-live.py", line 14, in ok
+    assert condition,name
+           ^^^^^^^^^
+AssertionError: L01-save native package resources

@@ -1,0 +1,72 @@
+[
+  {
+    "profile": "workspace",
+    "title": "Confirm these exact changes?",
+    "message": "Объединить ровно A в B, сохранить старую identity и историю\n\nAlternatives: Оставить A и B раздельными\n\nMerge entity “A” into “B”.\nSource identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination aliases will include: A.\nDestination visibility: workspace. Source keeps a current redirect; historical identities and references stay exact.\n\nExpires: 2026-10-21T06:15:54.339Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": false,
+    "synthetic": true
+  },
+  {
+    "profile": "workspace",
+    "title": "Confirm these exact changes?",
+    "message": "Объединить только A в B\n\nAlternatives: Оставить раздельными\n\nMerge entity “A” into “B”.\nSource identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination aliases will include: A.\nDestination visibility: workspace. Source keeps a current redirect; historical identities and references stay exact.\n\nExpires: 2026-10-21T06:15:58.413Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": true,
+    "synthetic": true
+  },
+  {
+    "profile": "workspace",
+    "title": "Confirm these exact changes?",
+    "message": "Записать показанные точные bytes в report.txt\n\nAlternatives: Не создавать файл\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\e2-native-installed-01\\workspace\\output\\report.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\n﻿Exact SDK output\r\nΩ 🦉\r\n\nIndependent action: Independent new synthetic SDK file action\n\n\nExpires: 2026-10-21T06:16:04.825Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": true,
+    "synthetic": true
+  },
+  {
+    "profile": "workspace",
+    "title": "Confirm these exact changes?",
+    "message": "Записать конечный текст\n\nAlternatives: Не писать\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\e2-native-installed-01\\workspace\\output\\lost.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\nWritten before lost tool_result\n\nIndependent action: Independent new synthetic SDK file action\n\n\nExpires: 2026-10-21T06:16:07.458Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": true,
+    "synthetic": true
+  },
+  {
+    "profile": "workspace",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/synthetic-unexplained-recipient. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "choice": false,
+    "synthetic": true
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Объединить ровно A в B, сохранить старую identity и историю\n\nAlternatives: Оставить A и B раздельными\n\nMerge entity “A” into “B”.\nSource identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination aliases will include: A.\nDestination visibility: restricted. Source keeps a current redirect; historical identities and references stay exact.\n\nExpires: 2026-10-21T06:16:12.509Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": false,
+    "synthetic": true
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Объединить только A в B\n\nAlternatives: Оставить раздельными\n\nMerge entity “A” into “B”.\nSource identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination identity: entity kind: item\naliases: none\ndisambiguation: Synthetic SDK item\nstatus: active\nDestination aliases will include: A.\nDestination visibility: restricted. Source keeps a current redirect; historical identities and references stay exact.\n\nExpires: 2026-10-21T06:16:13.836Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": true,
+    "synthetic": true
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Записать показанные точные bytes в report.txt\n\nAlternatives: Не создавать файл\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\e2-native-installed-01\\protected\\output\\report.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\n﻿Exact SDK output\r\nΩ 🦉\r\n\nIndependent action: Independent new synthetic SDK file action\n\n\nExpires: 2026-10-21T06:16:16.171Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": true,
+    "synthetic": true
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm these exact changes?",
+    "message": "Записать конечный текст\n\nAlternatives: Не писать\n\nFile: <SYNTHETIC_EVIDENCE_ROOT>\\e2-native-installed-01\\protected\\output\\lost.txt\nAction: Create new file (expected absent). Existing size: 0 bytes.\nComplete resulting text:\nWritten before lost tool_result\n\nIndependent action: Independent new synthetic SDK file action\n\n\nExpires: 2026-10-21T06:16:16.889Z. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.",
+    "choice": true,
+    "synthetic": true
+  },
+  {
+    "profile": "protected",
+    "title": "Confirm context recipient?",
+    "message": "Actual Pi recipient: openai-codex/synthetic-unexplained-recipient. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.",
+    "choice": false,
+    "synthetic": true
+  }
+]

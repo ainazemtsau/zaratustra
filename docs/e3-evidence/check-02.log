@@ -1,0 +1,26 @@
+
+> zaratustra@0.4.0-dev.1 check
+> npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test
+
+
+> zaratustra@0.4.0-dev.1 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> zaratustra@0.4.0-dev.1 lint
+> eslint src tests scripts
+
+
+<PRODUCT_CHECKOUT>\scripts\live.mjs
+  123:45  error  'ctx' is defined but never used  @typescript-eslint/no-unused-vars
+
+<PRODUCT_CHECKOUT>\src\core\lifecycle.ts
+  7:3  error  'JsonObject' is defined but never used  @typescript-eslint/no-unused-vars
+
+<PRODUCT_CHECKOUT>\src\storage\administration.ts
+  845:11  error  'p' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (3 errors, 0 warnings)
+

@@ -1,0 +1,3 @@
+src/core/memory.ts 155ms
+src/core/lifecycle.ts 48ms
+tests/lifecycle-controls.test.ts 68ms

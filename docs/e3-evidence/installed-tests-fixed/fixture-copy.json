@@ -1,0 +1,66 @@
+[
+  {
+    "path": "scripts\\export-evidence.mjs",
+    "sha256": "a028d1d4f4bc6ec8d5a8ca3b922b5070d24c089437c65bb3aff913c2cef40550"
+  },
+  {
+    "path": "tests\\fixtures\\c\\blank.pdf",
+    "sha256": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064"
+  },
+  {
+    "path": "tests\\fixtures\\c\\book.epub",
+    "sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a"
+  },
+  {
+    "path": "tests\\fixtures\\c\\book.pdf",
+    "sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406"
+  },
+  {
+    "path": "tests\\fixtures\\c\\damaged.pdf",
+    "sha256": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76"
+  },
+  {
+    "path": "tests\\fixtures\\c\\encrypted.epub",
+    "sha256": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970"
+  },
+  {
+    "path": "tests\\fixtures\\c\\encrypted.pdf",
+    "sha256": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879"
+  },
+  {
+    "path": "tests\\fixtures\\c\\entities.epub",
+    "sha256": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23"
+  },
+  {
+    "path": "tests\\fixtures\\c\\image-only.epub",
+    "sha256": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990"
+  },
+  {
+    "path": "tests\\fixtures\\c\\large.pdf",
+    "sha256": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7"
+  },
+  {
+    "path": "tests\\fixtures\\c\\notes.md",
+    "sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54"
+  },
+  {
+    "path": "tests\\fixtures\\c\\output-limit.epub",
+    "sha256": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171"
+  },
+  {
+    "path": "tests\\fixtures\\c\\partial.epub",
+    "sha256": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468"
+  },
+  {
+    "path": "tests\\fixtures\\c\\remote.epub",
+    "sha256": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b"
+  },
+  {
+    "path": "tests\\fixtures\\c\\traversal.epub",
+    "sha256": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c"
+  },
+  {
+    "path": "tests\\fixtures\\c\\zip-limit.epub",
+    "sha256": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce"
+  }
+]

@@ -1,0 +1,4 @@
+src/core/contracts.ts 139ms
+tests/lifecycle-controls.test.ts 68ms
+tests/lifecycle.test.ts 82ms
+skills/zaratustra-memory/SKILL.md 45ms (unchanged)

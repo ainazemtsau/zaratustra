@@ -1,0 +1,78 @@
+TAP version 13
+# (node:68572) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 control operations cards remain readable after exact tombstone redacts a preview payload
+ok 1 - E3 control operations cards remain readable after exact tombstone redacts a preview payload
+  ---
+  duration_ms: 1044.1647
+  type: 'test'
+  ...
+# Subtest: E3 control unreferenced Concept has a valid tombstone and its bundle verifies/restores
+ok 2 - E3 control unreferenced Concept has a valid tombstone and its bundle verifies/restores
+  ---
+  duration_ms: 1055.007
+  type: 'test'
+  ...
+# Subtest: E3 control exact Method dependency pinned by open Work survives current Method revision; releasing obligation does not pin all history
+ok 3 - E3 control exact Method dependency pinned by open Work survives current Method revision; releasing obligation does not pin all history
+  ---
+  duration_ms: 2695.08
+  type: 'test'
+  ...
+# Subtest: E3 control exact historical Knowledge grounds remain pinned by open Work after current correction
+ok 4 - E3 control exact historical Knowledge grounds remain pinned by open Work after current correction
+  ---
+  duration_ms: 2321.953
+  type: 'test'
+  ...
+# Subtest: E3 control hidden primary guessed missing revision is indistinguishable from nonexistent ID
+ok 5 - E3 control hidden primary guessed missing revision is indistinguishable from nonexistent ID
+  ---
+  duration_ms: 768.1219
+  type: 'test'
+  ...
+# Subtest: E3 control stable lease survives SQLite close; a real interleaving writer cannot commit unpreviewed data
+ok 6 - E3 control stable lease survives SQLite close; a real interleaving writer cannot commit unpreviewed data
+  ---
+  duration_ms: 483.3627
+  type: 'test'
+  ...
+# Subtest: E3 control pending material remains pinned after an unrelated commit using the same source handle
+ok 7 - E3 control pending material remains pinned after an unrelated commit using the same source handle
+  ---
+  duration_ms: 411.7334
+  type: 'test'
+  ...
+# Subtest: E3 control tombstone preserves inherited restriction without declassifying identity/count/technical headers
+ok 8 - E3 control tombstone preserves inherited restriction without declassifying identity/count/technical headers
+  ---
+  duration_ms: 6009.6966
+  type: 'test'
+  ...
+# Subtest: E3 control backup51 is discoverable by bounded scope/generation-bound continuation
+ok 9 - E3 control backup51 is discoverable by bounded scope/generation-bound continuation
+  ---
+  duration_ms: 833.8491
+  type: 'test'
+  ...
+# Subtest: E3 control truncated recovery hints have an explicit continuation through ordinary Work reads
+ok 10 - E3 control truncated recovery hints have an explicit continuation through ordinary Work reads
+  ---
+  duration_ms: 14216.4872
+  type: 'test'
+  ...
+# Subtest: E3 control administrative paths reject Windows device, ADS and control aliases
+ok 11 - E3 control administrative paths reject Windows device, ADS and control aliases
+  ---
+  duration_ms: 71.4012
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30227.3216

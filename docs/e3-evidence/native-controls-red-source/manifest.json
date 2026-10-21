@@ -1,0 +1,27 @@
+[
+  {
+    "path": "src/extension/index.ts",
+    "sha256": "da6350780fc648a14ae36560d2b20edd67912fafceb74c43264d64d746514b91",
+    "length": 41124
+  },
+  {
+    "path": "src/extension/administration.ts",
+    "sha256": "445a57ec88ed0081510d71287bd57040f809cb72bb262181198364526e3785cd",
+    "length": 9016
+  },
+  {
+    "path": "src/storage/index.ts",
+    "sha256": "3bce1814e48cf28c1f927ed64b2402ac472379d8a4a2ce570c081ff2a9c63284",
+    "length": 30706
+  },
+  {
+    "path": "src/storage/administration.ts",
+    "sha256": "2fa947d972983c6e5f273dbc6daf934c086a16e5bddc1c91f85caeb5efcb1210",
+    "length": 32525
+  },
+  {
+    "path": "scripts/e3-native-controls.mjs",
+    "sha256": "598a90e9c38e6c85f6b60289e2707ce0f2b005382b5903b398e4fb14d69abfdd",
+    "length": 9699
+  }
+]

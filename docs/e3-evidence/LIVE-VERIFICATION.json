@@ -1,0 +1,103 @@
+{
+  "code_sha": "01a111fd4cb7e82be782a63499e60580f541e7cf",
+  "checks": [
+    "L01-save starts with empty transcript",
+    "L01-save fixed recipient/effort",
+    "L01-save native package resources",
+    "L02-backup-A starts with empty transcript",
+    "L02-backup-A fixed recipient/effort",
+    "L02-backup-A native package resources",
+    "L03-write-B starts with empty transcript",
+    "L03-write-B fixed recipient/effort",
+    "L03-write-B native package resources",
+    "L04-restore-A starts with empty transcript",
+    "L04-restore-A fixed recipient/effort",
+    "L04-restore-A native package resources",
+    "L05-fresh-readback starts with empty transcript",
+    "L05-fresh-readback fixed recipient/effort",
+    "L05-fresh-readback native package resources",
+    "L06-new-generation-write starts with empty transcript",
+    "L06-new-generation-write fixed recipient/effort",
+    "L06-new-generation-write native package resources",
+    "L07-unknown-readback starts with empty transcript",
+    "L07-unknown-readback fixed recipient/effort",
+    "L07-unknown-readback native package resources",
+    "L08-archive-pins starts with empty transcript",
+    "L08-archive-pins fixed recipient/effort",
+    "L08-archive-pins native package resources",
+    "L09-low-denial starts with empty transcript",
+    "L09-low-denial fixed recipient/effort",
+    "L09-low-denial native package resources",
+    "A precedes all managed effect intents/output",
+    "B actual bytes and requested intent retained before genuine loss",
+    "unavailable DB restores A into new epoch/generation with all required barriers",
+    "fresh continuation FIRST managed call is actual recovery inspection",
+    "fresh continuation never repeats native effects",
+    "actual current report bytes returned",
+    "only named action cleared; other barriers remain",
+    "named native reconciliation committed",
+    "new generation observer uses authoritative actual active database",
+    "actual second native loss exits86",
+    "fresh unknown recovery does not write",
+    "unknown current-state readback retains unknown author",
+    "archive body retained and found explicitly",
+    "dangerous deletion has exact pinned-ground refusal",
+    "no silent obligation retirement",
+    "predeclared low setup refuses full backup",
+    "only two actual native writes across all conversations",
+    "final bytes unchanged observatory-report.txt",
+    "final bytes unchanged generation-check.txt",
+    "non-reset ledger matches every actual dispatch/attempt",
+    "all first-cap limits preserved"
+  ],
+  "conversations": 9,
+  "provider_dispatches": 68,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 9,
+    "requests": 68,
+    "input": 3496787,
+    "output": 7094,
+    "cache_read": 2663808,
+    "estimated_usd": 2.0032787999999995,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 68
+  },
+  "tool_refusals": [
+    {
+      "attempt": "L03-write-B",
+      "tool": "zara_file_preview",
+      "code": "INVALID_TRANSITION",
+      "message": "Start the claimed step with satisfied dependencies before its native file action."
+    },
+    {
+      "attempt": "L06-new-generation-write",
+      "tool": "zara_file_preview",
+      "code": "INVALID_TRANSITION",
+      "message": "Start the claimed step with satisfied dependencies before its native file action."
+    },
+    {
+      "attempt": "L08-archive-pins",
+      "tool": "zara_storage_preview",
+      "code": "DEPENDENCY_UNSATISFIED",
+      "message": "current Knowledge knowledge-c0712b0f-6fa8-46ad-8aaf-e90f897c1feb@1 retains required exact dependency evidence-be386c88-9bf9-4055-adad-7184e6f30cc0 revision 1."
+    },
+    {
+      "attempt": "L09-low-denial",
+      "tool": "zara_backup",
+      "code": "PERMISSION_DENIED",
+      "message": "Full backup/export requires fixed full-read setup; restore requires full-read and full-write setup. No bundle inspection was authorized."
+    }
+  ],
+  "L03_exit_note": "Outer PowerShell reported1 after frozen runner process.exit(86); actual Node status was not separately captured. Durable intent/native bytes/fault point/loss proof retained. L06 directly records86.",
+  "scope": "synthetic registered controller; no owner/T31/independent verdict"
+}

@@ -1,0 +1,28 @@
+(node:16564) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Память восстановлена из проверенной копии, переключение подтверждено. Более поздняя история базы отсутствует; внешние файлы не изменены.\n\n«Observatory Report» восстановлена, но требует отдельной сверки перед продолжением. Работу не продолжал.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 13,
+    "requests": 95,
+    "input": 4848961,
+    "output": 10226,
+    "cache_read": 3671552,
+    "estimated_usd": 2.8242331999999997,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 95
+  }
+}

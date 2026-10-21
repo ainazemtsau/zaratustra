@@ -1,0 +1,156 @@
+{
+  "expected": "fixed",
+  "provider_requests": 0,
+  "results": [
+    {
+      "mode": "rpc",
+      "controller": null,
+      "hasUI": true,
+      "answer": {
+        "ok": false,
+        "code": "APPROVAL_REQUIRED",
+        "message": "Native confirmation requires the trusted local TUI channel or an explicitly registered synthetic controller. Unregistered RPC/SDK UI grants no owner authority.",
+        "retryable": false
+      },
+      "dialogCalls": 0,
+      "mechanical_mode_injection_not_human": true
+    },
+    {
+      "mode": "print",
+      "controller": null,
+      "hasUI": true,
+      "answer": {
+        "ok": false,
+        "code": "APPROVAL_REQUIRED",
+        "message": "Native confirmation requires the trusted local TUI channel or an explicitly registered synthetic controller. Unregistered RPC/SDK UI grants no owner authority.",
+        "retryable": false
+      },
+      "dialogCalls": 0,
+      "mechanical_mode_injection_not_human": true
+    },
+    {
+      "mode": "rpc",
+      "controller": "registered-synthetic-native-E2",
+      "hasUI": true,
+      "answer": {
+        "request_id": "preview-eee79762-cebd-4871-80bd-62bf323f1bdf",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "a9b24cec-c3c8-4f56-b746-c6631b5c7e08",
+          "epoch": "8537506f-1a47-4916-849b-a870d7c21c93",
+          "principal": "synthetic-controller:registered-synthetic-native-E2",
+          "scopes": [],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d39-4c2a-7325-970c-798253b5abf5",
+          "runtime_id": "03aa084e-b603-4cb8-8acf-415f22550233",
+          "action": "commit",
+          "exact": {
+            "request_id": "preview-source",
+            "reason": "M-only preview",
+            "source_handles": [
+              "observed-c78872f8-76d1-4ec7-ada2-214473149edb"
+            ],
+            "guards": [],
+            "ops": [
+              {
+                "op": "create_record",
+                "client_ref": "a",
+                "title": "Synthetic native-dialog target",
+                "visibility": "workspace",
+                "kind": "activity",
+                "data": {
+                  "purpose": "Observe ingress",
+                  "status": "active"
+                }
+              }
+            ],
+            "before": [],
+            "effective_access": [],
+            "assigned_method_versions": []
+          },
+          "dependencies": [],
+          "consequence": "Create the named synthetic Activity",
+          "alternatives": "Leave memory unchanged",
+          "expires_at": "2026-10-21T07:04:59.107Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "5ff92ccf1b8b787938918679cc6f58f0fd0c0823d7333598e7c71a3648ba42cf",
+        "answer": {
+          "source_ref": "native-dialog-7c8610e8-e919-4dac-9b22-2701fdab88d4",
+          "transport": "native-dialog",
+          "channel_identity": "registered-synthetic-native-E2",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:49:59.834Z",
+          "presentation_digest": "5ff92ccf1b8b787938918679cc6f58f0fd0c0823d7333598e7c71a3648ba42cf",
+          "authority": "registered-synthetic-controller-not-owner"
+        }
+      },
+      "dialogCalls": 1,
+      "mechanical_mode_injection_not_human": true
+    },
+    {
+      "mode": "tui",
+      "controller": null,
+      "hasUI": true,
+      "answer": {
+        "request_id": "preview-e21b0309-8c2b-42d7-849f-bbcba9ce643b",
+        "kind": "preview",
+        "status": "approved-transient",
+        "payload": {
+          "workspace_id": "422ddd54-33eb-476d-8efa-34f8c67689c4",
+          "epoch": "33c06301-5529-41bd-81c9-766f58573914",
+          "principal": "trusted-local-desktop-owner",
+          "scopes": [],
+          "policy_revision": "E2-exact-v1",
+          "session_id": "01a15d39-5209-7325-970c-7984b876af8c",
+          "runtime_id": "3ea06f19-42b2-43a9-bc30-01ffdbd502d9",
+          "action": "commit",
+          "exact": {
+            "request_id": "preview-source",
+            "reason": "M-only preview",
+            "source_handles": [
+              "observed-29236b50-40b9-4da5-a2c6-06822f047563"
+            ],
+            "guards": [],
+            "ops": [
+              {
+                "op": "create_record",
+                "client_ref": "a",
+                "title": "Synthetic native-dialog target",
+                "visibility": "workspace",
+                "kind": "activity",
+                "data": {
+                  "purpose": "Observe ingress",
+                  "status": "active"
+                }
+              }
+            ],
+            "before": [],
+            "effective_access": [],
+            "assigned_method_versions": []
+          },
+          "dependencies": [],
+          "consequence": "Create the named synthetic Activity",
+          "alternatives": "Leave memory unchanged",
+          "expires_at": "2026-10-21T07:05:00.626Z",
+          "revocation": "Runtime reload, session replacement, refusal/cancel, explicit revocation, changed authority/policy/epoch or a material dependency invalidates permission."
+        },
+        "operation_digest": "86bdb125365c6fe9063729baade7ebd8b276b72d92f15ea4d26be826ba8ffc1c",
+        "answer": {
+          "source_ref": "native-dialog-bab6b9e3-9366-4552-8c4c-149eba69ce24",
+          "transport": "native-dialog",
+          "channel_identity": "trusted-local-desktop-owner",
+          "stage": "pi-confirm-return",
+          "affirmative": true,
+          "observed_at": "2026-10-21T06:50:02.191Z",
+          "presentation_digest": "86bdb125365c6fe9063729baade7ebd8b276b72d92f15ea4d26be826ba8ffc1c",
+          "authority": "trusted-desktop-dialog"
+        }
+      },
+      "dialogCalls": 1,
+      "mechanical_mode_injection_not_human": true
+    }
+  ]
+}

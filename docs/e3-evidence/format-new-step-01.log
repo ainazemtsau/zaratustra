@@ -1,0 +1,2 @@
+src/core/index.ts 266ms (unchanged)
+tests/lifecycle.test.ts 90ms

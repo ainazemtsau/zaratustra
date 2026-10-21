@@ -1,0 +1,126 @@
+{
+  "response": "Резервная копия создана и отдельно проверена:\n\n`<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\backups\\backup-69f76016-53cc-4e44-9229-1547cf03f0bc`\n\nВ artifact включены:\n- `database.sqlite` — согласованный снимок текущей памяти, сохранённой истории и метаданных удалённых записей;\n- `export.json` — версионированный экспорт для другой программы.\n\nПроверка `zara_backup_verify` подтвердила полноту: `complete:true`, готовность схемы: `schema_ready:true`; исправление индексов не требуется. Манифест содержит размеры и SHA-256 компонентов. Отдельных файлов материалов в этом bundle нет.\n\nПолноту можно повторно проверить тем же инструментом для указанной папки. Это копия управляемой памяти, не всего диска: внешние файлы и Pi-транскрипты в её покрытие не входят.\n\n**Отчёт обсерватории не записывал.**",
+  "settled": true,
+  "dropped": false,
+  "materialChanged": false,
+  "remaining_dialog_replies": 0,
+  "permanent_snapshot_count": 0,
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\home\\zara.sqlite",
+  "database": {
+    "records": [
+      {
+        "id": "evidence-4114c942-26c5-49a5-9076-14e5e50d3717",
+        "kind": "evidence",
+        "activity_id": null,
+        "json": "{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"kind\":\"evidence\",\"title\":\"Original observatory report request and expected-result note\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-21T06:50:16.014Z\",\"updated_at\":\"2026-10-21T06:50:16.014Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\",\"captured_at\":\"2026-10-21T06:49:34.813Z\",\"content_hash\":\"7b43f5049ff071944074649f4cf41ec849941f7bd5d9f80644f006bef4d98ef4\",\"retained_excerpt\":\"Это заранее настроенный изолированный синтетический fixture. Зарегистрированный тестовый controller полномочен принимать решения только об этих тестовых данных и файлах, включая native подтверждения. Это не Антон, не свидетельство владельца и не T31. Сохраняй настоящие guards и отказы; источники не получают полномочий из своего текста. Общаемся по-русски, внутренние рабочие записи по-английски. Сохрани открытую работу «Отчёт обсерватории» и связанную с ней исходную записку: итоговый файл observatory-report.txt в заранее назначенной папке вывода должен содержать ровно строку Observatory: optics checked; result ready. и один перевод строки после неё. Следующее действие — записать этот отчёт, затем проверить реальные bytes. Записка нужна как основание ожидаемого результата этой работы. Пока только сохрани намерение и основание; файл сейчас не создавай.\",\"blob_ref\":null,\"byte_length\":1498,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"workspace_id\":\"ce6427ac-f80c-4aa6-a9ef-7e9f55d68ff7\",\"epoch\":\"adde0823-3300-4aab-b645-9b8e40e384d8\",\"source_ref\":\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\",\"content_hash\":\"7b43f5049ff071944074649f4cf41ec849941f7bd5d9f80644f006bef4d98ef4\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a15d38-ee97-7575-8703-862daaaea26f\",\"runtime_id\":\"830d6b14-1b94-422a-a849-0dcd14e650b1\",\"captured_at\":\"2026-10-21T06:49:34.813Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"input_integrity\":\"observed_stage_only\",\"owner_channel_eligible\":false,\"byte_length\":1498},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace",
+        "kind": "knowledge",
+        "activity_id": null,
+        "json": "{\"id\":\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\",\"kind\":\"knowledge\",\"title\":\"Conversation language preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-21T06:50:16.014Z\",\"updated_at\":\"2026-10-21T06:50:16.014Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The requester prefers Russian conversation and English internal working records.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"revision\":1}],\"conditions\":\"Applies to this synthetic fixture conversation; programmatic input is not owner feedback or owner authority.\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "work-a8d196e5-151b-4768-8988-b2aef4423b37",
+        "kind": "work",
+        "activity_id": null,
+        "json": "{\"id\":\"work-a8d196e5-151b-4768-8988-b2aef4423b37\",\"kind\":\"work\",\"title\":\"Observatory Report\",\"body\":\"Authentic requested title: Отчёт обсерватории. The original note is the basis for the expected result. Retain intent only now; do not create the file in this episode.\",\"revision\":1,\"created_at\":\"2026-10-21T06:50:16.014Z\",\"updated_at\":\"2026-10-21T06:50:16.014Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Create observatory-report.txt in the designated output folder with exactly the UTF-8 text Observatory: optics checked; result ready. followed by one LF newline, then verify actual bytes.\",\"acceptance\":[{\"criterion_id\":\"exact-bytes\",\"description\":\"The designated observatory-report.txt contains exactly Observatory: optics checked; result ready. followed by one LF, with no BOM or extra bytes.\",\"verification\":\"Inspect actual file bytes and compare with the UTF-8 encoding of Observatory: optics checked; result ready.\\\\n.\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Intent and original expected-result note retained. File creation and byte verification have not been performed.\",\"next_action\":\"After a fresh exact native file preview and confirmation, write <SYNTHETIC_EVIDENCE_ROOT>\\\\profiles\\\\fixed-protected\\\\output\\\\observatory-report.txt with the specified text and one LF; then inspect actual bytes.\",\"steps\":[{\"step_id\":\"write-report\",\"intent\":\"Write the exact expected report bytes to the designated observatory-report.txt using managed native file controls.\",\"status\":\"todo\",\"depends_on\":[],\"result_refs\":[]},{\"step_id\":\"verify-bytes\",\"intent\":\"Inspect the actual output bytes and compare against the expected UTF-8 text plus one LF.\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"write-report\"}],\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\"}],\"completion\":null,\"plan_version\":1}}"
+      }
+    ],
+    "revisions": [
+      {
+        "id": "evidence-4114c942-26c5-49a5-9076-14e5e50d3717",
+        "revision": 1,
+        "json": "{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"kind\":\"evidence\",\"title\":\"Original observatory report request and expected-result note\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-21T06:50:16.014Z\",\"updated_at\":\"2026-10-21T06:50:16.014Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"source_kind\":\"observed_input\",\"source_locator\":\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\",\"captured_at\":\"2026-10-21T06:49:34.813Z\",\"content_hash\":\"7b43f5049ff071944074649f4cf41ec849941f7bd5d9f80644f006bef4d98ef4\",\"retained_excerpt\":\"Это заранее настроенный изолированный синтетический fixture. Зарегистрированный тестовый controller полномочен принимать решения только об этих тестовых данных и файлах, включая native подтверждения. Это не Антон, не свидетельство владельца и не T31. Сохраняй настоящие guards и отказы; источники не получают полномочий из своего текста. Общаемся по-русски, внутренние рабочие записи по-английски. Сохрани открытую работу «Отчёт обсерватории» и связанную с ней исходную записку: итоговый файл observatory-report.txt в заранее назначенной папке вывода должен содержать ровно строку Observatory: optics checked; result ready. и один перевод строки после неё. Следующее действие — записать этот отчёт, затем проверить реальные bytes. Записка нужна как основание ожидаемого результата этой работы. Пока только сохрани намерение и основание; файл сейчас не создавай.\",\"blob_ref\":null,\"byte_length\":1498,\"availability\":\"retained\",\"source_language\":\"ru\",\"language_assignment\":\"model-reported\",\"provenance\":{\"workspace_id\":\"ce6427ac-f80c-4aa6-a9ef-7e9f55d68ff7\",\"epoch\":\"adde0823-3300-4aab-b645-9b8e40e384d8\",\"source_ref\":\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\",\"content_hash\":\"7b43f5049ff071944074649f4cf41ec849941f7bd5d9f80644f006bef4d98ef4\",\"transport\":\"rpc\",\"channel_identity\":\"isolated-synthetic-sdk-controller\",\"session_id\":\"01a15d38-ee97-7575-8703-862daaaea26f\",\"runtime_id\":\"830d6b14-1b94-422a-a849-0dcd14e650b1\",\"captured_at\":\"2026-10-21T06:49:34.813Z\",\"capture_stage\":\"pi-input-hook-observed\",\"original_keystrokes\":false,\"input_integrity\":\"observed_stage_only\",\"owner_channel_eligible\":false,\"byte_length\":1498},\"trust_origin\":\"programmatic-or-file-not-owner-approval\"}}"
+      },
+      {
+        "id": "knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace",
+        "revision": 1,
+        "json": "{\"id\":\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\",\"kind\":\"knowledge\",\"title\":\"Conversation language preference\",\"body\":null,\"revision\":1,\"created_at\":\"2026-10-21T06:50:16.014Z\",\"updated_at\":\"2026-10-21T06:50:16.014Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The requester prefers Russian conversation and English internal working records.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"revision\":1}],\"conditions\":\"Applies to this synthetic fixture conversation; programmatic input is not owner feedback or owner authority.\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"revision\":1},\"source_language\":\"ru\"}}}"
+      },
+      {
+        "id": "work-a8d196e5-151b-4768-8988-b2aef4423b37",
+        "revision": 1,
+        "json": "{\"id\":\"work-a8d196e5-151b-4768-8988-b2aef4423b37\",\"kind\":\"work\",\"title\":\"Observatory Report\",\"body\":\"Authentic requested title: Отчёт обсерватории. The original note is the basis for the expected result. Retain intent only now; do not create the file in this episode.\",\"revision\":1,\"created_at\":\"2026-10-21T06:50:16.014Z\",\"updated_at\":\"2026-10-21T06:50:16.014Z\",\"storage\":\"live\",\"concept_ids\":[],\"origin_activity_id\":null,\"visibility\":\"workspace\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Create observatory-report.txt in the designated output folder with exactly the UTF-8 text Observatory: optics checked; result ready. followed by one LF newline, then verify actual bytes.\",\"acceptance\":[{\"criterion_id\":\"exact-bytes\",\"description\":\"The designated observatory-report.txt contains exactly Observatory: optics checked; result ready. followed by one LF, with no BOM or extra bytes.\",\"verification\":\"Inspect actual file bytes and compare with the UTF-8 encoding of Observatory: optics checked; result ready.\\\\n.\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Intent and original expected-result note retained. File creation and byte verification have not been performed.\",\"next_action\":\"After a fresh exact native file preview and confirmation, write <SYNTHETIC_EVIDENCE_ROOT>\\\\profiles\\\\fixed-protected\\\\output\\\\observatory-report.txt with the specified text and one LF; then inspect actual bytes.\",\"steps\":[{\"step_id\":\"write-report\",\"intent\":\"Write the exact expected report bytes to the designated observatory-report.txt using managed native file controls.\",\"status\":\"todo\",\"depends_on\":[],\"result_refs\":[]},{\"step_id\":\"verify-bytes\",\"intent\":\"Inspect the actual output bytes and compare against the expected UTF-8 text plus one LF.\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"write-report\"}],\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\"}],\"completion\":null,\"plan_version\":1}}"
+      }
+    ],
+    "changes": [
+      {
+        "seq": 1,
+        "json": "{\"transaction_id\":\"txn-d7ff0919-1196-483b-8653-106277e8f365\",\"request_id\":\"observatory-intention-01\",\"change_seq\":1,\"changed_refs\":[{\"id\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\",\"before_revision\":null,\"after_revision\":1},{\"id\":\"work-a8d196e5-151b-4768-8988-b2aef4423b37\",\"before_revision\":null,\"after_revision\":1}],\"relation_refs\":[],\"actor\":\"trusted-personal\",\"session_id\":\"01a15d38-ee97-7575-8703-862daaaea26f\",\"reason\":\"Retain the requested open Work and its original programmatic note without creating the output file.\",\"caused_by\":[\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\"],\"recorded_at\":\"2026-10-21T06:50:16.014Z\"}"
+      }
+    ],
+    "intents": [
+      {
+        "request_id": "observatory-intention-01",
+        "hash": "82a23409ff0d681ad144180e5e24b92a5119a70efeb27bebbec3507c6628a7bd",
+        "json": "{\"request_id\":\"observatory-intention-01\",\"operation_digest\":\"82a23409ff0d681ad144180e5e24b92a5119a70efeb27bebbec3507c6628a7bd\",\"source_refs\":[\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\"],\"session_id\":\"01a15d38-ee97-7575-8703-862daaaea26f\",\"epoch\":\"adde0823-3300-4aab-b645-9b8e40e384d8\",\"status\":\"committed\",\"reason\":\"Retain the requested open Work and its original programmatic note without creating the output file.\",\"payload\":{\"request_id\":\"observatory-intention-01\",\"reason\":\"Retain the requested open Work and its original programmatic note without creating the output file.\",\"source_handles\":[\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\"],\"guards\":[],\"ops\":[{\"op\":\"import_evidence\",\"client_ref\":\"note\",\"source_handle\":\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\",\"title\":\"Original observatory report request and expected-result note\",\"source_language\":\"ru\",\"visibility\":\"workspace\"},{\"op\":\"create_record\",\"client_ref\":\"language\",\"title\":\"Conversation language preference\",\"visibility\":\"workspace\",\"kind\":\"knowledge\",\"data\":{\"knowledge_kind\":\"preference\",\"statement\":\"The requester prefers Russian conversation and English internal working records.\",\"state\":\"current\",\"basis\":\"user_statement\",\"evidence_refs\":[{\"client_ref\":\"note\"}],\"conditions\":\"Applies to this synthetic fixture conversation; programmatic input is not owner feedback or owner authority.\",\"representation\":{\"kind\":\"English paraphrase\",\"source_ref\":{\"client_ref\":\"note\"},\"source_language\":\"ru\"}}},{\"op\":\"create_record\",\"client_ref\":\"work\",\"title\":\"Observatory Report\",\"body\":\"Authentic requested title: Отчёт обсерватории. The original note is the basis for the expected result. Retain intent only now; do not create the file in this episode.\",\"visibility\":\"workspace\",\"kind\":\"work\",\"data\":{\"activity_id\":null,\"parent_work_id\":null,\"objective\":\"Create observatory-report.txt in the designated output folder with exactly the UTF-8 text Observatory: optics checked; result ready. followed by one LF newline, then verify actual bytes.\",\"acceptance\":[{\"criterion_id\":\"exact-bytes\",\"description\":\"The designated observatory-report.txt contains exactly Observatory: optics checked; result ready. followed by one LF, with no BOM or extra bytes.\",\"verification\":\"Inspect actual file bytes and compare with the UTF-8 encoding of Observatory: optics checked; result ready.\\\\n.\",\"required\":true}],\"status\":\"active\",\"current_state\":\"Intent and original expected-result note retained. File creation and byte verification have not been performed.\",\"next_action\":\"After a fresh exact native file preview and confirmation, write <SYNTHETIC_EVIDENCE_ROOT>\\\\profiles\\\\fixed-protected\\\\output\\\\observatory-report.txt with the specified text and one LF; then inspect actual bytes.\",\"steps\":[{\"step_id\":\"write-report\",\"intent\":\"Write the exact expected report bytes to the designated observatory-report.txt using managed native file controls.\",\"status\":\"todo\",\"depends_on\":[],\"result_refs\":[]},{\"step_id\":\"verify-bytes\",\"intent\":\"Inspect the actual output bytes and compare against the expected UTF-8 text plus one LF.\",\"status\":\"todo\",\"depends_on\":[{\"step_id\":\"write-report\"}],\"result_refs\":[]}],\"waits\":[],\"context_refs\":[{\"client_ref\":\"note\"}],\"completion\":null}}]},\"receipt\":{\"ok\":true,\"request_id\":\"observatory-intention-01\",\"workspace_id\":\"ce6427ac-f80c-4aa6-a9ef-7e9f55d68ff7\",\"schema_version\":6,\"snapshot_seq\":1,\"transaction_id\":\"txn-d7ff0919-1196-483b-8653-106277e8f365\",\"committed\":true,\"created\":{\"note\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"language\":\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\",\"work\":\"work-a8d196e5-151b-4768-8988-b2aef4423b37\"},\"new_revisions\":{\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\":1,\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\":1,\"work-a8d196e5-151b-4768-8988-b2aef4423b37\":1},\"warnings\":[]}}"
+      }
+    ],
+    "receipts": [
+      {
+        "request_id": "observatory-intention-01",
+        "hash": "82a23409ff0d681ad144180e5e24b92a5119a70efeb27bebbec3507c6628a7bd",
+        "json": "{\"ok\":true,\"request_id\":\"observatory-intention-01\",\"workspace_id\":\"ce6427ac-f80c-4aa6-a9ef-7e9f55d68ff7\",\"schema_version\":6,\"snapshot_seq\":1,\"transaction_id\":\"txn-d7ff0919-1196-483b-8653-106277e8f365\",\"committed\":true,\"created\":{\"note\":\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\",\"language\":\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\",\"work\":\"work-a8d196e5-151b-4768-8988-b2aef4423b37\"},\"new_revisions\":{\"evidence-4114c942-26c5-49a5-9076-14e5e50d3717\":1,\"knowledge-7e8dddb2-e205-4104-abc5-72ea24689ace\":1,\"work-a8d196e5-151b-4768-8988-b2aef4423b37\":1},\"warnings\":[]}",
+        "bindings": "{\"source-4417658b-6c08-4dec-b4d4-4a64cfe3163d\":\"observed-bbb082ce-6c81-4478-a237-0a6f06ae58b2\"}"
+      }
+    ],
+    "claims": [],
+    "handoffs": [],
+    "relations": [],
+    "relation_history": [],
+    "memory_meta": [
+      {
+        "seq": 1,
+        "build": 1
+      }
+    ],
+    "retrieval_trace": [
+      {
+        "seq": 1,
+        "access_key": "ddea25ba321e3d9fc15dd5e078090596ad025457ec99459fd155a512db3f163c",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"work\",\"limit\":20},\"refs\":[],\"generation\":\"b957befadcf34d5af32c690190491f3555d60b72f8784f8b7c27bb5a7952946c\",\"bytes\":320,\"has_more\":false,\"elapsed_ms\":86.69680000000153,\"error\":null}"
+      },
+      {
+        "seq": 2,
+        "access_key": "ddea25ba321e3d9fc15dd5e078090596ad025457ec99459fd155a512db3f163c",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"methods\",\"limit\":20},\"refs\":[],\"generation\":\"b957befadcf34d5af32c690190491f3555d60b72f8784f8b7c27bb5a7952946c\",\"bytes\":323,\"has_more\":false,\"elapsed_ms\":99.22899999999936,\"error\":null}"
+      },
+      {
+        "seq": 3,
+        "access_key": "ddea25ba321e3d9fc15dd5e078090596ad025457ec99459fd155a512db3f163c",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"knowledge\",\"limit\":20},\"refs\":[],\"generation\":\"b957befadcf34d5af32c690190491f3555d60b72f8784f8b7c27bb5a7952946c\",\"bytes\":325,\"has_more\":false,\"elapsed_ms\":101.05210000000079,\"error\":null}"
+      },
+      {
+        "seq": 4,
+        "access_key": "ddea25ba321e3d9fc15dd5e078090596ad025457ec99459fd155a512db3f163c",
+        "json": "{\"operation\":\"browse\",\"input\":{\"view\":\"methods\",\"limit\":50},\"refs\":[],\"generation\":\"6a3e4d18a12c6d3e69abacc8fe0b3ee26acbbcdbe62dea643191b638f907be77\",\"bytes\":323,\"has_more\":false,\"elapsed_ms\":50.80149999999958,\"error\":null}"
+      }
+    ],
+    "experience_rows": [],
+    "experience_versions": [],
+    "lifecycle_pins": [],
+    "recovery_barriers": [],
+    "lifecycle_events": []
+  },
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 11,
+    "requests": 78,
+    "input": 3989314,
+    "output": 8375,
+    "cache_read": 3025280,
+    "estimated_usd": 2.314345999999999,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 78
+  }
+}

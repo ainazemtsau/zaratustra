@@ -1,0 +1,39 @@
+{
+  "profiles": {
+    "low": {
+      "agent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\low\\agent",
+      "home": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\low\\home",
+      "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\low\\cwd",
+      "output": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\low\\output",
+      "backups": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\low\\backups",
+      "scopes": []
+    },
+    "protected": {
+      "agent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\agent",
+      "home": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\home",
+      "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\cwd",
+      "output": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\output",
+      "backups": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\protected\\backups",
+      "scopes": [
+        "restricted:read",
+        "restricted:write"
+      ]
+    },
+    "upgrade": {
+      "agent": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\upgrade\\agent",
+      "home": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\upgrade\\home",
+      "cwd": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\upgrade\\cwd",
+      "output": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\upgrade\\output",
+      "backups": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\upgrade\\backups",
+      "scopes": [
+        "restricted:read",
+        "restricted:write"
+      ]
+    }
+  },
+  "principal": "predeclared registered isolated synthetic fixture controller, never owner/T31",
+  "model": "openai-codex/gpt-6.1-sol",
+  "thinking": "medium",
+  "ledger": "<SYNTHETIC_EVIDENCE_ROOT>\\budget.json",
+  "authority": "controller may approve only these synthetic fixture actions; no scope escalation mid-history"
+}

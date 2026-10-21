@@ -1,0 +1,69 @@
+{
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\home\\generations\\3e695d72-df01-4940-8dc6-1d2845355d62\\zara.sqlite",
+  "control": {
+    "format": 1,
+    "workspace_id": "ce6427ac-f80c-4aa6-a9ef-7e9f55d68ff7",
+    "epoch": "5959bee8-43f1-4794-a1cc-2ee1232d2b01",
+    "generation": "generations/3e695d72-df01-4940-8dc6-1d2845355d62",
+    "restoration": {
+      "rebuilt_indexes": [],
+      "quarantine_components": [
+        {
+          "path": "zara.sqlite",
+          "length": 286720,
+          "sha256": "f832ddf9cf6a36cf58b00ad5299dc94083d0cb619d666415e60f46d5ff6866bc"
+        },
+        {
+          "path": "workspace.json",
+          "length": 134,
+          "sha256": "ac08c2b618542889463eacb6ef0273093a0c220b51e7c9f9bbd34cafda78f3ba"
+        }
+      ],
+      "backup": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\backups\\backup-69f76016-53cc-4e44-9229-1547cf03f0bc",
+      "backup_identity": "c1c8dbbd76201e77ad329f75ee1a1fad6182dabbdddd50517352fff140338e52",
+      "destination": "<SYNTHETIC_EVIDENCE_ROOT>\\profiles\\fixed-protected\\home\\generations\\3e695d72-df01-4940-8dc6-1d2845355d62",
+      "new_epoch": "5959bee8-43f1-4794-a1cc-2ee1232d2b01",
+      "workspace_id": "ce6427ac-f80c-4aa6-a9ef-7e9f55d68ff7",
+      "captured_seq": 1,
+      "current_fingerprint": "596007b9d67181161b88def7d9d471b220a4f8696c3537ed0c4e92df39533ffe",
+      "restoration_id": "8057983c-ffbc-4df8-ae9a-750c62019be0",
+      "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+      "loss": "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
+      "previous_generation": ".",
+      "preview_digest": "1250084eb4701bc14c500bce72d232364a28353627121986fd17a564886c0778",
+      "decision": {
+        "source_ref": "native-dialog-041fb587-620a-4c45-bf20-3fd626da2cc3",
+        "transport": "native-dialog",
+        "channel_identity": "isolated-synthetic-sdk-controller",
+        "stage": "pi-confirm-return",
+        "affirmative": true,
+        "observed_at": "2026-10-21T06:58:08.827Z",
+        "presentation_digest": "1250084eb4701bc14c500bce72d232364a28353627121986fd17a564886c0778",
+        "authority": "registered-synthetic-controller-not-owner"
+      },
+      "recorded_at": "2026-10-21T06:58:15.087Z"
+    }
+  },
+  "managed_file_intents": 0,
+  "required_barriers": [
+    {
+      "epoch": "5959bee8-43f1-4794-a1cc-2ee1232d2b01",
+      "restoration_id": "8057983c-ffbc-4df8-ae9a-750c62019be0",
+      "status": "required",
+      "reason": "Restored Work can predate all intents/receipts; inspect current-world postconditions."
+    },
+    {
+      "epoch": "5959bee8-43f1-4794-a1cc-2ee1232d2b01",
+      "restoration_id": "8057983c-ffbc-4df8-ae9a-750c62019be0",
+      "status": "required",
+      "reason": "Restored Work can predate all intents/receipts; inspect current-world postconditions."
+    },
+    {
+      "epoch": "5959bee8-43f1-4794-a1cc-2ee1232d2b01",
+      "restoration_id": "8057983c-ffbc-4df8-ae9a-750c62019be0",
+      "status": "required",
+      "reason": "Restored Work can predate all intents/receipts; inspect current-world postconditions."
+    }
+  ],
+  "external_output_unchanged": true
+}

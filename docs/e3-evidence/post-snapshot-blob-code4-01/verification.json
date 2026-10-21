@@ -1,0 +1,42 @@
+{
+  "code_sha": "de96b982b8d5348563fa3318de27144f32dd0b4c",
+  "active_database": "<SYNTHETIC_EVIDENCE_ROOT>\\post-snapshot-blob-code4-01\\home\\zara.sqlite",
+  "manifest": {
+    "format": "zaratustra.bundle.v1",
+    "schema": 6,
+    "workspace_id": "2a33437c-0c1d-42ce-abdd-70633b05d91e",
+    "captured_epoch": "c8441078-87e6-4b09-9adc-1e74716ecafc",
+    "captured_seq": 1,
+    "captured_at": "2026-10-21T07:33:48.188Z",
+    "complete": true,
+    "coverage": "full current and retained historical/deleted metadata; historical authority is not runnable",
+    "components": [
+      {
+        "path": "database.sqlite",
+        "length": 270336,
+        "sha256": "414e12445d164cdd93098f1c59163b6bdfc80ee27980589b6393cc5b731f4723"
+      },
+      {
+        "path": "export.json",
+        "length": 6610,
+        "sha256": "b0d0d3f35b824365b2edfcd9e843041f7312672d939d80530bd9a95a78d30d88"
+      },
+      {
+        "path": "materials/1d292bbab424a72462f4f3c00e1a4869cbf2d853dd7ed9f4a94daac4881d73ac",
+        "length": 28,
+        "sha256": "1d292bbab424a72462f4f3c00e1a4869cbf2d853dd7ed9f4a94daac4881d73ac"
+      }
+    ]
+  },
+  "export_ids": [
+    "evidence-35a9e809-fbab-4315-b10c-1179e2764411"
+  ],
+  "late_live_id": "evidence-9fa6f565-e9fb-477b-97d5-cf73014a28fb",
+  "late_live_blob": "b5c5bc65033d290fad12877dacf376cb4f2ac755b646aed39296011309cdbb01",
+  "late_blob_excluded": true,
+  "live_seq": 2,
+  "captured_seq": 1,
+  "independent_backup_after_live_blob_loss": true,
+  "original_sha256": "1d292bbab424a72462f4f3c00e1a4869cbf2d853dd7ed9f4a94daac4881d73ac",
+  "provider_dispatches": 0
+}

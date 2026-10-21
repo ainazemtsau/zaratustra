@@ -1,0 +1,39 @@
+TAP version 13
+# (node:86552) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# {"protected_storage_scope_control":[{"action":"archive","before_generation":"0a0bb714c9305c189820586bfe86cd6414b8b4bfe4fc2919badd1732e5230b84","after_generation":"52b828e89a73e0f58ad8106ef37c2a8ebc56eb9ec2594cc08c7ae41b95882a4a","before_seq":1,"after_seq":2,"before_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"after_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"continuation":["entity-21f98d6a-7771-4ded-a48a-d48470794cf7"],"cursor_error":"CURSOR_INVALIDATED","visible_count":3},{"action":"retain","before_generation":"52b828e89a73e0f58ad8106ef37c2a8ebc56eb9ec2594cc08c7ae41b95882a4a","after_generation":"57b900167805dfe19031bece7e8ae0172969d85e5784bfa790cac04425432010","before_seq":2,"after_seq":3,"before_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"after_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"continuation":["entity-21f98d6a-7771-4ded-a48a-d48470794cf7"],"cursor_error":"CURSOR_INVALIDATED","visible_count":3},{"action":"release","before_generation":"57b900167805dfe19031bece7e8ae0172969d85e5784bfa790cac04425432010","after_generation":"4f22c10c2ba6b9a745417c48d3ce8f50490a57bf1be655aa98c0fe77ab52e032","before_seq":3,"after_seq":4,"before_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"after_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"continuation":["entity-21f98d6a-7771-4ded-a48a-d48470794cf7"],"cursor_error":"CURSOR_INVALIDATED","visible_count":3},{"action":"tombstone","before_generation":"4f22c10c2ba6b9a745417c48d3ce8f50490a57bf1be655aa98c0fe77ab52e032","after_generation":"1d7ceea8434d84f1cdd1f70916d5c8c71fe69ccd78e9a8200e7ff4735f827821","before_seq":4,"after_seq":2,"before_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"after_docids":[{"id":"entity-92e831ed-f121-4803-8dfb-e1c86ecc31b1","revision":1,"docid":3},{"id":"entity-28171002-5964-4f20-95d4-8839f97391cf","revision":1,"docid":2},{"id":"entity-21f98d6a-7771-4ded-a48a-d48470794cf7","revision":1,"docid":1}],"continuation":["entity-21f98d6a-7771-4ded-a48a-d48470794cf7"],"cursor_error":"CURSOR_INVALIDATED","visible_count":3}]}
+# Subtest: E3 control restricted storage operations preserve low generation, sequence, docids and complete cursor continuation
+not ok 1 - E3 control restricted storage operations preserve low generation, sequence, docids and complete cursor continuation
+  ---
+  duration_ms: 10406.8742
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:17908'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '52b828e89a73e0f58ad8106ef37c2a8ebc56eb9ec2594cc08c7ae41b95882a4a'
+    - '0a0bb714c9305c189820586bfe86cd6414b8b4bfe4fc2919badd1732e5230b84'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '0a0bb714c9305c189820586bfe86cd6414b8b4bfe4fc2919badd1732e5230b84'
+  actual: '52b828e89a73e0f58ad8106ef37c2a8ebc56eb9ec2594cc08c7ae41b95882a4a'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:841:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11984.6842

@@ -1,0 +1,28 @@
+(node:3848) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "response": "Записка **Observatory report original request and expected-output note** архивирована после native-подтверждения controller. Повторно найдена: статус `archive`, ревизия 2; исходный текст доступен. Архивирование — не удаление.\n\nПроверка удаления вернула конкретный отказ `DEPENDENCY_UNSATISFIED`: запись `knowledge-c0712b0f-6fa8-46ad-8aaf-e90f897c1feb@1` удерживает исходную записку версии 1 как точное основание языкового предпочтения.\n\nОткрытая работа **Observatory report** также сохраняет ссылку на записку. Работу и зависимости я не менял; тело не удалено, подтверждение удаления не запрашивалось.",
+  "settled": true,
+  "dropped": false,
+  "permanent_snapshot_count": 0,
+  "budget": {
+    "scope": "E3",
+    "provider": "openai-codex",
+    "model": "gpt-6.1-sol",
+    "thinking": "medium",
+    "prompts": 8,
+    "requests": 65,
+    "input": 3354274,
+    "output": 6923,
+    "cache_read": 2573696,
+    "estimated_usd": 1.8877555999999998,
+    "limits": {
+      "prompts": 30,
+      "requests": 240,
+      "estimated_usd": 20,
+      "input": 10000000000,
+      "output": 10000000000
+    },
+    "reported_usage_messages": 65
+  }
+}

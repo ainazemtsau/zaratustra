@@ -1,0 +1,59 @@
+TAP version 13
+# (node:52844) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E3 control tombstone preserves inherited restriction without declassifying identity/count/technical headers
+not ok 1 - E3 control tombstone preserves inherited restriction without declassifying identity/count/technical headers
+  ---
+  duration_ms: 2622.7427
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:9613'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'success'
+    - 'REFERENCE_NOT_FOUND'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFERENCE_NOT_FOUND'
+  actual: 'success'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:69:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: E3 control backup51 is discoverable by bounded scope/generation-bound continuation
+not ok 2 - E3 control backup51 is discoverable by bounded scope/generation-bound continuation
+  ---
+  duration_ms: 427.8992
+  type: 'test'
+  location: '<PRODUCT_CHECKOUT>\\tests\\lifecycle-controls.test.ts:1:12074'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      i.toString(16)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (<PRODUCT_CHECKOUT>\tests\lifecycle-controls.test.ts:75:246)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3372.9295
