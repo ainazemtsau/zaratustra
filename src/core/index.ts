@@ -2366,7 +2366,7 @@ export class Core {
                 const derivative: RecordRow = {
                   id: derivativeId,
                   kind: "evidence",
-                  title: op.title + " â€” extracted text",
+                  title: op.title + " — extracted text",
                   body: "Parser-derived text; consult extraction limitations and original source.",
                   revision: 1,
                   created_at: now,

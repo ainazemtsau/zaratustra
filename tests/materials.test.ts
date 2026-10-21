@@ -78,6 +78,7 @@ test("TXT, multipage PDF and multichapter EPUB keep exact original bytes, separa
     );
     unlinkSync(b.path);
     const d = f.core.read(b.derived!.id).data as RecordRow;
+    assert.equal(d.title, b.original.title + " — extracted text");
     assert.deepEqual(d.data.derived_from, { id: b.original.id, revision: 1 });
     assert.equal(d.data.source_hash, digest(original));
     assert.equal(d.data.parser, b.m.extraction.parser);
