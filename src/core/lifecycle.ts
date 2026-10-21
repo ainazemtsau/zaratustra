@@ -275,7 +275,9 @@ export class Lifecycle {
         .all<{ request_id: string; json: string }>(
           "SELECT request_id,json FROM intents WHERE json_extract(json,'$.kind')='preview'",
         )
-        .filter((r) => addressedIds(JSON.parse(r.json)).includes(target.id))
+        .filter((r) =>
+          addressedIds(JSON.parse(r.json), true).includes(target.id),
+        )
         .map((r) => r.request_id),
     );
     for (const { json } of this.db.all<{ json: string }>(
@@ -283,7 +285,7 @@ export class Lifecycle {
     )) {
       const e = JSON.parse(json);
       requireThat(
-        !addressedIds(e).includes(target.id) &&
+        !addressedIds(e, true).includes(target.id) &&
           !relatedPreviews.has(e.preview_ref),
         "UNKNOWN_EFFECT",
         "An unresolved managed effect and its exact preview grounds pin this body/version.",
@@ -490,7 +492,7 @@ export class Lifecycle {
               json: string;
             }>(`SELECT ${key} AS key,json FROM ${table}`)) {
               const value = JSON.parse(entry.json);
-              if (addressedIds(value).some((id) => redactedIds.has(id))) {
+              if (addressedIds(value, true).some((id) => redactedIds.has(id))) {
                 if (typeof entry.key === "string") redactedIds.add(entry.key);
                 const redacted = {
                   id: value.id,
@@ -569,6 +571,10 @@ export class Lifecycle {
           seq,
           transaction_id: requestId,
           changed,
+          changed_refs: action.targets.map((ref) => ({
+            id: ref.id,
+            revision: changed[ref.id]?.after ?? ref.revision,
+          })),
           actor: this.ctx.principal,
           reason: "Exact bound storage operation",
           recorded_at: now,
@@ -594,7 +600,11 @@ export class Lifecycle {
         JSON.stringify(receipt),
         "{}",
       );
-      refreshMemory(this.db, true);
+      refreshMemory(
+        this.db,
+        false,
+        action.action === "tombstone" ? action.targets.map((t) => t.id) : [],
+      );
       this.db.exec("COMMIT");
       return receipt;
     } catch (err) {

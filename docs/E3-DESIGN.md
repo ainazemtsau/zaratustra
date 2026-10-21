@@ -66,3 +66,17 @@ child inherits the nearest unresolved restored ancestor. New IDs are not non-exe
 proof. An explicitly reconciled existing action stays named/local; a genuinely
 independent new Work remains allowed. This reuses current ancestry/epoch guards and
 adds no planner or effect runtime. Own RED/positive controls are retained.
+
+Restricted-only lifecycle operations preserve unrelated memory_docs/docids and build.
+Only rewritten retained bodies are evicted/reindexed; archive appends its new version,
+retention updates metadata, and full rebuild remains explicit. Every storage Change
+carries typed target refs, including retain/release. Legacy changed-map/transaction
+intent refs retain classification without rewriting history. Low generation/sequence/
+count/cursor continuation stay unchanged for private-only operations; public changes
+and explicit genuine rebuild still invalidate. No per-principal generation platform.
+
+Technical classification checks ID-bearing keys and atoms at every depth in both
+SQL and JavaScript, including nested legacy maps and linked transaction intents.
+Ordinary domain reference callers keep their existing defaults. Targeted body redaction
+uses technical-key coverage too. History remains immutable fact metadata, not authority;
+no historical rows are rewritten merely to hide access-control omissions.

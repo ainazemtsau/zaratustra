@@ -594,6 +594,11 @@ test("E3 control tombstone preserves inherited restriction without declassifying
   for (const [marker, ids] of [
     ["nested-protected-control", [[entity]]],
     ["nested-public-control", [["ordinary-public-marker"]]],
+    [
+      "nested-protected-key-control",
+      [{ opaque: { [entity]: { metadata: "Retained identity only" } } }],
+    ],
+    ["nested-public-key-control", [{ opaque: { "ordinary-public-key": 1 } }]],
   ] as const) {
     const seq = f.disk.get<{ n: number }>(
       "SELECT coalesce(max(seq),0)+1 AS n FROM retrieval_trace",
@@ -609,7 +614,32 @@ test("E3 control tombstone preserves inherited restriction without declassifying
   assert.equal(diagnostics.includes("nested-protected-control"), false);
   assert.equal(diagnostics.includes(entity), false);
   assert.equal(diagnostics.includes("nested-public-control"), true);
+  assert.equal(diagnostics.includes("nested-protected-key-control"), false);
+  assert.equal(diagnostics.includes("nested-public-key-control"), true);
   assert.equal(diagnostics.includes(nonexistent), true);
+  const beforeLegacy = low.search({
+      kinds: ["entity"],
+      limit: 50,
+    }).snapshot_seq,
+    legacySeq = f.disk.get<{ n: number }>(
+      "SELECT coalesce(max(seq),0)+1 AS n FROM changes",
+    )!.n;
+  f.disk.run(
+    "INSERT INTO changes VALUES(?,?)",
+    legacySeq,
+    JSON.stringify({
+      seq: legacySeq,
+      transaction_id: "legacy-key-only-metadata",
+      changed: {},
+      nested: { new_revisions: { [entity]: 2 } },
+    }),
+  );
+  f.core.rebuildIndex();
+  assert.equal(
+    low.search({ kinds: ["entity"], limit: 50 }).snapshot_seq,
+    beforeLegacy,
+    "Legacy technical object keys at every depth must not count as a public change",
+  );
   const visible = f.save([
       {
         op: "create_record",
@@ -810,5 +840,165 @@ test("E3 control deleting an exported Method redacts managed payload copies whil
       f.core.search({ query: secret, match: "all" }).data.cards,
     ).includes(secret),
     false,
+  );
+});
+
+test("E3 control restricted storage operations preserve low generation, sequence, docids and complete cursor continuation", (t) => {
+  const f = setup();
+  t.after(() => f.disk.close());
+  const entity = (client_ref: string, visibility: string) => ({
+    op: "create_record",
+    client_ref,
+    kind: "entity",
+    title: client_ref,
+    body: "Synthetic scope pagination body",
+    visibility,
+    data: {
+      entity_kind: "item",
+      aliases: [],
+      disambiguation: client_ref,
+      status: "active",
+    },
+  });
+  const publics = Object.values(
+      f.save([
+        entity("one", "workspace"),
+        entity("two", "workspace"),
+        entity("three", "workspace"),
+      ]).created,
+    ),
+    hidden = f.save([
+      {
+        op: "create_record",
+        client_ref: "hidden",
+        kind: "activity",
+        title: "Protected activity before entity sort keys",
+        visibility: "restricted",
+        data: {
+          purpose: "Force real docid displacement on a full rebuild",
+          status: "active",
+        },
+      },
+    ]).created.hidden,
+    low = new Core(f.disk, { ...f.ctx, scopes: [] }),
+    query = { kinds: ["entity"], limit: 1 },
+    observations: unknown[] = [];
+  const docs = () =>
+    publics.map((id) =>
+      f.disk.get(
+        "SELECT id,revision,docid FROM memory_docs WHERE id=? AND revision=1",
+        id,
+      ),
+    );
+  for (const action of ["archive", "retain", "release", "tombstone"]) {
+    const first = low.search(query),
+      beforeDocs = docs(),
+      revision = f.read(hidden).revision,
+      p = f.core.storagePreview(
+        { action, targets: [{ id: hidden, revision }] },
+        "Only protected fixture storage",
+        "Keep",
+      );
+    approve(f.core, p.request_id);
+    const applied = f.core.applyStorage(p.request_id);
+    const after = low.search(query),
+      ids = first.data.cards.map((c) => c.id);
+    let cursor = first.data.next_cursor,
+      error = "";
+    try {
+      while (cursor) {
+        const page = low.search({ ...query, cursor });
+        ids.push(...page.data.cards.map((c) => c.id));
+        cursor = page.data.next_cursor;
+      }
+    } catch (e) {
+      error = (e as { code: string }).code;
+    }
+    const result = {
+      action,
+      before_generation: first.data.generation,
+      after_generation: after.data.generation,
+      before_seq: first.snapshot_seq,
+      after_seq: after.snapshot_seq,
+      before_docids: beforeDocs,
+      after_docids: docs(),
+      continuation: ids,
+      cursor_error: error,
+      visible_count: low.search({ kinds: ["entity"], limit: 50 }).data.cards
+        .length,
+    };
+    observations.push(result);
+    if (action === "release") {
+      const row = f.disk.get<{ seq: number; json: string }>(
+        "SELECT seq,json FROM changes WHERE seq=?",
+        applied.data.snapshot_seq,
+      )!;
+      const legacy = JSON.parse(row.json);
+      delete legacy.changed_refs;
+      f.disk.run(
+        "UPDATE changes SET json=? WHERE seq=?",
+        JSON.stringify(legacy),
+        row.seq,
+      );
+      assert.equal(
+        low.search(query).snapshot_seq,
+        first.snapshot_seq,
+        "Legacy empty-map Change is scoped by its existing exact transaction intent",
+      );
+      const access = f.disk.get<{ access_key: string }>(
+        "SELECT access_key FROM retrieval_trace ORDER BY seq DESC LIMIT 1",
+      )!.access_key;
+      for (const [operation, transaction_id] of [
+        ["legacy-private-transaction", applied.data.transaction_id],
+        ["ordinary-public-transaction", "unknown-public-transaction"],
+      ]) {
+        const seq = f.disk.get<{ n: number }>(
+          "SELECT coalesce(max(seq),0)+1 AS n FROM retrieval_trace",
+        )!.n;
+        f.disk.run(
+          "INSERT INTO retrieval_trace VALUES(?,?,?)",
+          seq,
+          access,
+          JSON.stringify({ operation, transaction_id, refs: [] }),
+        );
+      }
+      const diagnostic = JSON.stringify(low.diagnostics());
+      assert.equal(diagnostic.includes("legacy-private-transaction"), false);
+      assert.equal(diagnostic.includes("ordinary-public-transaction"), true);
+    }
+  }
+  console.log(
+    JSON.stringify({ protected_storage_scope_control: observations }),
+  );
+  for (const v of observations as {
+    before_generation: string;
+    after_generation: string;
+    before_seq: number;
+    after_seq: number;
+    before_docids: unknown[];
+    after_docids: unknown[];
+    continuation: string[];
+    cursor_error: string;
+    visible_count: number;
+  }[]) {
+    assert.equal(v.after_generation, v.before_generation);
+    assert.equal(v.after_seq, v.before_seq);
+    assert.deepEqual(v.after_docids, v.before_docids);
+    assert.equal(v.cursor_error, "");
+    assert.equal(v.visible_count, 3);
+    assert.equal(new Set(v.continuation).size, 3);
+    assert.deepEqual([...v.continuation].sort(), [...publics].sort());
+  }
+  const beforePublic = low.search(query);
+  f.save([entity("new-public", "workspace")]);
+  assert.throws(
+    () => low.search({ ...query, cursor: beforePublic.data.next_cursor! }),
+    { code: "CURSOR_INVALIDATED" },
+  );
+  const beforeRebuild = low.search(query);
+  f.core.rebuildIndex();
+  assert.throws(
+    () => low.search({ ...query, cursor: beforeRebuild.data.next_cursor! }),
+    { code: "CURSOR_INVALIDATED" },
   );
 });

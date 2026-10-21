@@ -37,7 +37,7 @@ export const MemorySchemaSQL = `
  CREATE INDEX knowledge_subject ON records(json_extract(json,'$.data.subject_ref.id'));
  CREATE INDEX knowledge_object ON records(json_extract(json,'$.data.object_ref.id'));`;
 
-export function addressedIds(value: unknown): string[] {
+export function addressedIds(value: unknown, technicalKeys = false): string[] {
   const found = new Set<string>();
   const walk = (v: unknown) => {
     // Match the existing JSON-tree technical classifier at every depth,
@@ -46,7 +46,14 @@ export function addressedIds(value: unknown): string[] {
     else if (Array.isArray(v)) v.forEach(walk);
     else if (v && typeof v === "object") {
       const o = v as JsonObject;
+      if (technicalKeys) Object.keys(o).forEach((id) => found.add(id));
       if (typeof o.id === "string") found.add(o.id);
+      if (
+        o.changed &&
+        typeof o.changed === "object" &&
+        !Array.isArray(o.changed)
+      )
+        Object.keys(o.changed).forEach((id) => found.add(id));
       // Technical rows also carry string IDs outside typed Ref objects.
       for (const [k, child] of Object.entries(o)) {
         if (
@@ -201,7 +208,11 @@ export function validateMemory(
 }
 
 /** Derived indexes only. Caller owns the short SQLite transaction. */
-export function refreshMemory(storage: StoragePort, rebuild = false) {
+export function refreshMemory(
+  storage: StoragePort,
+  rebuild = false,
+  rewrittenIds: readonly string[] = [],
+) {
   const experience = !!storage.get(
     "SELECT name FROM sqlite_master WHERE type='view' AND name='addressed_current'",
   );
@@ -276,7 +287,19 @@ export function refreshMemory(storage: StoragePort, rebuild = false) {
     storage.exec(
       "DELETE FROM memory_text; DELETE FROM memory_names; DELETE FROM memory_docs;",
     );
-  }
+  } else
+    for (const id of new Set(rewrittenIds)) {
+      // Rewritten retained bodies need fresh text, but unrelated docids/cursors
+      // must remain stable, including for observers unable to see this target.
+      for (const { docid } of storage.all<{ docid: number }>(
+        "SELECT docid FROM memory_docs WHERE id=?",
+        id,
+      )) {
+        storage.run("DELETE FROM memory_text WHERE rowid=?", docid);
+        storage.run("DELETE FROM memory_names WHERE rowid=?", docid);
+      }
+      storage.run("DELETE FROM memory_docs WHERE id=?", id);
+    }
   for (const r of versions) {
     const restricted =
       r.visibility === "restricted" ||
@@ -515,20 +538,38 @@ export class Memory {
   }
   technicalSQL(alias: string) {
     if (this.restricted) return "1";
-    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE (secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1))`;
+    const denied = `(secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1) OR secret.key IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1)`;
+    // Legacy lifecycle Changes can have an empty changed map. Their existing
+    // transaction intent still carries exact targets; retain that classification
+    // without rewriting historical rows or exposing a protected-only count.
+    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE ${denied}) AND NOT EXISTS(SELECT 1 FROM intents linked,json_tree(linked.json) secret WHERE linked.request_id=json_extract(${alias}.json,'$.transaction_id') AND (${denied}))`;
   }
   technical(value: unknown) {
     if (this.restricted) return true;
-    const serialized = JSON.stringify(value);
-    if (!this.restricted && /"visibility"\s*:\s*"restricted"/.test(serialized))
-      return false;
-    return addressedIds(value).every(
-      (id) =>
-        !this.db.get("SELECT id FROM addressed_current WHERE id=?", id) ||
-        !this.db.get(
-          "SELECT id FROM memory_docs WHERE id=? AND restricted=1 LIMIT 1",
-          id,
-        ),
+    const transaction =
+        value && typeof value === "object"
+          ? (value as JsonObject).transaction_id
+          : undefined,
+      linked =
+        typeof transaction === "string"
+          ? this.db.get<{ json: string }>(
+              "SELECT json FROM intents WHERE request_id=?",
+              transaction,
+            )
+          : undefined;
+    return [value, ...(linked ? [JSON.parse(linked.json)] : [])].every(
+      (item) => {
+        if (/"visibility"\s*:\s*"restricted"/.test(JSON.stringify(item)))
+          return false;
+        return addressedIds(item, true).every(
+          (id) =>
+            !this.db.get("SELECT id FROM addressed_current WHERE id=?", id) ||
+            !this.db.get(
+              "SELECT id FROM memory_docs WHERE id=? AND restricted=1 LIMIT 1",
+              id,
+            ),
+        );
+      },
     );
   }
   generation() {
