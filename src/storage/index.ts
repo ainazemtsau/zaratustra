@@ -49,6 +49,7 @@ import {
 } from "../core/index.ts";
 import type { RecordRow } from "../core/index.ts";
 import { extract } from "./extract.ts";
+import { BaseIndexesSQL } from "./indexes.ts";
 
 const sha = (bytes: Uint8Array) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -151,14 +152,14 @@ export class DiskStorage implements StoragePort {
         this.db.exec(`BEGIN IMMEDIATE;
           CREATE TABLE meta(json TEXT NOT NULL);
           CREATE TABLE records(id TEXT PRIMARY KEY,kind TEXT NOT NULL,activity_id TEXT,json TEXT NOT NULL);
-          CREATE INDEX kind_activity ON records(kind,activity_id);
+          ${BaseIndexesSQL.kind_activity}
           CREATE TABLE revisions(id TEXT NOT NULL,revision INTEGER NOT NULL,json TEXT NOT NULL,PRIMARY KEY(id,revision));
           CREATE TABLE changes(seq INTEGER PRIMARY KEY,json TEXT NOT NULL);
           CREATE TABLE intents(request_id TEXT PRIMARY KEY,hash TEXT NOT NULL,json TEXT NOT NULL);
           CREATE TABLE receipts(request_id TEXT PRIMARY KEY,hash TEXT NOT NULL,json TEXT NOT NULL,bindings TEXT NOT NULL);
           CREATE TABLE focus(session_id TEXT PRIMARY KEY,json TEXT NOT NULL);
           CREATE TABLE claims(token TEXT PRIMARY KEY,work_id TEXT NOT NULL,json TEXT NOT NULL);
-          CREATE INDEX claim_work ON claims(work_id);
+          ${BaseIndexesSQL.claim_work}
           CREATE TABLE handoffs(id TEXT PRIMARY KEY,json TEXT NOT NULL);
           CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);
           ${MemorySchemaSQL}
@@ -545,7 +546,7 @@ export class DiskStorage implements StoragePort {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       this.db.exec(
-        "CREATE TABLE claims(token TEXT PRIMARY KEY,work_id TEXT NOT NULL,json TEXT NOT NULL); CREATE INDEX claim_work ON claims(work_id); CREATE TABLE handoffs(id TEXT PRIMARY KEY,json TEXT NOT NULL); CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);",
+        `CREATE TABLE claims(token TEXT PRIMARY KEY,work_id TEXT NOT NULL,json TEXT NOT NULL); ${BaseIndexesSQL.claim_work} CREATE TABLE handoffs(id TEXT PRIMARY KEY,json TEXT NOT NULL); CREATE TABLE migrations(version INTEGER PRIMARY KEY,json TEXT NOT NULL);`,
       );
       this.db.prepare("INSERT INTO migrations VALUES(2,?)").run(
         JSON.stringify({

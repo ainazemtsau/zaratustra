@@ -52,3 +52,17 @@ affected_ids arrays which the JavaScript technical walker missed. The narrow cor
 recognizes string IDs at every depth, matching existing JSON-tree classification;
 nested protected arrays are filtered while unrelated low-visible traces remain.
 Own RED/source snapshot and GREEN are retained; no blanket diagnostics suppression.
+
+Required named schema indexes are checked against the existing finite DDL constants.
+Component completeness is separate from schema_ready. Missing nonunique query indexes
+are declared by verify, rebuilt only in quarantine, and strictly checked before switch;
+missing unique constraints or altered definitions refuse. Normal creation/migration and
+recovery share base definitions; other index statements come from existing schema SQL.
+No general SQL/schema-diff platform is introduced. Index repair and backup identity are
+bound to the exact native restore presentation; original bundle bytes stay unchanged.
+
+An untracked new step ID falls back to its restored Work barrier; a new dependent
+child inherits the nearest unresolved restored ancestor. New IDs are not non-execution
+proof. An explicitly reconciled existing action stays named/local; a genuinely
+independent new Work remains allowed. This reuses current ancestry/epoch guards and
+adds no planner or effect runtime. Own RED/positive controls are retained.

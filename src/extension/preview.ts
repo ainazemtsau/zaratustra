@@ -124,7 +124,7 @@ export function renderApproval(b: {
   });
   const exact =
     b.action === "restore"
-      ? `Restore backup: ${e.backup}\nCaptured sequence: ${e.captured_seq}.\nVerified destination: ${e.destination}\nCoverage: ${e.coverage}\nLoss/switch consequences: ${e.loss}\nOriginal generation remains retained; restored authority does not revive.`
+      ? `Restore backup: ${e.backup}\nBackup identity: ${e.backup_identity}\nCaptured sequence: ${e.captured_seq}.\nVerified destination: ${e.destination}\nRebuilt and verified derived query indexes: ${(e.rebuilt_indexes as string[]).join(", ") || "none required"}.\nCoverage: ${e.coverage}\nLoss/switch consequences: ${e.loss}\nOriginal generation remains retained; restored authority does not revive.`
       : b.action === "cleanup"
         ? `Remove only these unreferenced files:\n${(e.candidates as JsonObject[]).map((c) => `${c.path}: ${c.length} bytes`).join("\n")}\nCoverage: ${e.coverage}`
         : b.action === "release_backup_pin"

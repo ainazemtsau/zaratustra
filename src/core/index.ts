@@ -1298,7 +1298,20 @@ export class Core {
     return row ? (JSON.parse(row.json) as JsonObject) : undefined;
   }
   private assertReconciled(workId: string, stepId: string | null = null) {
-    const barrier = this.recovery(workId, stepId);
+    if (this.storage.workspace.schema_version < 6) return;
+    // A new step ID is not proof that a restored Work's external effect never
+    // happened. A new dependent child also inherits an unresolved ancestor;
+    // genuinely independent new Work has no such restored ancestry.
+    let barrier = this.recovery(workId, stepId) ?? this.recovery(workId);
+    const seen = new Set<string>();
+    while (!barrier) {
+      requireThat(!seen.has(workId), "GRAPH_CYCLE", "Parent cycle.");
+      seen.add(workId);
+      const parent = this.record(workId).data.parent_work_id;
+      if (!parent) break;
+      workId = refId(parent);
+      barrier = this.recovery(workId);
+    }
     requireThat(
       !barrier ||
         (barrier.epoch === this.context.epoch && barrier.status === "cleared"),

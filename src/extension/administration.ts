@@ -51,11 +51,17 @@ export function registerAdministration(
   );
   register(
     "zara_backup_verify",
-    "Verify the actual designated bundle, snapshot refs/versions and raw materials under fixed full-read setup.",
+    "Verify actual designated bundle refs/versions/raw materials under fixed full-read setup. Reports missing derived query indexes requiring quarantine repair; absent unique constraints or altered definitions refuse. Completeness is component coverage, schema_ready is separate.",
     z.strictObject({ backup: z.string() }),
     (p) => {
       const v = a.admin().verify(p.backup as string);
-      return { identity: v.identity, complete: true, manifest: v.manifest };
+      return {
+        identity: v.identity,
+        complete: true,
+        manifest: v.manifest,
+        schema_ready: v.schema_ready,
+        index_repairs_required: v.index_repairs_required,
+      };
     },
   );
   register(

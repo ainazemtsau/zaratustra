@@ -1054,3 +1054,212 @@ test("E3 disk actual PDF/EPUB raw originals and extracted derivatives bundle ind
     assert.ok((cleanup.payload.exact.candidates as unknown[]).length > 0);
   }
 });
+
+test("E3 disk missing declared query indexes are rebuilt and checked before switch; altered definitions and missing unique constraints refuse", async (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const b = await f.admin.backup(f.disk),
+    path = join(b.backup, "database.sqlite"),
+    missing = [
+      "kind_activity",
+      "memory_access",
+      "method_content_version",
+      "intent_kind",
+    ];
+  const resign = (bundle: string) => {
+    const manifestPath = join(bundle, "manifest.json"),
+      m = JSON.parse(readFileSync(manifestPath, "utf8")),
+      bytes = readFileSync(join(bundle, "database.sqlite"));
+    Object.assign(
+      m.components.find((c: { path: string }) => c.path === "database.sqlite"),
+      { length: bytes.length, sha256: digest(bytes) },
+    );
+    writeFileSync(manifestPath, JSON.stringify(m));
+  };
+  const db = new DatabaseSync(path);
+  db.exec("PRAGMA journal_mode=DELETE;");
+  for (const name of missing) db.exec("DROP INDEX " + name);
+  db.close();
+  resign(b.backup);
+  const verified = f.admin.verify(b.backup),
+    p = f.admin.restorePreview(
+      b.backup,
+      "Restore canonical data after verified derived-index repair",
+      "Keep",
+    );
+  assert.equal(verified.schema_ready, false);
+  assert.deepEqual(
+    [...(p.preview.payload.exact.rebuilt_indexes as string[])].sort(),
+    [...missing].sort(),
+  );
+  grant(f.admin.approvals, p.preview.request_id);
+  f.admin.restore(p.preview.request_id, f.disk);
+  const next = restored(f);
+  t.after(() => next.disk.close());
+  for (const name of missing)
+    assert.ok(
+      next.disk.get(
+        "SELECT sql FROM sqlite_schema WHERE type='index' AND name=?",
+        name,
+      ),
+      "Required query index must exist before active switch: " + name,
+    );
+  assert.deepEqual(
+    (
+      verified as unknown as { index_repairs_required: string[] }
+    ).index_repairs_required.sort(),
+    missing.sort(),
+  );
+  for (const fault of ["definition", "unique"]) {
+    const a = new Administration(f.home, f.backups, {
+        ...f.context,
+        epoch: next.disk.workspace.epoch,
+      }),
+      bundle = await a.backup(next.disk),
+      corrupt = new DatabaseSync(join(bundle.backup, "database.sqlite"));
+    corrupt.exec("PRAGMA journal_mode=DELETE;");
+    if (fault === "unique") corrupt.exec("DROP INDEX invocation_key;");
+    else
+      corrupt.exec(
+        "DROP INDEX kind_activity; CREATE INDEX kind_activity ON records(id);",
+      );
+    corrupt.close();
+    resign(bundle.backup);
+    assert.throws(() => a.verify(bundle.backup), { code: "STORE_UNAVAILABLE" });
+  }
+});
+
+test("E3 disk a new step ID in restored Work inherits the unreconciled Work barrier; genuinely independent new Work remains allowed", async (t) => {
+  const f = fixture(),
+    b = await f.admin.backup(f.disk),
+    p = f.admin.restorePreview(b.backup, "Restore pre-intent Work", "Keep");
+  grant(f.admin.approvals, p.preview.request_id);
+  f.admin.restore(p.preview.request_id, f.disk);
+  const next = restored(f);
+  t.after(() => next.disk.close());
+  const w = next.core.read(f.work).data as RecordRow,
+    source = next.core.capture(
+      "Explicit fixture plan amendment; a new ID is not proof of non-execution",
+      "rpc",
+      "registered-fixture",
+    ),
+    request = {
+      request_id: "new-step-plan",
+      reason: "Amend exact plan under a fresh bound decision",
+      source_handles: [source.source_handle],
+      guards: [{ ref: { id: f.work }, expected_revision: 1 }],
+      ops: [
+        {
+          op: "update_record",
+          ref: { id: f.work },
+          plan_change_reason: "Fresh exact plan change",
+          decision_source_handle: source.source_handle,
+          data: {
+            ...w.data,
+            steps: [
+              {
+                step_id: "new-id-after-restore",
+                intent: "Write report under a new step ID",
+                status: "todo",
+                depends_on: [],
+                result_refs: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+  const q = next.core.prepareCommit(
+    request,
+    "Amend plan only; no effect repeated",
+    "Keep plan",
+  );
+  grant(next.core.approvals, q.request_id);
+  next.core.commit({ ...request, preview_ref: q.request_id });
+  assert.throws(
+    () =>
+      next.core.claim({
+        action: "acquire",
+        work_id: f.work,
+        expected_revision: 2,
+        step_id: "new-id-after-restore",
+        reason: "A new step cannot bypass lost-effect uncertainty",
+      }),
+    { code: "RESTORE_RECONCILIATION_REQUIRED" },
+  );
+  const dependent = next.core.commit({
+    request_id: "dependent-new-child",
+    reason: "A new child ID still depends on the restored obligation",
+    source_handles: [source.source_handle],
+    guards: [{ ref: { id: f.work }, expected_revision: 2 }],
+    ops: [
+      {
+        op: "create_record",
+        client_ref: "w",
+        kind: "work",
+        title: "New dependent report child",
+        visibility: "workspace",
+        data: {
+          ...w.data,
+          parent_work_id: { id: f.work },
+          required_for_parent: false,
+          objective: "Continue the restored report under a new child identity",
+          steps: [],
+        },
+      },
+    ],
+  }).created.w;
+  assert.throws(
+    () =>
+      next.core.claim({
+        action: "acquire",
+        work_id: dependent,
+        expected_revision: 1,
+        reason:
+          "A new dependent child cannot bypass restored ancestor uncertainty",
+      }),
+    { code: "RESTORE_RECONCILIATION_REQUIRED" },
+  );
+  const s = next.core.capture(
+      "Create genuinely independent new synthetic work",
+      "rpc",
+      "registered-fixture",
+    ),
+    independent = next.core.commit({
+      request_id: "independent",
+      reason: "Different new obligation",
+      source_handles: [s.source_handle],
+      guards: [],
+      ops: [
+        {
+          op: "create_record",
+          client_ref: "w",
+          kind: "work",
+          title: "Independent new work",
+          visibility: "workspace",
+          data: {
+            ...w.data,
+            objective: "Inspect unrelated new input",
+            next_action: "Inspect unrelated input",
+            steps: [],
+            acceptance: [
+              {
+                criterion_id: "unrelated",
+                description: "New unrelated input inspected",
+                verification: "Read unrelated input",
+                required: true,
+              },
+            ],
+          },
+        },
+      ],
+    }).created.w;
+  assert.doesNotThrow(() =>
+    next.core.claim({
+      action: "acquire",
+      work_id: independent,
+      expected_revision: 1,
+      reason: "Independent new work is permitted",
+    }),
+  );
+});

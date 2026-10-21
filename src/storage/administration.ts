@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { z } from "zod";
+import { checkIndexes } from "./indexes.ts";
 import {
   Approvals,
   addressedRefs,
@@ -154,7 +155,12 @@ function blobs(db: DatabaseSync) {
   }
   return [...set].sort();
 }
-function validate(db: DatabaseSync, home: string, materials = true) {
+function validate(
+  db: DatabaseSync,
+  home: string,
+  materials = true,
+  allowDerivedIndexRepair = false,
+) {
   requireThat(
     db.prepare("PRAGMA user_version").get()!.user_version === 6,
     "STORE_UNAVAILABLE",
@@ -168,6 +174,10 @@ function validate(db: DatabaseSync, home: string, materials = true) {
       db.prepare("PRAGMA foreign_key_check").all().length === 0,
     "STORE_UNAVAILABLE",
     "SQLite integrity/foreign keys failed.",
+  );
+  const index_repairs_required = checkIndexes(
+    db,
+    allowDerivedIndexRepair ? "allow-derived-repair" : "require",
   );
   const s = port(db, home),
     rows = db
@@ -340,7 +350,7 @@ function validate(db: DatabaseSync, home: string, materials = true) {
         "Missing/corrupt snapshot material; bundle incomplete.",
       );
     }
-  return { storage: s, rows };
+  return { storage: s, rows, index_repairs_required };
 }
 
 /** One self-contained directory artifact, no scheduler or alternate recovery database. */
@@ -474,8 +484,11 @@ export class Administration {
     const db = new DatabaseSync(join(path, "database.sqlite"), {
       readOnly: true,
     });
+    let index_repairs_required: string[] = [];
     try {
-      const { storage } = validate(db, path);
+      const checked = validate(db, path, true, true),
+        { storage } = checked;
+      index_repairs_required = checked.index_repairs_required;
       requireThat(
         storage.workspace.workspace_id === manifest.workspace_id &&
           storage.workspace.epoch === manifest.captured_epoch &&
@@ -510,7 +523,13 @@ export class Administration {
     } finally {
       db.close();
     }
-    return { path, manifest, identity: bytesHash(manifestBytes) };
+    return {
+      path,
+      manifest,
+      identity: bytesHash(manifestBytes),
+      index_repairs_required,
+      schema_ready: index_repairs_required.length === 0,
+    };
   }
   async backup(disk: Disk, holdLivePin = false) {
     this.authorize();
@@ -607,6 +626,8 @@ export class Administration {
         export: "export.json",
         live_pin: holdLivePin ? key : null,
         coverage: manifest.coverage,
+        index_repairs_required: verified.index_repairs_required,
+        schema_ready: verified.schema_ready,
       };
     } catch (e) {
       atomicJSON(join(bundle, "INCOMPLETE.json"), {
@@ -636,10 +657,12 @@ export class Administration {
     const epoch = randomUUID(),
       restoration_id = randomUUID();
     const db = new DatabaseSync(join(quarantine, "zara.sqlite"));
+    let rebuilt_indexes: string[] = [];
     try {
       db.exec("PRAGMA foreign_keys=ON;");
-      const { storage, rows } = validate(db, quarantine);
+      const { storage, rows } = validate(db, quarantine, true, true);
       db.exec("BEGIN IMMEDIATE");
+      rebuilt_indexes = checkIndexes(db, "repair");
       const workspace = { ...storage.workspace, epoch };
       db.prepare("UPDATE meta SET json=?").run(JSON.stringify(workspace));
       storage.workspace = workspace;
@@ -671,6 +694,7 @@ export class Administration {
           captured_seq: b.manifest.captured_seq,
           barrier: "all restored Work and steps",
           authority: "historical claims/approvals cannot authorize",
+          rebuilt_indexes,
         }),
       );
       refreshMemory(storage, true);
@@ -695,6 +719,7 @@ export class Administration {
     });
     this.fault?.("restore_after_verify");
     const exact = {
+      rebuilt_indexes,
       quarantine_components,
       backup: b.path,
       backup_identity: b.identity,
