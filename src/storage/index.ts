@@ -1,4 +1,17 @@
-import { DatabaseSync } from "node:sqlite";
+import {
+  activeLocation,
+  readControl,
+  writeControl,
+  safePath,
+  bytesHash,
+} from "./control.ts";
+export {
+  activeLocation,
+  readControl,
+  removeOwned,
+  safePath,
+} from "./control.ts";
+import { backup, DatabaseSync } from "node:sqlite";
 import { randomUUID, createHash } from "node:crypto";
 import {
   closeSync,
@@ -29,6 +42,7 @@ import {
   MemorySchemaSQL,
   ExperienceSchemaSQL,
   ApprovalSchemaSQL,
+  LifecycleSchemaSQL,
   refreshMemory,
   validateMemory,
   validateWorks,
@@ -64,6 +78,10 @@ export class DiskStorage implements StoragePort {
   private lockToken = randomUUID();
   private ownsLock = false;
   private closed = false;
+  connectionClosed = false;
+  private initializing = true;
+  private administrative = false;
+  readonly controlHome: string;
   constructor(
     public home: string,
     private migrationFault?: (point: string) => void,
@@ -74,6 +92,8 @@ export class DiskStorage implements StoragePort {
       "ZARATUSTRA_HOME must be an absolute trusted setup path.",
     );
     home = resolve(home);
+    this.controlHome = home;
+    home = activeLocation(home);
     this.home = home;
     mkdirSync(home, { recursive: true });
     const manifest = join(home, "workspace.json");
@@ -81,12 +101,17 @@ export class DiskStorage implements StoragePort {
     const hadManifest = existsSync(manifest);
     const hadDb = existsSync(dbPath);
     requireThat(
+      !readControl(this.controlHome) || (hadManifest && hadDb),
+      "STORE_UNAVAILABLE",
+      "Known active memory is missing; use quarantine recovery, never initialize an empty replacement.",
+    );
+    requireThat(
       hadManifest === hadDb,
       "STORE_UNAVAILABLE",
       "Workspace manifest/database mismatch; preserve files and diagnose.",
     );
     try {
-      const lock = join(home, "writer.lock");
+      const lock = join(this.controlHome, "writer.lock");
       if (existsSync(lock)) {
         const owner = JSON.parse(readFileSync(lock, "utf8")) as { pid: number };
         let alive = true;
@@ -121,7 +146,7 @@ export class DiskStorage implements StoragePort {
         this.workspace = {
           workspace_id: randomUUID(),
           epoch: randomUUID(),
-          schema_version: 5,
+          schema_version: 6,
         };
         this.db.exec(`BEGIN IMMEDIATE;
           CREATE TABLE meta(json TEXT NOT NULL);
@@ -139,7 +164,8 @@ export class DiskStorage implements StoragePort {
           ${MemorySchemaSQL}
           ${ExperienceSchemaSQL}
           ${ApprovalSchemaSQL}
-          PRAGMA user_version=5;`);
+          ${LifecycleSchemaSQL}
+          PRAGMA user_version=6;`);
         this.db
           .prepare("INSERT INTO meta(json) VALUES(?)")
           .run(JSON.stringify(this.workspace));
@@ -153,6 +179,25 @@ export class DiskStorage implements StoragePort {
         const version = this.get<{ user_version: number }>(
           "PRAGMA user_version",
         )?.user_version;
+        if (
+          version === 6 &&
+          this.workspace.schema_version === 5 &&
+          !this.readonly
+        ) {
+          const receipt = this.get<{ json: string }>(
+            "SELECT json FROM migrations WHERE version=6",
+          );
+          const m = receipt ? JSON.parse(receipt.json) : null;
+          requireThat(
+            m &&
+              m.before === JSON.stringify(this.workspace) &&
+              m.after === meta?.json,
+            "STORE_UNAVAILABLE",
+            "Unrecognized lifecycle migration; preserve store.",
+          );
+          this.replaceManifest(meta!.json);
+          this.workspace = JSON.parse(meta!.json);
+        }
         if (
           version === 5 &&
           this.workspace.schema_version === 4 &&
@@ -238,7 +283,8 @@ export class DiskStorage implements StoragePort {
               this.workspace.schema_version === 2 ||
               this.workspace.schema_version === 3 ||
               this.workspace.schema_version === 4 ||
-              this.workspace.schema_version === 5) &&
+              this.workspace.schema_version === 5 ||
+              this.workspace.schema_version === 6) &&
             version === this.workspace.schema_version,
           "STORE_UNAVAILABLE",
           "Unknown schema or workspace identity mismatch; no replacement store will be created.",
@@ -254,6 +300,24 @@ export class DiskStorage implements StoragePort {
       if (this.workspace.schema_version === 2) this.migrateMemory();
       if (this.workspace.schema_version === 3) this.migrateMemory(4);
       if (this.workspace.schema_version === 4) this.migrateMemory(5);
+      if (this.workspace.schema_version === 5) this.migrateMemory(6);
+      const control = readControl(this.controlHome);
+      if (control)
+        requireThat(
+          control.workspace_id === this.workspace.workspace_id &&
+            control.epoch === this.workspace.epoch,
+          "STORE_UNAVAILABLE",
+          "Active control identity mismatch; no replacement.",
+        );
+      else if (!this.readonly)
+        writeControl(this.controlHome, {
+          format: 1,
+          generation: ".",
+          workspace_id: this.workspace.workspace_id,
+          epoch: this.workspace.epoch,
+          restoration: null,
+        });
+      this.initializing = false;
       if (!this.readonly) {
         mkdirSync(join(home, "materials"), { recursive: true });
         mkdirSync(join(home, "staging"), { recursive: true });
@@ -368,7 +432,13 @@ export class DiskStorage implements StoragePort {
       check.close();
     }
     const faultPrefix =
-      target === 3 ? "memory" : target === 4 ? "experience" : "approval";
+      target === 3
+        ? "memory"
+        : target === 4
+          ? "experience"
+          : target === 5
+            ? "approval"
+            : "lifecycle";
     this.migrationFault?.(faultPrefix + "_after_backup");
     const after = JSON.stringify({ ...this.workspace, schema_version: target });
     this.exec("BEGIN IMMEDIATE");
@@ -378,7 +448,9 @@ export class DiskStorage implements StoragePort {
           ? MemorySchemaSQL
           : target === 4
             ? ExperienceSchemaSQL
-            : ApprovalSchemaSQL,
+            : target === 5
+              ? ApprovalSchemaSQL
+              : LifecycleSchemaSQL,
       );
       refreshMemory(this, true);
       this.run(
@@ -503,19 +575,77 @@ export class DiskStorage implements StoragePort {
     this.replaceManifest(after);
     this.workspace = JSON.parse(after);
   }
+  assertActive(epoch: string, write = false) {
+    if (this.initializing) return;
+    const c = readControl(this.controlHome);
+    requireThat(
+      !this.closed &&
+        !this.connectionClosed &&
+        c &&
+        c.epoch === epoch &&
+        c.workspace_id === this.workspace.workspace_id &&
+        activeLocation(this.controlHome) === this.home,
+      "RESTORE_RECONCILIATION_REQUIRED",
+      "Workspace or epoch mismatch: active generation changed; reload the workspace.",
+    );
+    if (write) {
+      requireThat(
+        !this.administrative,
+        "WORK_IN_USE",
+        "A consistent backup is capturing this workspace.",
+      );
+      const lock = join(this.controlHome, "writer.lock");
+      requireThat(
+        !this.readonly &&
+          existsSync(lock) &&
+          JSON.parse(readFileSync(lock, "utf8")).token === this.lockToken,
+        "READ_ONLY",
+        "Another writing process owns the stable writer lease, or writes are disabled.",
+      );
+    }
+  }
+  async backupTo(path: string) {
+    this.assertActive(this.workspace.epoch, true);
+    this.administrative = true;
+    try {
+      await backup(this.db, path);
+    } finally {
+      this.administrative = false;
+    }
+    this.assertActive(this.workspace.epoch, true);
+  }
+  pinSource(key: string, hashes: string[]) {
+    this.run(
+      "INSERT OR REPLACE INTO lifecycle_pins VALUES(?,?)",
+      key,
+      JSON.stringify({
+        kind: "source",
+        hashes,
+        expires_at: Date.now() + 1800000,
+      }),
+    );
+  }
+  unpinSource(key: string) {
+    this.run("DELETE FROM lifecycle_pins WHERE key=?", key);
+  }
   exec(sql: string) {
+    this.assertActive(this.workspace?.epoch, true);
     this.db.exec(sql);
   }
   get<T>(sql: string, ...params: (string | number | null)[]) {
+    this.assertActive(this.workspace?.epoch);
     return this.db.prepare(sql).get(...params) as T | undefined;
   }
   all<T>(sql: string, ...params: (string | number | null)[]) {
+    this.assertActive(this.workspace?.epoch);
     return this.db.prepare(sql).all(...params) as T[];
   }
   run(sql: string, ...params: (string | number | null)[]) {
+    this.assertActive(this.workspace?.epoch, true);
     this.db.prepare(sql).run(...params);
   }
   importFile(path: string, roots: string[], fault?: (point: string) => void) {
+    this.assertActive(this.workspace.epoch, true);
     requireThat(!this.readonly, "READ_ONLY", "Imports need the one writer.");
     requireThat(
       isAbsolute(path),
@@ -557,6 +687,8 @@ export class DiskStorage implements StoragePort {
       );
     }
     const hash = sha(bytes);
+    const pending_key = "pending-" + randomUUID();
+    this.pinSource(pending_key, [hash]);
     const stage = join(this.home, "staging", randomUUID());
     const target = join(this.home, "materials", hash);
     durableWrite(stage, bytes);
@@ -575,7 +707,13 @@ export class DiskStorage implements StoragePort {
       "STORE_UNAVAILABLE",
       "Retained material failed readback.",
     );
-    return { text, blob_ref: hash, byte_length: bytes.length, locator: real };
+    return {
+      text,
+      blob_ref: hash,
+      byte_length: bytes.length,
+      locator: real,
+      pending_key,
+    };
   }
   async importMaterial(
     path: string,
@@ -585,6 +723,7 @@ export class DiskStorage implements StoragePort {
     fault?: (point: string) => void,
   ) {
     authorize();
+    this.assertActive(this.workspace.epoch, true);
     requireThat(!this.readonly, "READ_ONLY", "Imports need the one writer.");
     requireThat(
       isAbsolute(path),
@@ -619,6 +758,8 @@ export class DiskStorage implements StoragePort {
     } finally {
       closeSync(fd);
     }
+    const pendingKey = "pending-" + randomUUID();
+    this.pinSource(pendingKey, [sha(bytes)]);
     let extraction: Awaited<ReturnType<typeof extract>>;
     if (["txt", "md", "markdown"].includes(format)) {
       let text = "",
@@ -677,6 +818,10 @@ export class DiskStorage implements StoragePort {
       "PERMISSION_DENIED",
       "Import runtime was invalidated.",
     );
+    this.pinSource(pendingKey, [
+      sha(bytes),
+      ...(extraction.text ? [sha(Buffer.from(extraction.text))] : []),
+    ]);
     const blob_ref = this.retain(bytes, fault);
     const { text, ...metadata } = extraction;
     if (["readable", "partial"].includes(metadata.status)) {
@@ -684,6 +829,7 @@ export class DiskStorage implements StoragePort {
       metadata.text_hash = metadata.text_blob_ref;
     }
     return {
+      pending_key: pendingKey,
       text,
       blob_ref,
       byte_length: bytes.length,
@@ -712,6 +858,22 @@ export class DiskStorage implements StoragePort {
       "Retained material failed readback.",
     );
     return hash;
+  }
+  readBlob(hash: string) {
+    this.assertActive(this.workspace.epoch);
+    requireThat(
+      /^[0-9a-f]{64}$/.test(hash),
+      "VALIDATION_ERROR",
+      "Invalid blob address.",
+    );
+    const path = safePath(this.home, join(this.home, "materials", hash));
+    const bytes = readFileSync(path);
+    requireThat(
+      bytesHash(bytes) === hash,
+      "STORE_UNAVAILABLE",
+      "Blob digest mismatch.",
+    );
+    return bytes;
   }
   readMaterial(hash: string) {
     requireThat(
@@ -750,14 +912,19 @@ export class DiskStorage implements StoragePort {
       read_only: this.readonly,
     };
   }
+  closeConnection() {
+    if (this.connectionClosed) return;
+    this.connectionClosed = true;
+    this.db?.close();
+  }
   close() {
     if (this.closed) return;
     this.closed = true;
     try {
-      this.db?.close();
+      this.closeConnection();
     } finally {
       if (this.ownsLock) {
-        const path = join(this.home, "writer.lock");
+        const path = join(this.controlHome, "writer.lock");
         try {
           if (JSON.parse(readFileSync(path, "utf8")).token === this.lockToken)
             unlinkSync(path);
@@ -770,3 +937,5 @@ export class DiskStorage implements StoragePort {
 }
 export { CoreError };
 export { OutputBoundary } from "./output.ts";
+
+export { Administration, fullAccess } from "./administration.ts";

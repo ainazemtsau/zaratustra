@@ -356,6 +356,84 @@ export const ExperienceOps = [
     dismissal_reason: text.nullable(),
   }),
 ] as const;
+/** Persisted supporting shapes reuse the same finite public write schemas. */
+export const PersistedSupportData = {
+  evaluation: ExperienceOps[6].omit({ op: true, client_ref: true }).extend({
+    recorded_at: z.iso.datetime(),
+    provenance: z.record(z.string(), z.unknown()),
+  }),
+  signal: ExperienceOps[7]
+    .omit({ op: true, client_ref: true, visibility: true })
+    .extend({
+      problem_state: ExperienceOps[8].shape.problem_state,
+      applied_change_ref: Ref.nullable(),
+      grounds: text.nullable(),
+      dismissal_reason: text.nullable(),
+    }),
+  signal_review: ExperienceOps[8]
+    .omit({ op: true, client_ref: true, ref: true })
+    .extend({ signal_ref: Ref, recorded_at: z.iso.datetime() }),
+  invocation: ExperienceOps[4].omit({ op: true, client_ref: true }).extend({
+    selected_at: z.iso.datetime(),
+    reported_application:
+      ExperienceOps[5].shape.reported_application.nullable(),
+    output_refs: z.array(Ref).max(50),
+    observation_refs: z.array(Ref).max(50),
+    reported_at: z.iso.datetime().nullable(),
+  }),
+  environment: z.record(z.string(), z.unknown()),
+};
+const OriginalEvidenceData = z.object({
+  source_kind: z.enum([
+    "observed_input",
+    "imported_file",
+    "tool_result",
+    "external_reply",
+    "direct_statement",
+    "quotation",
+    "agent_reply",
+    "generated_artifact",
+  ]),
+  source_locator: z.string(),
+  captured_at: z.iso.datetime(),
+  content_hash: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .nullable()
+    .optional(),
+  retained_excerpt: z.string().nullable().optional(),
+  blob_ref: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .nullable()
+    .optional(),
+  availability: z.enum(["retained", "locator_only", "missing", "deleted"]),
+  source_language: z.string(),
+});
+export const PersistedEvidenceData = z.union([
+  OriginalEvidenceData,
+  OriginalEvidenceData.omit({ source_locator: true, captured_at: true }).extend(
+    {
+      source_kind: z.literal("extracted_text"),
+      derived_from: Ref,
+      source_hash: z.string().regex(/^[0-9a-f]{64}$/),
+      parser: z.string(),
+      parser_version: z.string(),
+      extraction_status: z.enum(["readable", "partial"]),
+      total_characters: z.number().int().nonnegative(),
+      sections: z.array(
+        z.object({
+          locator: z.string(),
+          label: z.string(),
+          start: z.number().int().nonnegative(),
+          end: z.number().int().nonnegative(),
+          available: z.boolean(),
+        }),
+      ),
+      warnings: z.array(z.string()),
+    },
+  ),
+]);
 const common = {
   client_ref: text,
   title: text,
@@ -590,7 +668,7 @@ export interface RecordRow {
   revision: number;
   created_at: string;
   updated_at: string;
-  storage: "live";
+  storage: "live" | "archive" | "tombstone";
   visibility: "workspace" | "restricted";
   data: JsonObject;
   concept_ids: { id: string; revision?: number; content_version?: number }[];
@@ -619,6 +697,7 @@ export interface Source {
     full_content_hash: string;
     truncated: boolean;
   };
+  pending_key?: string;
   blob_ref?: string;
   byte_length: number;
   locator?: string;
@@ -684,6 +763,9 @@ export interface StoragePort {
   all<T>(sql: string, ...params: (string | number | null)[]): T[];
   run(sql: string, ...params: (string | number | null)[]): void;
   readMaterial(hash: string): string;
+  assertActive?(epoch: string, write?: boolean): void;
+  pinSource?(key: string, hashes: string[]): void;
+  unpinSource?(key: string): void;
 }
 export class CoreError extends Error {
   constructor(

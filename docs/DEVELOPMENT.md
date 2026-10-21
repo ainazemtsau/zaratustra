@@ -1,44 +1,32 @@
-# Authorized outcome E2
+# Authorized outcome E3
 
-The owner/coordinator assignment authorizes exact confirmations and controlled actions,
-finite identity/catalog/Activity decisions, managed textual Method export/drift/import and
-provider-boundary qualification. Exact E1 base 0b45c0853d7ee0c2f3c294b9bc4dd9803117462a
-is independently limited PASS and technically accepted by the coordinator under explicit
-owner delegation. This is separate from Anton's experience/T31. E2 result review and
-acceptance remain pending. No subagents/chats or self-issued independent review.
+Exact E2 094c0df4ef893a0668ee87dcff92e5abbad3514d is independently limited technical
+PASS and coordinator-accepted under explicit owner overnight delegation. The root gate
+was reread accepted with E3 writes allowed before implementation. This is separate from
+Anton usefulness/T31 and full R1. E2 current docs are preserved as exact Git-byte copies
+ending -094c0df4.md. Preflight on old0d6 remains an unchanged external historical note.
 
-The complete unchanged v1.1 specification was read. Original SHA256:
+E3 authorizes consistent backup plus versioned JSON export, exact raw managed blobs/pins,
+quarantine restore (including unavailable DB), external authoritative control epoch,
+per-action restored reconciliation including no receipt, archive/minimal tombstones,
+conservative addressed retention and bounded file cleanup. Read E3-DESIGN for mechanism
+necessity and limits. Portable Core remains independent of Pi. No SQL transaction spans
+model/human/tool waits; no new dependency, planner, second model, daemon or installer.
+
+The unchanged complete specification including appendices was read. Original SHA256
 7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4;
 public derivative 4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb.
-The executor waited read-only for the exact accepted E1 gate before the first product write.
-Accepted E1 current docs are preserved byte-for-byte in E1-RESULT-0b45c085.md,
-E1-DEVELOPMENT-0b45c085.md and E1-R1-STATUS-0b45c085.md. Older evidence stays frozen.
+Full R1 remains the target. Full F/T30, actual owner usefulness/T31, Sleep and Codex remain
+separate. The sole executor assigns no independent E3 PASS or acceptance.
 
-See [E2-DESIGN](E2-DESIGN.md) for mechanism necessity, exact mechanics and limits.
-Native Pi remains the only model chooser/auth/config and ordinary tool executor. Portable
-Core retains short SQLite transactions behind StoragePort; no Pi types enter Core.
-Schema5 changes only an intent index and old-writer semantic admission. A verified filled
-schema4 backup/migration/manifest protocol precedes writes; no replacement empty DB.
+One new non-reset external E3 ledger: 30 conversations,240 actual provider dispatches,
+USD20 Pi estimate; stop at the first cap. All errors/retries/candidates remain charged.
+Fixed openai-codex/gpt-6.1-sol medium, supported native authPath only. No credential read
+or copy. Predeclared low scopes[] and protected restricted:read/write synthetic profiles
+use separate external agent/home/cwd/output/backup roots. The registered controller may
+approve only those fixtures; it never supplies owner testimony or T31. No escalation
+inside a refused history. Existing E2/reviewer/raw evidence and Direction OS remain frozen.
 
-One new non-reset E2 live ledger: 30 attempts, 240 provider dispatch attempts, USD20 Pi
-estimate; stop at the first cap. Fixed openai-codex/gpt-6.1-sol, medium. Native auth/authPath,
-no credentials read/copied. Actual billing unknown. All attempts and failures retained.
-Declared workspace-only and protected profiles use separate new synthetic homes, cwd,
-agent and output roots outside checkout/package/personal storage. Never escalate a failing
-history. Native dialog responses from registered test RPC/UI remain synthetic, not owner.
-
-Trusted personal local TUI is the owner decision channel. hasUI alone is insufficient:
-RPC/SDK requires trusted setup registration and remains explicitly synthetic in these tests.
-Native first/untransformed input capture is separately configured for provenance; a dialog
-boolean is a response to the exact new native question, not semantic parsing of old yes.
-Unconsented routing is unsupported; before_provider_request exceptions are not a veto.
-Stopping future reads never purges existing transcript or proves pre-transmission control.
-
-All original B/C/D/E1 requirements and version-attributed results remain in R1-STATUS.md.
-E2 executor qualification is recorded in E2-VALIDATION/REPRODUCE/ATTEMPTS and the sealed synthetic manifest. Final code/live candidate d6a3187 after independent H1 FAIL on the preserved original0d6c9a2 and bounded correction; final exact publication/installation is in the terminal local FINAL-READBACK. Independent E2 review and coordinator acceptance remain separate. E3 owns user backup/quarantine
-restore, archive/delete/retention/GC and the future epoch reconciliation barrier. That
-barrier must stop every resumed potentially effectful Work/step, including a backup with
-no receipt/intent. E2 supplies identities/bindings, not restore implementation. Full E/R1,
-T31, independent T30, Sleep and Codex remain open. next: solmax.
-
-END_OF_FILE: docs/DEVELOPMENT.md
+Current E3 implementation/qualification is in progress. See E3-VALIDATION/REPRODUCE/ATTEMPTS
+for executed version-attributed results at handback. Known braces dev advisory and two
+Windows controls remain separate. next: solmax.

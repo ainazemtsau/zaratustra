@@ -805,7 +805,7 @@ test("D schema-2 migration faults preserve filled canonical rows, original mater
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 5);
+    assert.equal(recovered.workspace.schema_version, 6);
     assert.equal(
       JSON.stringify(tables.map((t) => recovered.all("SELECT * FROM " + t))),
       before,

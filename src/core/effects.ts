@@ -78,6 +78,7 @@ export const FileEffectSchema = z.strictObject({
 });
 export type FileEffect = z.infer<typeof FileEffectSchema>;
 export interface EffectRow {
+  payload_not_retained?: boolean;
   request_id: string;
   kind: "managed_file";
   status: string;
@@ -119,6 +120,11 @@ export class Effects {
       e?.kind === "managed_file" && this.accessible(e),
       "REFERENCE_NOT_FOUND",
       "Managed attempt unavailable.",
+    );
+    requireThat(
+      !e.payload_not_retained,
+      "CONTENT_NOT_RETAINED",
+      "Original managed action payload is not retained; stable receipt metadata remains in operations.",
     );
     requireThat(
       e.operation_digest === hash(e.payload),

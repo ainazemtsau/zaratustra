@@ -1,3 +1,4 @@
+import { registerAdministration } from "./administration.ts";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -19,9 +20,11 @@ import {
   MethodData,
   requireThat,
 } from "../core/index.ts";
-import type { FileEffect, RecordRow } from "../core/index.ts";
+import type { CallContext, FileEffect, RecordRow } from "../core/index.ts";
 import {
   DiskStorage,
+  Administration,
+  readControl,
   OutputBoundary,
   resolvedLocation,
   within,
@@ -66,6 +69,10 @@ const productInputs = [
   "src/core/experience.ts",
   "src/core/approval.ts",
   "src/core/effects.ts",
+  "src/core/lifecycle.ts",
+  "src/storage/administration.ts",
+  "src/storage/control.ts",
+  "src/extension/administration.ts",
   "src/storage/output.ts",
   "src/extension/managed.ts",
   "src/extension/preview.ts",
@@ -90,16 +97,34 @@ const packageInfo = JSON.parse(
 export default function extension(pi: ExtensionAPI) {
   let disk: DiskStorage | undefined;
   let core: Core | undefined;
+  let administration: Administration | undefined;
   let unavailable: unknown;
   let currentSources: unknown[] = [];
   let selected = "";
+  let recipientAllowed = false;
+  // One Pi-owned recipient authority shared by Core and unavailable-DB administration.
+  const bindRecipient = <T extends CallContext>(context: T): T => {
+    Object.defineProperty(context, "processing_allowed", {
+      enumerable: true,
+      get: () => recipientAllowed,
+      set: (allowed: boolean) => {
+        recipientAllowed = allowed;
+      },
+    });
+    return context;
+  };
+  const inFlightNative = new Set<string>();
+  let activeImports = 0,
+    nativeDialogs = 0;
   let outputBoundary: OutputBoundary | undefined;
   let readyFile: { effect: FileEffect; preview: string } | undefined;
   const activeFiles = new Map<string, FileEffect>();
   let selectionGeneration = 0;
   let recipientAuthority = "startup-selected-Pi-recipient";
   const confirmRecipient = async (ctx: ExtensionContext) => {
-    if (!core || core.context.processing_allowed || !ctx.hasUI) return;
+    const actor = core?.context ?? administration?.context;
+    if (!actor || actor.processing_allowed || !ctx.hasUI || nativeDialogs)
+      return;
     let authority;
     try {
       authority = dialogAuthority(ctx, process.env.ZARATUSTRA_TEST_CONTROLLER);
@@ -108,24 +133,31 @@ export default function extension(pi: ExtensionAPI) {
     }
     const generation = selectionGeneration,
       recipient = selected;
-    const yes = await ctx.ui.confirm(
-      "Confirm context recipient?",
-      `Actual Pi recipient: ${recipient}. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.`,
-    );
+    let yes = false;
+    nativeDialogs++;
+    try {
+      yes = await ctx.ui.confirm(
+        "Confirm context recipient?",
+        `Actual Pi recipient: ${recipient}. Processing includes the already loaded conversation, previous tool/memory outputs and subsequent permitted reads. Blocking new reads does not erase prior transmission or purge context. Confirm this recipient for that context? Decline keeps managed retrieval/import blocked.`,
+      );
+    } finally {
+      nativeDialogs--;
+    }
     if (
       yes &&
       `${ctx.model?.provider}/${ctx.model?.id}` === recipient &&
       generation === selectionGeneration &&
       selected === recipient &&
-      core
+      (core || administration)
     ) {
-      core.context.processing_allowed = true;
+      if (core) core.context.processing_allowed = true;
+      if (administration) administration.context.processing_allowed = true;
       recipientAuthority =
         "explicit-native-dialog:" +
         authority.principal +
         ":actual-recipient-and-loaded-context";
       importAbort = new AbortController();
-      if (core.context.environment) {
+      if (core?.context.environment) {
         core.context.environment.provider = ctx.model?.provider ?? null;
         core.context.environment.model = ctx.model?.id ?? null;
       }
@@ -144,11 +176,28 @@ export default function extension(pi: ExtensionAPI) {
       );
     return core;
   };
-  pi.on("session_start", (_event, ctx) => {
+  const openWorkspace = (ctx: ExtensionContext) => {
+    const actual = ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : "";
+    if (!selected) {
+      selected = actual;
+      recipientAllowed = !!actual;
+    } else if (actual !== selected) {
+      selected = actual;
+      recipientAllowed = false;
+      selectionGeneration++;
+      recipientAuthority = "unresolved-selection-during-store-reopen";
+    }
     importAbort.abort();
     importAbort = new AbortController();
-    if (core?.context.can_write && core.context.processing_allowed)
-      core.interruptFiles("session replacement before verified result");
+    if (core?.context.can_write && core.context.processing_allowed) {
+      try {
+        core.interruptFiles("session replacement before verified result");
+      } catch {
+        /* A closed prior generation cannot mutate. */
+      }
+    }
+    administration?.approvals.invalidate();
+    administration = undefined;
     core?.expireSources();
     currentSources = [];
     readyFile = undefined;
@@ -177,7 +226,51 @@ export default function extension(pi: ExtensionAPI) {
           "PERMISSION_DENIED",
           "Workspace must be outside package and Pi configuration/cache.",
         );
+      if (process.env.ZARATUSTRA_BACKUP_ROOT) {
+        const backupRoot = resolvedLocation(process.env.ZARATUSTRA_BACKUP_ROOT);
+        requireThat(
+          isAbsolute(process.env.ZARATUSTRA_BACKUP_ROOT) &&
+            !within(canonicalHome, backupRoot) &&
+            !within(backupRoot, canonicalHome) &&
+            !within(realpathSync(root), backupRoot) &&
+            !(
+              process.env.PI_CODING_AGENT_DIR &&
+              within(
+                resolvedLocation(process.env.PI_CODING_AGENT_DIR),
+                backupRoot,
+              )
+            ),
+          "PERMISSION_DENIED",
+          "Backup root must be separately designated outside memory/package/Pi storage.",
+        );
+        const control = readControl(canonicalHome);
+        administration = new Administration(
+          canonicalHome,
+          backupRoot,
+          bindRecipient({
+            workspace_id:
+              control?.workspace_id ?? "uninitialized-trusted-setup",
+            epoch: control?.epoch ?? randomUUID(),
+            principal: "trusted-personal",
+            session_id: ctx.sessionManager.getSessionId(),
+            runtime_id: runtimeId,
+            can_write: true,
+            processing_allowed: !!selected,
+            scopes: z
+              .array(z.enum(["restricted:read", "restricted:write"]))
+              .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]")),
+            approval_principal: process.env.ZARATUSTRA_TEST_CONTROLLER
+              ? "synthetic-controller:" + process.env.ZARATUSTRA_TEST_CONTROLLER
+              : "trusted-local-desktop-owner",
+          }),
+        );
+      }
       disk = new DiskStorage(canonicalHome);
+      if (administration)
+        Object.assign(administration.context, {
+          workspace_id: disk.workspace.workspace_id,
+          epoch: disk.workspace.epoch,
+        });
       if (within(realpathSync(root), realpathSync(canonicalHome)))
         throw new CoreError(
           "PERMISSION_DENIED",
@@ -203,56 +296,58 @@ export default function extension(pi: ExtensionAPI) {
         );
         outputBoundary = new OutputBoundary(outputRoot);
       }
-      selected = ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : "";
       const ingress = process.env.ZARATUSTRA_INTERACTIVE_INPUT_CONTRACT;
       if (ingress && ingress !== "first-untransformed")
         throw new CoreError(
           "VALIDATION_ERROR",
           "Unknown trusted interactive input contract.",
         );
-      core = new Core(disk, {
-        workspace_id: disk.workspace.workspace_id,
-        epoch: disk.workspace.epoch,
-        principal: "trusted-personal",
-        approval_principal: process.env.ZARATUSTRA_TEST_CONTROLLER
-          ? "synthetic-controller:" + process.env.ZARATUSTRA_TEST_CONTROLLER
-          : "trusted-local-desktop-owner",
-        session_id: ctx.sessionManager.getSessionId(),
-        runtime_id: runtimeId,
-        can_write: !disk.readonly,
-        processing_allowed: !!selected,
-        scopes: z
-          .array(z.enum(["restricted:read", "restricted:write"]))
-          .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]")),
-        ...(ingress
-          ? {
-              interactive_input: {
-                contract: "first-untransformed" as const,
-                caller_identity: "trusted-local-desktop-owner",
-              },
-            }
-          : {}),
-        environment: {
-          package: {
-            name: packageInfo.name,
-            version: packageInfo.version,
-            resource_hashes: resourceHashes,
+      core = new Core(
+        disk,
+        bindRecipient({
+          workspace_id: disk.workspace.workspace_id,
+          epoch: disk.workspace.epoch,
+          principal: "trusted-personal",
+          approval_principal: process.env.ZARATUSTRA_TEST_CONTROLLER
+            ? "synthetic-controller:" + process.env.ZARATUSTRA_TEST_CONTROLLER
+            : "trusted-local-desktop-owner",
+          session_id: ctx.sessionManager.getSessionId(),
+          runtime_id: runtimeId,
+          can_write: !disk.readonly,
+          processing_allowed: !!selected,
+          scopes: z
+            .array(z.enum(["restricted:read", "restricted:write"]))
+            .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]")),
+          ...(ingress
+            ? {
+                interactive_input: {
+                  contract: "first-untransformed" as const,
+                  caller_identity: "trusted-local-desktop-owner",
+                },
+              }
+            : {}),
+          environment: {
+            package: {
+              name: packageInfo.name,
+              version: packageInfo.version,
+              resource_hashes: resourceHashes,
+            },
+            bootstrap: { sha256: resourceHashes["instructions/bootstrap.md"] },
+            skills: ["zaratustra-work", "zaratustra-memory"].map((name) => ({
+              name,
+              sha256: resourceHashes[`skills/${name}/SKILL.md`],
+            })),
+            harness: { name: "Pi", version: null },
+            node: process.version,
+            platform: process.platform,
+            architecture: process.arch,
+            provider: ctx.model?.provider ?? null,
+            model: ctx.model?.id ?? null,
+            settings: { thinking: pi.getThinkingLevel(), temperature: null },
           },
-          bootstrap: { sha256: resourceHashes["instructions/bootstrap.md"] },
-          skills: ["zaratustra-work", "zaratustra-memory"].map((name) => ({
-            name,
-            sha256: resourceHashes[`skills/${name}/SKILL.md`],
-          })),
-          harness: { name: "Pi", version: null },
-          node: process.version,
-          platform: process.platform,
-          architecture: process.arch,
-          provider: ctx.model?.provider ?? null,
-          model: ctx.model?.id ?? null,
-          settings: { thinking: pi.getThinkingLevel(), temperature: null },
-        },
-      });
-      if (!disk.readonly)
+        }),
+      );
+      if (!disk.readonly && recipientAllowed)
         core.interruptFiles(
           "new runtime found prior requested attempt; inspect current bytes",
           true,
@@ -267,7 +362,8 @@ export default function extension(pi: ExtensionAPI) {
         "warning",
       );
     }
-  });
+  };
+  pi.on("session_start", (_event, ctx) => openWorkspace(ctx));
   pi.on("session_shutdown", () => {
     if (core?.context.can_write && core.context.processing_allowed)
       core.interruptFiles("shutdown before verified result");
@@ -278,10 +374,9 @@ export default function extension(pi: ExtensionAPI) {
     disk = undefined;
   });
   pi.on("input", async (event, ctx) => {
-    if (core && !core.context.processing_allowed) {
+    if (!recipientAllowed && (core || administration)) {
       await confirmRecipient(ctx);
-      if (!core.context.processing_allowed)
-        return { action: "handled" as const };
+      if (!recipientAllowed) return { action: "handled" as const };
     }
     if (!core) return;
     try {
@@ -299,6 +394,8 @@ export default function extension(pi: ExtensionAPI) {
     }
   });
   pi.on("tool_call", async (event, ctx) => {
+    if (["write", "edit", "bash", "powershell"].includes(event.toolName))
+      inFlightNative.add(event.toolCallId);
     if (!["write", "edit"].includes(event.toolName)) return;
     const path = (event.input as { path?: string }).path;
     if (!outputBoundary && !readyFile) return;
@@ -329,10 +426,12 @@ export default function extension(pi: ExtensionAPI) {
       readyFile = undefined;
       activeFiles.set(event.toolCallId, effect);
     } catch (e) {
+      inFlightNative.delete(event.toolCallId);
       return { block: true, reason: JSON.stringify(failure(e)) };
     }
   });
   pi.on("tool_result", (event, ctx) => {
+    inFlightNative.delete(event.toolCallId);
     const managed = activeFiles.get(event.toolCallId);
     if (managed && core && outputBoundary) {
       try {
@@ -357,6 +456,8 @@ export default function extension(pi: ExtensionAPI) {
           "warning",
         );
         unavailable = e;
+      } finally {
+        activeFiles.delete(event.toolCallId);
       }
     }
     if (
@@ -404,12 +505,16 @@ export default function extension(pi: ExtensionAPI) {
   });
   pi.on("model_select", async (event, ctx) => {
     const identity = `${event.model.provider}/${event.model.id}`;
-    if (core && selected && identity !== selected) {
-      if (core.context.can_write && core.context.processing_allowed)
+    if (selected && identity !== selected) {
+      if (core?.context.can_write && core.context.processing_allowed)
         core.interruptFiles("recipient change before verified result");
-      core.context.processing_allowed = false;
+      if (core) core.context.processing_allowed = false;
+      if (administration) {
+        administration.context.processing_allowed = false;
+        administration.approvals.invalidate();
+      }
       importAbort.abort();
-      core.expireSources();
+      core?.expireSources();
       readyFile = undefined;
       selected = identity;
       ++selectionGeneration;
@@ -448,7 +553,7 @@ export default function extension(pi: ExtensionAPI) {
             "no OS CAS or author attribution",
             "no shell deduplication",
             "no automatic routing gate",
-            "no restore in E2",
+            "restore loses post-snapshot DB history; external effects remain",
           ],
         },
       };
@@ -457,7 +562,10 @@ export default function extension(pi: ExtensionAPI) {
         available: false,
         error: failure(e),
         captured_sources: [],
-        warnings: ["Do not claim persistence or use stale memory."],
+        warnings: [
+          "Do not claim persistence or use stale memory. Exact quarantine restore remains available with full-read/write trusted setup even when current DB is unavailable.",
+        ],
+        backup_recovery_configured: !!administration,
       };
     }
     const snapshot = {
@@ -500,6 +608,38 @@ export default function extension(pi: ExtensionAPI) {
       },
     });
   }
+  registerAdministration(register, {
+    core: get,
+    admin: () => {
+      requireThat(
+        administration,
+        "PERMISSION_DENIED",
+        "Trusted setup must designate a separate backup root.",
+      );
+      return administration;
+    },
+    disk: () => disk,
+    output: () => outputBoundary,
+    restoreReady: () =>
+      requireThat(
+        inFlightNative.size === 0 && activeImports === 0 && nativeDialogs === 0,
+        "WORK_IN_USE",
+        "A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.",
+      ),
+    needsReopen: () =>
+      !!disk?.connectionClosed ||
+      !!(
+        administration &&
+        readControl(administration.home)?.epoch !== administration.context.epoch
+      ),
+    reopen: (ctx) => {
+      core?.expireSources();
+      core = undefined;
+      disk?.close();
+      disk = undefined;
+      openWorkspace(ctx);
+    },
+  });
   register(
     "zara_preview",
     "Prepare an immutable exact commit proposal. Explain consequences and alternatives in the user's language; this creates no permission. Use zara_confirm for the actual native yes/no/cancel dialog, then commit the identical request plus preview_ref.",
@@ -520,11 +660,14 @@ export default function extension(pi: ExtensionAPI) {
     "Present one exact immutable proposal through Pi's native confirmation dialog. No approved flag or source-handle argument. Only that actual dialog response is bound. Clarify ambiguous chat before using the dialog. Refusal/cancel never dispatches. Registered synthetic UI is never owner authority.",
     z.strictObject({ preview_ref: z.string(), revoke: z.boolean().optional() }),
     async (p, ctx) => {
-      const c = get();
-      c.authorizeImport();
+      const c = core;
+      const approvals = administration?.owns(p.preview_ref as string)
+        ? administration.approvals
+        : get().approvals;
+      if (c) c.authorizeImport();
       if (p.revoke) {
         if (readyFile?.preview === p.preview_ref) readyFile = undefined;
-        return c.approvals.revoke(p.preview_ref as string);
+        return approvals.revoke(p.preview_ref as string);
       }
       requireThat(
         ctx?.hasUI,
@@ -535,26 +678,34 @@ export default function extension(pi: ExtensionAPI) {
         ctx,
         process.env.ZARATUSTRA_TEST_CONTROLLER,
       );
-      const shown = c.approvals.present(p.preview_ref as string);
+      requireThat(
+        nativeDialogs === 0,
+        "APPROVAL_PENDING",
+        "Resolve the existing native decision first.",
+      );
+      const shown = approvals.present(p.preview_ref as string);
       let yes = false;
+      nativeDialogs++;
       try {
         yes = await ctx.ui.confirm(
           "Confirm these exact changes?",
           renderApproval(shown.preview.payload),
         );
       } catch {
-        c.approvals.revoke(shown.preview.request_id);
+        approvals.revoke(shown.preview.request_id);
         throw new CoreError(
           "APPROVAL_REQUIRED",
           "Native confirmation cancelled or unavailable.",
         );
+      } finally {
+        nativeDialogs--;
       }
       requireThat(
-        get() === c,
+        core === c && recipientAllowed,
         "APPROVAL_STALE",
         "Runtime replaced during dialog.",
       );
-      const answer = c.approvals.answer(shown.token, yes, {
+      const answer = approvals.answer(shown.token, yes, {
         source_ref: "native-dialog-" + randomUUID(),
         transport: "native-dialog",
         channel_identity: authority.channel_identity,
@@ -957,26 +1108,31 @@ export default function extension(pi: ExtensionAPI) {
       const roots = JSON.parse(
         process.env.ZARATUSTRA_IMPORT_ROOTS ?? "[]",
       ) as string[];
-      const material = await disk!.importMaterial(
-        p.path as string,
-        roots,
-        () => {
-          if (get() !== c)
-            throw new CoreError(
-              "PERMISSION_DENIED",
-              "Import session was replaced.",
-            );
-          c.authorizeImport();
-        },
-        importAbort.signal,
-      );
-      c.authorizeImport();
-      return {
-        ok: true,
-        ...c.capture(material.text, "file", null, material),
-        readable_format: material.extraction.status,
-        committed: false,
-      };
+      activeImports++;
+      try {
+        const material = await disk!.importMaterial(
+          p.path as string,
+          roots,
+          () => {
+            if (get() !== c)
+              throw new CoreError(
+                "PERMISSION_DENIED",
+                "Import session was replaced.",
+              );
+            c.authorizeImport();
+          },
+          importAbort.signal,
+        );
+        c.authorizeImport();
+        return {
+          ok: true,
+          ...c.capture(material.text, "file", null, material),
+          readable_format: material.extraction.status,
+          committed: false,
+        };
+      } finally {
+        activeImports--;
+      }
     },
   );
   register(
@@ -996,7 +1152,7 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_commit",
-    "Atomically save linked domain/support rows, exact versions, Change, indexes and receipt. Read work/memory skills. Methods: create_record kind:method starts content_version 1; revise_method/update_record supply current version, Core increments behavioral changes. start_run/finish_run retain meaningful episodes; invoke_method pins complete selected_versions before use; report_application keeps model report distinct from output_refs and observed tool Evidence. record_evaluation targets exact result/version; use reported_feedback for RPC/quoted reports, never owner user_feedback. open_signal/review_signal preserve problems and independent reviews; editing alone never resolves. Exact guards required for changes. Existing Work claim/transition/handoff contracts remain. Knowledge is canonical fact storage; originals stay exact. E2 consequential changes require zara_preview then zara_confirm; commit the identical request plus preview_ref. merge_identity and finite reorganize_catalog preserve historical identities. Native file effects use zara_file_preview and ordinary write/edit. No archive/delete/restore in E2.",
+    "Atomically save linked domain/support rows, exact versions, Change, indexes and receipt. Read work/memory skills. Methods: create_record kind:method starts content_version 1; revise_method/update_record supply current version, Core increments behavioral changes. start_run/finish_run retain meaningful episodes; invoke_method pins complete selected_versions before use; report_application keeps model report distinct from output_refs and observed tool Evidence. record_evaluation targets exact result/version; use reported_feedback for RPC/quoted reports, never owner user_feedback. open_signal/review_signal preserve problems and independent reviews; editing alone never resolves. Exact guards required for changes. Existing Work claim/transition/handoff contracts remain. Knowledge is canonical fact storage; originals stay exact. E2 consequential changes require zara_preview then zara_confirm; commit the identical request plus preview_ref. merge_identity and finite reorganize_catalog preserve historical identities. Native file effects use zara_file_preview and ordinary write/edit. Storage operations use zara_storage_preview/confirm/apply; restore uses zara_restore_preview/confirm/restore and named reconciliation.",
     CommitSchema,
     (p) => get().commit(p),
   );

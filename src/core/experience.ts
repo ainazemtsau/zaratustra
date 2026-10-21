@@ -89,6 +89,11 @@ export function methodClosure(root: unknown, get: Get, selected?: unknown[]) {
   };
   const visit = (r: RecordRow, path: Set<string>) => {
     requireThat(
+      r.storage !== "tombstone",
+      "CONTENT_NOT_RETAINED",
+      "Required exact Method/dependency body is not retained.",
+    );
+    requireThat(
       !path.has(r.id),
       "GRAPH_CYCLE",
       "Method dependencies contain a cycle.",
@@ -119,7 +124,9 @@ export function methodClosure(root: unknown, get: Get, selected?: unknown[]) {
   return [...result.values()];
 }
 export function validateMethods(rows: RecordRow[], get: Get) {
-  for (const r of rows.filter((r) => r.kind === "method")) {
+  for (const r of rows.filter(
+    (r) => r.kind === "method" && r.storage !== "tombstone",
+  )) {
     const m = MethodData.parse(r.data);
     for (const ref of m.derived_from) get(ref, "method");
     for (const requirement of m.context_requirements)

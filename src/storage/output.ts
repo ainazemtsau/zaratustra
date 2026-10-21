@@ -17,7 +17,7 @@ const inside = (root: string, path: string) => {
   const r = relative(root, path);
   return r !== "" && !r.startsWith("..") && !isAbsolute(r);
 };
-function noAliases(path: string) {
+export function noAliases(path: string) {
   const volume = parse(path).root;
   let current = volume;
   for (const component of path

@@ -36,7 +36,7 @@ export function validateWorks(
 ) {
   const works = new Map(
     rows
-      .filter((r) => r.kind === "work")
+      .filter((r) => r.kind === "work" && r.storage !== "tombstone")
       .map((r) => [r.id, WorkData.parse(r.data)]),
   );
   const edges = new Map<string, string[]>();

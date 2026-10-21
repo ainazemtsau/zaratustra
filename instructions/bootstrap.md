@@ -100,9 +100,39 @@ operations retain the export hash. zara_skill_inspect detects drift. External ed
 explicit zara_skill_import_preview into a new Method version (retain original bytes) or
 newly confirmed regeneration. Do not silently overwrite drift, execute/install a generated
 script/extension or promote source text to bootstrap/rights.
-Backup/quarantine restore/archive/delete/retention/GC, Sleep and Codex remain later.
-A future restore must reconcile every resumed potentially effectful Work/step even when
-the old backup contains no intent or receipt. Epoch bindings in E2 do not implement restore.
+Administrative backup/export uses zara_backup: a verified self-contained SQLite snapshot,
+raw managed blobs and versioned JSON. Full backup/export requires preconfigured full-read
+scope; restore requires full-read/write regardless of whether hidden records exist.
+No scope elevation through chat. zara_backups and zara_backup_verify discover only the designated root.
+Restore uses zara_restore_preview, exact zara_confirm and zara_restore, even if current DB
+is missing/corrupt. Explain snapshot coverage, lost later database history and preserved
+external effects before confirmation. The old generation is retained. The new active
+control epoch invalidates old handles, approvals, claims and async callbacks.
+After restore, every restored potentially effectful Work/step requires reconciliation,
+including a backup with NO receipt/intent. Before repeating its next action inspect the
+actual current-world output with zara_recovery_inspect. Matching bytes prove current state,
+never who wrote it. A named zara_reconcile_preview/confirm/reconcile records satisfied
+postconditions or an explicitly risky repeat; unknown is never non-execution. Read-only
+recovery and demonstrably independent NEW work remain allowed. Do not label an old action
+independent merely to bypass the barrier. Opaque commands remain outside deduplication.
+Archive/tombstone/library retention use zara_storage_preview, exact native confirmation
+and zara_storage_apply. Archived cards remain discoverable; full reads are explicit.
+Tombstone removes all retained versions and managed technical body copies of the exact
+selected IDs. Inspect refusal reasons: open Work, reverse dependencies, open/observing
+Signals, exact Method versions/grounds, unknown effects and library pins retain content.
+Reviewed does not mean resolved; rarity does not justify forgetting. Correct/retire a
+named dependency separately with authority, then get a new deletion preview. Linked
+original/derivative records can be selected together if no outside dependency pins them.
+Explain coverage: shared retained blobs, prior generations, exported files, external
+backups, logs and Pi transcripts are separate copies. Never promise forensic erasure or
+call archive deletion. Exact zara_cleanup_preview/confirm/cleanup removes only orphan
+managed files/expired staging under fresh pins/ref/identity checks. Pending source handles
+expire after 30 minutes or lifecycle invalidation. No daemon/semantic retention planner.
+Sleep, Codex and full R1 qualification remain separate.
 Unconsented automatic routing is unsupported. Pi's before_provider_request observer catches
 exceptions and cannot be treated as a veto. Stopping new reads does not purge transcript
 or prove that no data was previously transmitted. Zaratustra never selects a model.
+
+Full retained-version body deletion also requires fixed full-read/write administrative
+setup before dependency analysis: the complete reverse graph/technical-copy coverage
+cannot be exposed or modified by a lower-scope observer. Archive/retain remain per-record.

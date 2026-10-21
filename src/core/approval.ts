@@ -7,6 +7,7 @@ const hash = (v: unknown) =>
 export const ApprovalSchemaSQL = `CREATE INDEX intent_kind ON intents(json_extract(json,'$.kind'));`;
 export const APPROVAL_POLICY = "E2-exact-v1";
 export interface BoundPreview {
+  payload_not_retained?: boolean;
   request_id: string;
   kind: "preview";
   status: string;
@@ -31,16 +32,53 @@ export interface BoundPreview {
   consumed_by?: string;
 }
 
+export interface PreviewStore {
+  workspace: StoragePort["workspace"];
+  assertActive?(epoch: string): void;
+  readPreview(ref: string): BoundPreview | undefined;
+  writePreview(preview: BoundPreview, create?: boolean): void;
+}
 /** Transient authority, durable immutable drafts. Only the trusted adapter completes a presentation. */
 export class Approvals {
   private pending?: { ref: string; token: string; digest: string };
   private granted = new Map<string, string>();
   constructor(
-    private db: StoragePort,
+    db: StoragePort | PreviewStore,
     private ctx: CallContext,
     private accessible: (value: unknown) => boolean,
     private revision: (id: string) => number,
-  ) {}
+  ) {
+    this.db =
+      "readPreview" in db
+        ? db
+        : {
+            workspace: db.workspace,
+            assertActive: (epoch) => db.assertActive?.(epoch),
+            readPreview: (ref) => {
+              const row = db.get<{ json: string }>(
+                "SELECT json FROM intents WHERE request_id=?",
+                ref,
+              );
+              return row ? JSON.parse(row.json) : undefined;
+            },
+            writePreview: (p, create) => {
+              if (create)
+                db.run(
+                  "INSERT INTO intents VALUES(?,?,?)",
+                  p.request_id,
+                  p.operation_digest,
+                  JSON.stringify(p),
+                );
+              else
+                db.run(
+                  "UPDATE intents SET json=? WHERE request_id=?",
+                  JSON.stringify(p),
+                  p.request_id,
+                );
+            },
+          };
+  }
+  private db: PreviewStore;
   invalidate() {
     this.pending = undefined;
     this.granted.clear();
@@ -95,24 +133,20 @@ export class Approvals {
       payload,
       operation_digest: hash(payload),
     };
-    this.db.run(
-      "INSERT INTO intents VALUES(?,?,?)",
-      preview.request_id,
-      preview.operation_digest,
-      JSON.stringify(preview),
-    );
+    this.db.writePreview(preview, true);
     return structuredClone(preview);
   }
   read(ref: string) {
-    const row = this.db.get<{ json: string }>(
-      "SELECT json FROM intents WHERE request_id=?",
-      ref,
-    );
-    const p = row ? (JSON.parse(row.json) as BoundPreview) : undefined;
+    const p = this.db.readPreview(ref);
     requireThat(
       p?.kind === "preview" && this.accessible(p),
       "REFERENCE_NOT_FOUND",
       "Preview unavailable.",
+    );
+    requireThat(
+      !p.payload_not_retained,
+      "CONTENT_NOT_RETAINED",
+      "The original preview payload is not retained and cannot grant permission.",
     );
     requireThat(
       p.operation_digest === hash(p.payload),
@@ -122,6 +156,7 @@ export class Approvals {
     return p;
   }
   private valid(p: BoundPreview) {
+    this.db.assertActive?.(this.ctx.epoch);
     const b = p.payload;
     requireThat(
       b.workspace_id === this.ctx.workspace_id &&
@@ -239,10 +274,6 @@ export class Approvals {
     return p.request_id;
   }
   private save(p: BoundPreview) {
-    this.db.run(
-      "UPDATE intents SET json=? WHERE request_id=?",
-      JSON.stringify(p),
-      p.request_id,
-    );
+    this.db.writePreview(p);
   }
 }

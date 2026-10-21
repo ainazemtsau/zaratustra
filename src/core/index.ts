@@ -1,3 +1,9 @@
+import { Lifecycle } from "./lifecycle.ts";
+export {
+  LifecycleSchemaSQL,
+  StorageActionSchema,
+  TombstoneSchema,
+} from "./lifecycle.ts";
 import { createHash, randomUUID } from "node:crypto";
 import {
   ActivityData,
@@ -47,7 +53,7 @@ import type {
 import { Approvals } from "./approval.ts";
 import { Effects, FileEffectSchema } from "./effects.ts";
 import type { FileEffect } from "./effects.ts";
-export { ApprovalSchemaSQL, APPROVAL_POLICY } from "./approval.ts";
+export { Approvals, ApprovalSchemaSQL, APPROVAL_POLICY } from "./approval.ts";
 export { NativeArguments, FileEffectSchema } from "./effects.ts";
 export type { FileEffect } from "./effects.ts";
 export * from "./contracts.ts";
@@ -264,6 +270,7 @@ export class Core {
         deps.push({ id: row.id, revision: row.revision });
     }
     if (e.work_ref) {
+      this.assertReconciled(e.work_ref.id, e.step_id);
       const w = this.record(e.work_ref.id);
       requireThat(
         w.kind === "work" && w.revision === e.work_ref.revision,
@@ -275,6 +282,7 @@ export class Core {
         .map((r) => JSON.parse(r.json))
         .some(
           (c) =>
+            c.epoch === this.context.epoch &&
             c.state === "active" &&
             (c.runtime_id !== this.context.runtime_id ||
               c.session_id !== this.context.session_id),
@@ -408,6 +416,8 @@ export class Core {
   }
   dispatchFile(effect: FileEffect, preview: string, call: string) {
     this.authorize(true);
+    if (effect.work_ref)
+      this.assertReconciled(effect.work_ref.id, effect.step_id);
     return this.effects.dispatch(effect, preview, call);
   }
   inspectFile(request: string) {
@@ -472,6 +482,11 @@ export class Core {
     this.authorize();
     const m = this.record(recordId, revision, false, contentVersion);
     requireThat(
+      m.storage !== "tombstone",
+      "CONTENT_NOT_RETAINED",
+      "Method body is not retained.",
+    );
+    requireThat(
       m.kind === "method",
       "REFERENCE_TYPE_MISMATCH",
       "Only textual Methods can be exported.",
@@ -535,6 +550,13 @@ export class Core {
     private fault?: (point: string) => void,
   ) {}
   private authorize(write = false) {
+    this.storage.assertActive?.(this.context.epoch, write);
+    for (const source of this.sources.values())
+      if (Date.parse(source.captured_at) < Date.now() - 1800000) {
+        if (this.context.can_write && !this.storage.readonly)
+          this.storage.unpinSource?.(source.handle);
+        this.sources.delete(source.handle);
+      }
     requireThat(
       this.context.processing_allowed,
       "PERMISSION_DENIED",
@@ -567,6 +589,7 @@ export class Core {
     transport: string,
     channel_identity: string | null,
     material?: {
+      pending_key?: string;
       blob_ref: string;
       byte_length: number;
       locator: string;
@@ -614,6 +637,13 @@ export class Core {
       ...material,
     };
     this.sources.set(source.handle, source);
+    if (material && this.context.can_write)
+      this.storage.pinSource?.(source.handle, [
+        material.blob_ref,
+        ...(material.extraction?.text_blob_ref
+          ? [material.extraction.text_blob_ref]
+          : []),
+      ]);
     return {
       source_handle: source.handle,
       source_ref: source.source_ref,
@@ -629,6 +659,14 @@ export class Core {
     };
   }
   expireSources() {
+    if (this.context.can_write && !this.storage.readonly)
+      for (const source of this.sources.values()) {
+        try {
+          this.storage.unpinSource?.(source.handle);
+        } catch {
+          /* expired generation cannot mutate pins */
+        }
+      }
     this.sources.clear();
     this._approvals?.invalidate();
   }
@@ -647,6 +685,14 @@ export class Core {
     internal = false,
     contentVersion?: number,
   ) {
+    // Authorize current identity before distinguishing a missing historical body.
+    // A guessed hidden primary ID must have the same result as an unknown ID.
+    if (!internal)
+      requireThat(
+        this.memory.allowed(recordId),
+        "REFERENCE_NOT_FOUND",
+        "Requested record/version is unavailable.",
+      );
     const row =
       contentVersion !== undefined && revision === undefined
         ? this.storage.get<{ json: string }>(
@@ -666,7 +712,9 @@ export class Core {
             );
     requireThat(
       row,
-      revision === undefined ? "REFERENCE_NOT_FOUND" : "CONTENT_NOT_RETAINED",
+      revision === undefined && contentVersion === undefined
+        ? "REFERENCE_NOT_FOUND"
+        : "CONTENT_NOT_RETAINED",
       "Requested record/version is unavailable.",
     );
     const result = unpack(row);
@@ -879,6 +927,17 @@ export class Core {
       "REFERENCE_TYPE_MISMATCH",
       "Only Methods have content_version.",
     );
+    if (r.storage === "tombstone") {
+      requireThat(
+        revision === undefined &&
+          contentVersion === undefined &&
+          !range &&
+          !locator,
+        "CONTENT_NOT_RETAINED",
+        "The addressed historical body is not retained.",
+      );
+      return this.envelope(r);
+    }
     if (range)
       requireThat(
         Number.isInteger(range.start) &&
@@ -1013,6 +1072,29 @@ export class Core {
           },
         });
     }
+    if (
+      r.kind === "work" &&
+      revision === undefined &&
+      this.storage.workspace.schema_version >= 6
+    ) {
+      const recovery = this.storage
+        .all<{
+          step_id: string;
+          json: string;
+        }>(
+          "SELECT step_id,json FROM recovery_barriers WHERE work_id=? ORDER BY step_id",
+          r.id,
+        )
+        .map((b) => ({ step_id: b.step_id || null, ...JSON.parse(b.json) }));
+      if (recovery.length)
+        return this.envelope({
+          ...r,
+          current_runtime_recovery: {
+            epoch: this.context.epoch,
+            actions: recovery,
+          },
+        });
+    }
     return this.envelope(r);
   }
   methodBundle(
@@ -1039,6 +1121,11 @@ export class Core {
       },
       () => {
         const root = this.record(recordId, revision, false, contentVersion);
+        requireThat(
+          root.storage !== "tombstone",
+          "CONTENT_NOT_RETAINED",
+          "Method body is not retained.",
+        );
         const rows = methodClosure(exactRef(root), (ref, kind) => {
           const p = ref as {
             id: string;
@@ -1046,6 +1133,11 @@ export class Core {
             content_version?: number;
           };
           const r = this.record(p.id, p.revision, false, p.content_version);
+          requireThat(
+            r.storage !== "tombstone",
+            "CONTENT_NOT_RETAINED",
+            "Required Method/dependency body is not retained.",
+          );
           requireThat(
             !kind || r.kind === kind,
             "REFERENCE_TYPE_MISMATCH",
@@ -1118,7 +1210,13 @@ export class Core {
       "REFERENCE_NOT_FOUND",
       "Handoff not found.",
     );
-    return this.envelope(JSON.parse(row.json));
+    const value = JSON.parse(row.json);
+    requireThat(
+      !value.payload_not_retained,
+      "CONTENT_NOT_RETAINED",
+      "Handoff body is not retained.",
+    );
+    return this.envelope(value);
   }
   private handoffStale(
     h: {
@@ -1165,6 +1263,222 @@ export class Core {
       "Explicit lifecycle/plan decision needs a current observed interactive source or trusted controller; external Evidence grants no decision authority.",
     );
     return s.source_ref;
+  }
+  storagePreview(input: unknown, consequence: string, alternatives: string) {
+    this.authorize(true);
+    return new Lifecycle(
+      this.storage,
+      this.context,
+      () => this.authorize(true),
+      (id) => this.record(id),
+      this.approvals,
+      (id, revision) => this.memory.allowed(id, revision),
+    ).preview(input, consequence, alternatives);
+  }
+  applyStorage(ref: string) {
+    this.authorize(true);
+    const result = new Lifecycle(
+      this.storage,
+      this.context,
+      () => this.authorize(true),
+      (id) => this.record(id),
+      this.approvals,
+      (id, revision) => this.memory.allowed(id, revision),
+    ).apply(ref);
+    if (result.action === "tombstone") this.expireSources();
+    return this.envelope(this.memory.sanitizeTechnical(result));
+  }
+  private recovery(workId: string, stepId: string | null = null) {
+    if (this.storage.workspace.schema_version < 6) return undefined;
+    const row = this.storage.get<{ json: string }>(
+      "SELECT json FROM recovery_barriers WHERE work_id=? AND step_id=?",
+      workId,
+      stepId ?? "",
+    );
+    return row ? (JSON.parse(row.json) as JsonObject) : undefined;
+  }
+  private assertReconciled(workId: string, stepId: string | null = null) {
+    const barrier = this.recovery(workId, stepId);
+    requireThat(
+      !barrier ||
+        (barrier.epoch === this.context.epoch && barrier.status === "cleared"),
+      "RESTORE_RECONCILIATION_REQUIRED",
+      "Restored Work/step requires current-world inspection and a named fresh reconciliation decision, even when no receipt exists.",
+    );
+  }
+  private recoveryWrite(workId: string) {
+    const r = this.record(workId),
+      restricted = this.storage.get<{ n: number }>(
+        "SELECT max(restricted) AS n FROM memory_docs WHERE id=?",
+        workId,
+      )?.n;
+    requireThat(
+      !restricted || this.context.scopes?.includes("restricted:write"),
+      "PERMISSION_DENIED",
+      "Restricted write scope required for reconciliation.",
+    );
+    return r;
+  }
+  recoveryInspect(
+    workId: string,
+    stepId: string | null,
+    observation: JsonObject,
+  ) {
+    this.authorize(true);
+    const w = this.recoveryWrite(workId);
+    requireThat(
+      w.kind === "work" &&
+        (!stepId ||
+          WorkData.parse(w.data).steps.some((s) => s.step_id === stepId)),
+      "REFERENCE_NOT_FOUND",
+      "Work/step unavailable.",
+    );
+    requireThat(
+      w.visibility !== "restricted" ||
+        this.context.scopes?.includes("restricted:write"),
+      "PERMISSION_DENIED",
+      "Restricted write scope required.",
+    );
+    const barrier = this.recovery(workId, stepId);
+    requireThat(
+      barrier && barrier.epoch === this.context.epoch,
+      "REFERENCE_NOT_FOUND",
+      "No restored barrier for this Work/step.",
+    );
+    const inspected = {
+      ...observation,
+      work_revision: w.revision,
+      observed_at: new Date().toISOString(),
+      writer_attribution: "unknown",
+    };
+    this.storage.run(
+      "UPDATE recovery_barriers SET json=? WHERE work_id=? AND step_id=?",
+      JSON.stringify({ ...barrier, inspection: inspected }),
+      workId,
+      stepId ?? "",
+    );
+    return this.envelope({
+      work_ref: { id: w.id, revision: w.revision },
+      step_id: stepId,
+      barrier: barrier.status,
+      inspection: inspected,
+    });
+  }
+  prepareReconciliation(
+    workId: string,
+    stepId: string | null,
+    disposition: "observed_satisfied" | "risky_repeat",
+    expectedHash: string | null,
+    explanation: string,
+    consequence: string,
+    alternatives: string,
+  ) {
+    this.authorize(true);
+    const w = this.recoveryWrite(workId),
+      barrier = this.recovery(workId, stepId),
+      inspection = barrier?.inspection as JsonObject | undefined;
+    requireThat(
+      inspection &&
+        inspection.work_revision === w.revision &&
+        Date.parse(String(inspection.observed_at)) > Date.now() - 300000,
+      "RESTORE_RECONCILIATION_REQUIRED",
+      "Inspect current output for this exact Work/step first.",
+    );
+    requireThat(
+      disposition !== "observed_satisfied" ||
+        (typeof expectedHash === "string" && inspection.hash === expectedHash),
+      "UNKNOWN_EFFECT",
+      "Observed bytes do not establish the supplied current postcondition; absence never proves non-execution.",
+    );
+    return this.approvals.draft(
+      "reconcile",
+      {
+        work_ref: { id: w.id, revision: w.revision },
+        work_title: w.title,
+        step_id: stepId,
+        disposition,
+        expected_hash: expectedHash,
+        explanation,
+        inspection,
+      },
+      [{ id: w.id, revision: w.revision }],
+      consequence,
+      alternatives,
+    );
+  }
+  finishReconciliation(ref: string, observation: JsonObject) {
+    this.authorize(true);
+    const p = this.approvals.read(ref),
+      e = p.payload.exact,
+      w = e.work_ref as { id: string; revision: number },
+      step = e.step_id as string | null;
+    this.recoveryWrite(w.id);
+    const inspected = e.inspection as JsonObject;
+    requireThat(
+      ["target", "hash", "byte_length", "boundary"].every(
+        (k) => canonical(observation[k]) === canonical(inspected[k]),
+      ),
+      "APPROVAL_STALE",
+      "Current output changed since recovery inspection.",
+    );
+    requireThat(
+      canonical(this.recovery(w.id, step)?.inspection) === canonical(inspected),
+      "APPROVAL_STALE",
+      "Recovery inspection changed.",
+    );
+    const receipt = {
+      request_id: id("reconciliation"),
+      kind: "reconciliation",
+      epoch: this.context.epoch,
+      work_ref: w,
+      step_id: step,
+      disposition: e.disposition,
+      explanation: e.explanation,
+      observation,
+      writer_attribution: "unknown",
+      committed: true,
+    };
+    this.storage.exec("BEGIN IMMEDIATE");
+    try {
+      this.authorize(true);
+      this.approvals.consume(ref, "reconcile", e, receipt.request_id);
+      this.storage.run(
+        "UPDATE recovery_barriers SET json=? WHERE work_id=? AND step_id=?",
+        JSON.stringify({
+          ...this.recovery(w.id, step),
+          status: "cleared",
+          disposition: e.disposition,
+          receipt,
+        }),
+        w.id,
+        step ?? "",
+      );
+      this.storage.run(
+        "INSERT INTO intents VALUES(?,?,?)",
+        receipt.request_id,
+        digest(canonical(e)),
+        JSON.stringify({
+          kind: "reconciliation",
+          request_id: receipt.request_id,
+          epoch: this.context.epoch,
+          status: "committed",
+          payload: e,
+          receipt,
+        }),
+      );
+      this.storage.run(
+        "INSERT INTO receipts VALUES(?,?,?,?)",
+        receipt.request_id,
+        digest(canonical(e)),
+        JSON.stringify(receipt),
+        "{}",
+      );
+      this.storage.exec("COMMIT");
+      return this.envelope(receipt);
+    } catch (err) {
+      this.storage.exec("ROLLBACK");
+      throw err;
+    }
   }
   private assertExecutable(workId: string) {
     const seen = new Set<string>();
@@ -1220,6 +1534,7 @@ export class Core {
         .map((r) => JSON.parse(r.json));
       let claim;
       if (input.action === "acquire") {
+        this.assertReconciled(w.id, input.step_id ?? null);
         const plan_guards = this.assertExecutable(w.id);
         const data = WorkData.parse(w.data);
         requireThat(
@@ -1230,6 +1545,7 @@ export class Core {
         requireThat(
           !rows.some(
             (c) =>
+              c.epoch === this.context.epoch &&
               c.state === "active" &&
               (!c.step_id || !input.step_id || c.step_id === input.step_id),
           ),
@@ -1296,7 +1612,7 @@ export class Core {
       .all<{
         json: string;
       }>(
-        `SELECT r.json FROM records r WHERE ${this.memory.visibleSQL("r")} AND (r.kind='work' OR (r.kind='knowledge' AND json_extract(r.json,'$.data.knowledge_kind')='preference' AND json_extract(r.json,'$.data.state')='current')) ORDER BY json_extract(r.json,'$.updated_at') DESC,r.id LIMIT 21`,
+        `SELECT r.json FROM records r WHERE ${this.memory.visibleSQL("r")} AND json_extract(r.json,'$.storage')='live' AND (r.kind='work' OR (r.kind='knowledge' AND json_extract(r.json,'$.data.knowledge_kind')='preference' AND json_extract(r.json,'$.data.state')='current')) ORDER BY json_extract(r.json,'$.updated_at') DESC,r.id LIMIT 21`,
       )
       .map(unpack);
     const items: {
@@ -1358,6 +1674,17 @@ export class Core {
       `SELECT t.json FROM experience_rows t WHERE t.kind='signal' AND json_extract(t.json,'$.data.problem_state') IN ('open','observing') AND ${this.memory.technicalSQL("t")} ORDER BY t.rowid DESC LIMIT 6`,
     );
     // Shared facts are discovered through catalog/search, never silently injected into every prompt.
+    const recoveryRequired =
+      this.storage.workspace.schema_version >= 6
+        ? this.storage
+            .all<{
+              work_id: string;
+              step_id: string;
+            }>(
+              "SELECT work_id,step_id FROM recovery_barriers WHERE json_extract(json,'$.status')='required' ORDER BY work_id,step_id",
+            )
+            .filter((r) => this.memory.allowed(r.work_id))
+        : [];
     const snapshot = {
       available: true,
       workspace_id: this.context.workspace_id,
@@ -1378,15 +1705,26 @@ export class Core {
       }),
       operations_selector: { view: "operations" },
       restore_compatibility:
-        "Future restore must reconcile EVERY resumed potentially effectful Work/step, even without an attempt or receipt. E2 does not implement restore.",
+        "Every restored potentially effectful Work/step requires named reconciliation, including absent receipts. Inspect current output before repeat.",
+      recovery_required: recoveryRequired
+        .slice(0, 20)
+        .map((r) => ({ work_id: r.work_id, step_id: r.step_id || null })),
+      recovery_required_has_more: recoveryRequired.length > 20,
+      recovery_selector: { view: "work" },
       open_signals_has_more: openSignals.length > 5,
       open_signals_selector: { view: "signals" },
       must_read: [...new Set(must_read)],
       has_more:
-        rows.length > 20 || must_read.length > 0 || openSignals.length > 5,
+        rows.length > 20 ||
+        must_read.length > 0 ||
+        openSignals.length > 5 ||
+        recoveryRequired.length > 20,
       warnings: [
         "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale.",
-        ...(rows.length > 20 || must_read.length || openSignals.length > 5
+        ...(rows.length > 20 ||
+        must_read.length ||
+        openSignals.length > 5 ||
+        recoveryRequired.length > 20
           ? ["Snapshot incomplete; read must_read refs and catalog."]
           : []),
       ],
@@ -1628,6 +1966,11 @@ export class Core {
       const guarded = (recordId: string) => {
         const current = this.record(recordId);
         requireThat(
+          current.storage !== "tombstone",
+          "CONTENT_NOT_RETAINED",
+          "Removed body cannot be updated through an ordinary mutation.",
+        );
+        requireThat(
           request.guards.some(
             (g) =>
               g.ref.id === recordId && g.expected_revision === current.revision,
@@ -1661,6 +2004,7 @@ export class Core {
         purpose: string,
       ) => {
         const current = guarded(workId);
+        this.assertReconciled(workId, stepId);
         const plan_guards = this.assertExecutable(workId);
         const claim = (request.claim_tokens ?? [])
           .map((token) =>
@@ -2917,6 +3261,20 @@ export class Core {
         JSON.stringify(intent),
         request.request_id,
       );
+      for (const handle of request.source_handles) {
+        const source = this.sources.get(handle);
+        if (
+          source?.blob_ref &&
+          this.storage.get(
+            "SELECT id FROM records WHERE kind='evidence' AND json_extract(json,'$.data.blob_ref')=?",
+            source.blob_ref,
+          )
+        ) {
+          this.storage.unpinSource?.(handle);
+          if (source.pending_key)
+            this.storage.unpinSource?.(source.pending_key);
+        }
+      }
       this.fault?.("before_commit");
       this.storage.exec("COMMIT");
       this.fault?.("after_commit");
@@ -2950,3 +3308,6 @@ export function failure(error: unknown) {
     retryable: false,
   };
 }
+
+export type { PreviewStore, BoundPreview } from "./approval.ts";
+export { addressedRefs } from "./memory.ts";

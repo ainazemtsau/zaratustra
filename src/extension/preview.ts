@@ -123,18 +123,28 @@ export function renderApproval(b: {
     return text;
   });
   const exact =
-    b.action === "managed_file"
-      ? `File: ${e.target}\nAction: ${e.before_hash === null ? "Create new file (expected absent)" : "Replace/edit the exact observed existing file"}. Existing size: ${e.before_length} bytes.\nComplete resulting ${e.method_export ? "Method content (the file also carries internal source/version/hash metadata)" : "text"}:\n${e.method_snapshot ? value(e.method_snapshot) : e.final_text}\n${e.work_ref ? `Work: ${(e.work_snapshot as JsonObject)?.title ?? "Selected Work"}. Goal: ${(e.work_snapshot as JsonObject)?.objective}. ${(e.work_snapshot as JsonObject)?.step_intent ? `Step: ${(e.work_snapshot as JsonObject).step_intent}` : ""}` : `Independent action: ${e.independent_basis}`}\n${e.retry_of ? `Risky repeat: ${e.retry_risk}. The prior uncertain attempt stays linked internally.` : ""}`
-      : descriptions.join("\n\n") +
-        ((
-          e.assigned_method_versions as
-            | { id: string; content_version: number }[]
-            | undefined
-        )
-          ?.map(
-            (v) =>
-              `\nMethod “${byId.get(v.id)?.title}” resulting content version: ${v.content_version}`,
-          )
-          .join("") ?? "");
+    b.action === "restore"
+      ? `Restore backup: ${e.backup}\nCaptured sequence: ${e.captured_seq}.\nVerified destination: ${e.destination}\nCoverage: ${e.coverage}\nLoss/switch consequences: ${e.loss}\nOriginal generation remains retained; restored authority does not revive.`
+      : b.action === "cleanup"
+        ? `Remove only these unreferenced files:\n${(e.candidates as JsonObject[]).map((c) => `${c.path}: ${c.length} bytes`).join("\n")}\nCoverage: ${e.coverage}`
+        : b.action === "release_backup_pin"
+          ? `Release the held live pin for independent backup ${(e.pin as JsonObject).bundle}. The verified backup bundle remains. Other live/history/import pins remain effective.`
+          : b.action === "storage"
+            ? `Storage action: ${e.action}.\n${(e.targets as JsonObject[]).map((t) => `“${t.title}” (${t.kind}), revision ${t.revision}; retained versions: ${(t.versions as JsonObject[]).map((v) => v.revision).join(", ")}`).join("\n")}\nCoverage/loss: ${e.coverage}`
+            : b.action === "reconcile"
+              ? `Reconcile this named Work/action: ${e.work_title ?? "Selected restored Work"}. Step: ${e.step_id ?? "Work action"}.\nDisposition: ${e.disposition}. ${e.explanation}\nObserved target: ${(e.inspection as JsonObject).target}; ${(e.inspection as JsonObject).byte_length} bytes. Matching current bytes never prove who wrote them. No file is repeated by this decision.`
+              : b.action === "managed_file"
+                ? `File: ${e.target}\nAction: ${e.before_hash === null ? "Create new file (expected absent)" : "Replace/edit the exact observed existing file"}. Existing size: ${e.before_length} bytes.\nComplete resulting ${e.method_export ? "Method content (the file also carries internal source/version/hash metadata)" : "text"}:\n${e.method_snapshot ? value(e.method_snapshot) : e.final_text}\n${e.work_ref ? `Work: ${(e.work_snapshot as JsonObject)?.title ?? "Selected Work"}. Goal: ${(e.work_snapshot as JsonObject)?.objective}. ${(e.work_snapshot as JsonObject)?.step_intent ? `Step: ${(e.work_snapshot as JsonObject).step_intent}` : ""}` : `Independent action: ${e.independent_basis}`}\n${e.retry_of ? `Risky repeat: ${e.retry_risk}. The prior uncertain attempt stays linked internally.` : ""}`
+                : descriptions.join("\n\n") +
+                  ((
+                    e.assigned_method_versions as
+                      | { id: string; content_version: number }[]
+                      | undefined
+                  )
+                    ?.map(
+                      (v) =>
+                        `\nMethod “${byId.get(v.id)?.title}” resulting content version: ${v.content_version}`,
+                    )
+                    .join("") ?? "");
   return `${b.consequence}\n\nAlternatives: ${b.alternatives}\n\n${exact}\n\nExpires: ${b.expires_at}. Changed material conditions require a new decision. Decline/cancel leaves this proposal unperformed.`;
 }

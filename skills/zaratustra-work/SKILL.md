@@ -215,5 +215,10 @@ not a new executor. Recover through operations and zara_file_inspect without rep
 possibly dispatched action. Missing receipts or matching bytes do not prove non-execution
 or authorship. Opaque commands have no deduplication guarantee. A risky repeat needs a
 separate bound decision linked by retry_of/retry_risk; automatic recovery never loops.
-Future restore must stop every resumed potentially effectful step, including steps with
-no restored intent or receipt. E2 epoch bindings prepare for E3; they do not perform restore.
+After restore, recovery_required names restored Work/steps whose next effect must not
+repeat blindly, even if no intent/receipt exists. Discover the actual Work and inspect
+current output with zara_recovery_inspect. Matching bytes establish current state, never
+author. Reconcile that named action under fresh guards and exact native decision through
+zara_reconcile_preview/confirm/reconcile. Keep unknown honest; explicitly risky repeats
+are new decisions. Read-only recovery and demonstrably independent new work remain useful.
+Do not bypass through a new operation ID, independent_basis, ordinary shell or old claim.

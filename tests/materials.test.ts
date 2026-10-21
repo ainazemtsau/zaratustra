@@ -366,7 +366,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
       /interruption/,
     );
     const recovered = new DiskStorage(f.home);
-    assert.equal(recovered.workspace.schema_version, 5);
+    assert.equal(recovered.workspace.schema_version, 6);
     assert.deepEqual(
       tables.map((t) => recovered.all("SELECT * FROM " + t)),
       before,
@@ -383,7 +383,7 @@ test("schema-1 migration preserves every row and material; before/after-commit f
     assert.equal(digest(readFileSync(info.backup)), info.backup_sha256);
     recovered.close();
     const again = new DiskStorage(f.home);
-    assert.equal(again.workspace.schema_version, 5);
+    assert.equal(again.workspace.schema_version, 6);
     again.close();
   }
 });

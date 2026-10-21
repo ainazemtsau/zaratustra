@@ -89,6 +89,7 @@ export function validateMemory(
 ) {
   const concepts = new Map<string, string[]>();
   for (const r of final) {
+    if (r.storage === "tombstone") continue;
     for (const c of r.concept_ids) get(c, "concept");
     if (r.origin_activity_id) get(r.origin_activity_id, "activity");
     if (r.kind === "concept") {
@@ -347,6 +348,7 @@ export function refreshMemory(storage: StoragePort, rebuild = false) {
   }
   storage.exec("DELETE FROM memberships; DELETE FROM concept_parents;");
   for (const r of byId.values()) {
+    if (r.storage === "tombstone") continue;
     for (const c of r.concept_ids)
       storage.run("INSERT OR IGNORE INTO memberships VALUES(?,?)", r.id, c.id);
     if (r.kind === "concept")
@@ -413,7 +415,7 @@ export const SearchSchema = z.strictObject({
     .min(1)
     .max(15)
     .optional(),
-  storage: z.literal("live").optional(),
+  storage: z.enum(["live", "archive", "tombstone"]).optional(),
   history: z.boolean().optional(),
   valid_at: z.iso.datetime({ offset: true }).optional(),
   observed_after: z.iso.datetime({ offset: true }).optional(),
@@ -727,6 +729,16 @@ export class Memory {
               untrusted_data: true,
             };
           if (view === "operations") {
+            if (value.payload_not_retained)
+              return {
+                request_id: value.request_id,
+                kind: value.kind,
+                status: value.status,
+                operation_digest: value.operation_digest,
+                payload_not_retained: true,
+                receipt: value.receipt ?? null,
+                must_read_operation: value.request_id,
+              };
             const { payload, ...header } = value;
             if (value.kind === "managed_file") {
               const p = payload as JsonObject;

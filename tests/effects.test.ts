@@ -855,7 +855,7 @@ test("E2 disk schema-4 filled migration: all canonical rows preserved, verified 
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 5);
+    assert.equal(recovered.workspace.schema_version, 6);
     assert.equal(canonical(recovered.all("SELECT * FROM records")), before);
     assert.ok(recovered.get("SELECT id FROM records WHERE id=?", id));
     const m = JSON.parse(
@@ -1023,6 +1023,12 @@ test("E2 disk old source cannot authorize a new write after an active epoch chan
   t.after(() => f.disk.close());
   f.disk.workspace.epoch = "new-active-epoch";
   f.core.context.epoch = "new-active-epoch";
+  // Advance authoritative control as well; cached mutation alone is rejected by E3.
+  const control = JSON.parse(readFileSync(join(f.home, "active.json"), "utf8"));
+  writeFileSync(
+    join(f.home, "active.json"),
+    JSON.stringify({ ...control, epoch: "new-active-epoch" }),
+  );
   rejects(
     () => f.node("Must not be written from old source"),
     "SOURCE_EXPIRED",

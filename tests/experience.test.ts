@@ -1518,7 +1518,7 @@ test("E1 schema-3 upgrade faults preserve filled canonical rows and material byt
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 5);
+    assert.equal(recovered.workspace.schema_version, 6);
     assert.equal(
       canonical(
         tables.map((table) =>

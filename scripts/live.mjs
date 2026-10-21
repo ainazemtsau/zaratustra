@@ -8,6 +8,8 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
 const configPath = process.argv[2];
@@ -32,8 +34,18 @@ if (config.scopes !== undefined) {
     throw new Error("Unknown predeclared synthetic scope profile");
   process.env.ZARATUSTRA_SCOPES = JSON.stringify(config.scopes);
 }
+if (config.backupRoot) process.env.ZARATUSTRA_BACKUP_ROOT = config.backupRoot;
+else delete process.env.ZARATUSTRA_BACKUP_ROOT;
 process.env.ZARATUSTRA_TEST_CONTROLLER = "isolated-synthetic-sdk-controller";
 const sdk = await import(pathToFileURL(process.env.ZARA_PI_SDK).href);
+const { createJiti } = createRequire(pathToFileURL(process.env.ZARA_PI_SDK))(
+  "jiti",
+);
+const jiti = createJiti(import.meta.url);
+const { activeLocation } = await jiti.import(
+  fileURLToPath(new URL("../src/storage/index.ts", import.meta.url)),
+);
+const activeDb = () => join(activeLocation(home), "zara.sqlite");
 const {
   ModelRuntime,
   DefaultResourceLoader,
@@ -108,7 +120,7 @@ const observer = (pi) => {
         .map((m) => m.content),
     });
   });
-  pi.on("before_provider_request", (_event, ctx) => {
+  pi.on("before_provider_request", (_event) => {
     log("provider-requests", _event);
     const budget = ledger();
     if (
@@ -117,8 +129,11 @@ const observer = (pi) => {
       budget.output >= budget.limits.output ||
       budget.estimated_usd >= budget.limits.estimated_usd
     ) {
-      ctx.abort();
-      throw new Error("Finite live request/token/cost budget exhausted");
+      log("faults", {
+        point: "finite-live-budget-exhausted-before-dispatch",
+        budget,
+      });
+      process.exit(87);
     }
     ++budget.requests;
     saveLedger(budget);
@@ -131,7 +146,7 @@ const observer = (pi) => {
       resolve(cwd, event.input.path).toLowerCase() ===
         resolve(config.changeFileBeforeDispatch.path).toLowerCase()
     ) {
-      const db = new DatabaseSync(join(home, "zara.sqlite"), {
+      const db = new DatabaseSync(activeDb(), {
         readOnly: true,
       });
       const pending = db
@@ -168,7 +183,7 @@ const observer = (pi) => {
       ["write", "edit"].includes(event.toolName) &&
       !event.isError
     ) {
-      const db = new DatabaseSync(join(home, "zara.sqlite"), {
+      const db = new DatabaseSync(activeDb(), {
         readOnly: true,
       });
       const attempt = db
@@ -181,6 +196,7 @@ const observer = (pi) => {
         dropped = true;
         log("faults", {
           point: "real-native-write-before-adapter-tool-result-receipt",
+          active_database: activeDb(),
           call_id: event.toolCallId,
           attempt: JSON.parse(attempt.json),
           native_result: event.content,
@@ -340,7 +356,7 @@ try {
   const ownSnapshots = session.messages.filter(
     (m) => m.role === "custom" && m.customType === "zaratustra.snapshot.v1",
   );
-  const dbPath = join(home, "zara.sqlite");
+  const dbPath = activeDb();
   let database = null;
   if (existsSync(dbPath)) {
     const db = new DatabaseSync(dbPath, { readOnly: true });
@@ -359,6 +375,9 @@ try {
         "retrieval_trace",
         "experience_rows",
         "experience_versions",
+        "lifecycle_pins",
+        "recovery_barriers",
+        "lifecycle_events",
       ].map((table) => [table, db.prepare(`SELECT * FROM ${table}`).all()]),
     );
     db.close();
@@ -370,6 +389,7 @@ try {
     materialChanged,
     remaining_dialog_replies: dialogReplies.length,
     permanent_snapshot_count: ownSnapshots.length,
+    active_database: activeDb(),
     database,
     budget: ledger(),
   };

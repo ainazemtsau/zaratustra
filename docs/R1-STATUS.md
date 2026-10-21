@@ -14,8 +14,12 @@ D is independently scope-qualified technical PASS and separately owner-accepted 
 corpus checks were mechanical; reviewer live scenarios were small. Those limits remain.
 E1 is independently limited technical PASS and coordinator-accepted under explicit owner
 delegation on 0b45c0853d7ee0c2f3c294b9bc4dd9803117462a. Its actual owner-usefulness/T31
-is not established. E2 is implemented and executor-qualified on final code/live candidate d6a3187 after correcting independently failed original0d6c9a2; actual installed M/L and filled E1 upgrade are recorded in E2-VALIDATION. Final public/installed identity is a terminal local receipt. No independent verdict is assigned here to the corrected final artifact; original independent H1 FAIL remains preserved.
-E3 and complete E/R1/T31 remain open.
+is not established. E2 final094c0df4ef893a0668ee87dcff92e5abbad3514d is independently limited technical
+PASS and separately coordinator-accepted under explicit owner delegation. Original0d6
+H1 FAIL remains historical. Exact accepted E2 docs are preserved as E2-\*-094c0df4.md.
+E3 is the current sole-executor assignment: implementation and M qualification in progress;
+public installed model L and independent exact-artifact qualification remain pending.
+Full E/R1/T31 remain open. No E3 independent verdict is assigned here.
 Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1b742a6.md.
 `partial` never discharges a full release criterion; all later obligations remain.
 
@@ -44,9 +48,9 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 | T21 | partial | partial | —       | E2 installed M and L14–15 plus original L04–05: native file exact bytes/guards/replay, lost result/new process discovery/inspect without retry. Qualified single-writer output path only; no arbitrary command or attribution claim.                                                                    |
 | T22 | partial | —       | —       | B/C/D claim/revision coverage retained. E2 adds Work/step/context-bound native intent and unknown new-ID blocking. No concurrent outside-writer or OS CAS guarantee.                                                                                                                                    |
 | T23 | partial | partial | —       | Mechanical corrupt/missing/read-only/full; live unavailable-store honesty (10).                                                                                                                                                                                                                         |
-| T24 | partial | —       | —       | TXT/PDF/EPUB import staging/rename/async abort faults leave no committed unfinished blob; GC/backup pins remain E.                                                                                                                                                                                      |
-| T25 | not_run | not_run | —       | E3 user backup, quarantine restore and restored-epoch barrier remain unimplemented; migration backup is not this product feature.                                                                                                                                                                       |
-| T26 | partial | partial | —       | E2 M/L06–08 and final L16–17 managed textual export/drift/import/regenerate. Archive/delete/retention/GC remain E3; no executable publication.                                                                                                                                                          |
+| T24 | partial | —       | —       | TXT/PDF/EPUB import staging/rename/async abort faults leave no committed unfinished blob; E3 adds pending-source/import/backup pins and exact bounded cleanup; qualification in progress.                                                                                                               |
+| T25 | not_run | not_run | —       | E3 consistent SQLite/raw-blob/JSON bundle, quarantine restore and external epoch/barrier are implemented; installed M/L qualification in progress, see E3-VALIDATION at handback.                                                                                                                       |
+| T26 | partial | partial | —       | E2 M/L06–08 and final L16–17 managed textual export/drift/import/regenerate. E3 implements archive/tombstone/retention/GC with qualification in progress; no executable publication.                                                                                                                    |
 | T27 | partial | partial | —       | E2 stale/forged source and preview/scopes/policy/epoch/expiry/role/RPC negatives; original imported bytes stay untrusted. Model semantic interpretation remains fallible; no malicious-peer sandbox claim.                                                                                              |
 | T28 | passed  | —       | —       | D keyset/access generations plus final E1 bundles/history/support/open-Signal continuations and freshness. One 7b06465 affected M scale sweep: 2,273 primary rows/2,048 claim cards/41 pages; no full D repeat.                                                                                         |
 | T29 | partial | partial | —       | Source expiry, fresh cwd, owned snapshot refresh; full reload/compaction/restore suite outstanding.                                                                                                                                                                                                     |
@@ -61,7 +65,7 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 | T38 | passed  | —       | —       | Final E1 extends managed access to support/history/relations/bundles/counts/diagnostics and guessed IDs; exact historical protected refs propagate. Native installed controls pass; no OS isolation claim.                                                                                              |
 | T39 | passed  | partial | —       | E1 native SDK M: 12 source/profile cases, four modifier negatives, zero dispatch. L synthetic RPC/caller/quote/stage retained, never Anton. Genuine interactive owner feedback was not exercised.                                                                                                       |
 | T40 | passed  | partial | —       | E2 installed exact-binding M plus synthetic registered-dialog L: fresh merge/file/export decisions, refusal, material change/new decision and ambiguity. Genuine owner TUI approval/usefulness not exercised; no owner acceptance claim.                                                                |
-| T41 | partial | partial | —       | E2 L14–15 actual interrupted native write, new process/no old ID discovers unknown attempt and inspects without rewrite. Stable receipt history/drift M; future restore barrier remains E3.                                                                                                             |
+| T41 | partial | partial | —       | E2 L14–15 actual interrupted native write, new process/no old ID discovers unknown attempt and inspects without rewrite. Stable receipt history/drift M; E3 adds per-action reconciliation even without receipts; installed M/L pending.                                                                |
 | T42 | partial | partial | —       | E2 native exact E1 schema4->5 filled upgrade preserves all selected primary/support/history/bytes/identity/epoch/replay; old E1 rejects5 unchanged DB. Backup/transaction/manifest fault controls M. User restore/full lifecycle open.                                                                  |
 | T43 | passed  | passed  | —       | D English working text and literal/name channels; original Russian preserved; actual 21–22 cross-language discovery plus 16 lexical fallback. Scope/profile and every failure disclosed.                                                                                                                |
 | T44 | partial | partial | —       | E2 SDK unexplained model_select handling, loaded-transcript honesty and explicit synthetic recipient/context decision; observer exceptions are not veto. No actual alternate recipient network test or automatic-router gate. Supported trusted desktop/no router only.                                 |
@@ -69,11 +73,12 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 M = mechanical; L = actual Pi/model; O = owner usefulness. A dash means no claim
 for that layer in this handoff, not a waiver. Platform/material profiles beyond the
 declared qualified profiles need their own qualification. Accepted C implemented Work/materials; its version-attributed evidence is tracked in
-[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). E2 is the current
-authorized block; its separate executor evidence is in [E2-VALIDATION](E2-VALIDATION.md).
+[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). E3 is the current authorized block. Accepted predecessor evidence is in
+[E2 validation](E2-VALIDATION-094c0df4.md); new mechanisms are in [E3 design](E3-DESIGN.md).
 E2 executor qualification covers exact confirmations, controlled native
-actions/recovery, finite merges and textual export/drift. E3 retains
-user backup/quarantine restore, archive/delete/retention and the restore epoch barrier.
+actions/recovery, finite merges and textual export/drift. E3 implements
+user backup/quarantine restore, archive/delete/retention and the restored-action barrier;
+current exact M/L results will be recorded in E3-VALIDATION.
 Real finite identity/catalog/Activity operations are implemented and qualified within E2 bounds; generic bulk platforms are not introduced. Codex and R2 Sleep remain separate.
 The full roadmap remains specification §25.8, with full requirements §24.
 
