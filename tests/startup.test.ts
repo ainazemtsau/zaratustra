@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { workspacePaths } from "../src/extension/workspace.ts";
 import { digest } from "../src/core/index.ts";
+import { DiskStorage } from "../src/storage/index.ts";
 
 const pkg = resolve("."),
   sdk = resolve("node_modules/@earendil-works/pi-coding-agent/dist/index.js");
@@ -84,18 +85,27 @@ test("startup native package discovery creates all four trusted roots, preserves
   assert.equal(second.snapshot.active_epoch, first.snapshot.active_epoch);
   assert.equal(second.provider_dispatches, 0);
   assert.equal(second.snapshot.captured_sources.length, 0);
-  const initialized = spawnSync("git", ["init", f.project], {
-    encoding: "utf8",
-  });
-  assert.equal(initialized.status, 0, initialized.stderr);
-  const untracked = spawnSync(
-    "git",
-    ["-C", f.project, "ls-files", "--others", "--exclude-standard"],
+  assert.equal(existsSync(join(f.project, ".local/.gitignore")), false);
+  assert.ok(first.storage_files_while_open.includes("writer.lock"));
+  assert.ok(first.storage_files_while_open.includes("zara.sqlite-wal"));
+  assert.ok(!first.storage_files_after_close.includes("writer.lock"));
+  // Explicit synthetic fixture setup only: exclude Pi/package cache, never data.
+  writeFileSync(join(f.project, ".gitignore"), "/.pi/\n");
+  const gitProof = join(f.base, "closed-git-objects.json");
+  const indexed = spawnSync(
+    process.execPath,
+    [resolve("scripts/startup-git.mjs"), f.project, gitProof],
     { encoding: "utf8" },
   );
-  assert.equal(untracked.status, 0, untracked.stderr);
-  assert.ok(!untracked.stdout.includes(".local"));
-  assert.equal(existsSync(join(f.project, ".gitignore")), false);
+  writeFileSync(
+    join(f.base, "closed-git-objects.log"),
+    indexed.stdout + indexed.stderr,
+  );
+  assert.equal(indexed.status, 0, indexed.stdout + indexed.stderr);
+  const objects = JSON.parse(readFileSync(gitProof, "utf8"));
+  assert.ok(objects.objects.length >= 7);
+  assert.equal(objects.no_remote, true);
+  assert.ok(objects.state.work > 0 && objects.state.changes > 0);
   const other = fixture().run("health");
   assert.notEqual(other.snapshot.workspace_id, first.snapshot.workspace_id);
   // A separately preconfigured scope can use the automatic backup destination.
@@ -236,38 +246,34 @@ test("startup defaults reject links into package/cache/other memory before write
   assert.equal(existsSync(join(f.project, ".local/memory")), false);
 });
 
-test("startup preserves existing user ignore bytes and refuses inadequate protection", () => {
+test("startup respects arbitrary user Git exclusion rules without a prerequisite or ignore writes", () => {
   const f = fixture(),
     local = join(f.project, ".local");
   mkdirSync(local);
   const ignore = join(local, ".gitignore"),
-    bytes = "# User rules\noutput/\n";
-  writeFileSync(ignore, bytes);
-  assert.equal(f.run("inspect").snapshot.available, false);
-  assert.equal(readFileSync(ignore, "utf8"), bytes);
-  assert.deepEqual(readdirSync(local), [".gitignore"]);
-  for (const ineffective of [" *\n", "/*\n!memory/\n"]) {
-    writeFileSync(ignore, ineffective);
-    assert.throws(() =>
-      workspacePaths(
-        { cwd: f.project, isProjectTrusted: () => true },
-        pkg,
-        f.agent,
-        {},
-      ),
+    rootIgnore = join(f.project, ".gitignore");
+  const initialized = spawnSync("git", ["init", f.project], {
+    encoding: "utf8",
+  });
+  assert.equal(initialized.status, 0, initialized.stderr);
+  const exclude = join(f.project, ".git/info/exclude");
+  for (const bytes of [
+    "# User rules\noutput/\n",
+    " *\n",
+    "/*\n!memory/\n",
+    "*\n",
+    "",
+  ]) {
+    writeFileSync(ignore, bytes);
+    writeFileSync(rootIgnore, "# Owner configuration\n.local/output/\n");
+    writeFileSync(exclude, "# Owner local exclusion\n.local/backups/\n");
+    const before = [ignore, rootIgnore, exclude].map((path) =>
+      readFileSync(path),
     );
-    assert.equal(readFileSync(ignore, "utf8"), ineffective);
-    assert.deepEqual(readdirSync(local), [".gitignore"]);
+    assert.notEqual(f.run("health").snapshot.available, false);
+    for (const [i, path] of [ignore, rootIgnore, exclude].entries())
+      assert.deepEqual(readFileSync(path), before[i]);
   }
-  writeFileSync(ignore, "# User protection\n*\n");
-  const paths = workspacePaths(
-    { cwd: f.project, isProjectTrusted: () => true },
-    pkg,
-    f.agent,
-    {},
-  );
-  assert.equal(paths.profile, "project-local");
-  assert.equal(readFileSync(ignore, "utf8"), "# User protection\n*\n");
 });
 
 test("startup ordinary project metadata is not mistaken for a Zaratustra store", () => {
@@ -296,4 +302,63 @@ test("startup ordinary project metadata is not mistaken for a Zaratustra store",
     ),
   );
   assert.equal(existsSync(join(f.project, ".local")), false);
+});
+
+function fileBytes(root: string): Record<string, string> {
+  const files: Record<string, string> = {};
+  const visit = (path: string) => {
+    for (const entry of readdirSync(path, { withFileTypes: true })) {
+      const full = join(path, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else files[full.slice(root.length)] = digest(readFileSync(full));
+    }
+  };
+  visit(root);
+  return files;
+}
+
+test("startup refuses an actual existing .local store before creating nested default roots and preserves bytes/identity", () => {
+  const f = fixture(),
+    home = join(f.project, ".local");
+  const old = new DiskStorage(home),
+    identity = { ...old.workspace };
+  old.close();
+  const before = fileBytes(home);
+  assert.throws(
+    () =>
+      workspacePaths(
+        { cwd: f.project, isProjectTrusted: () => true },
+        pkg,
+        f.agent,
+        {},
+      ),
+    /existing memory/,
+  );
+  const report = f.run("inspect");
+  assert.equal(report.snapshot.available, false);
+  assert.equal(report.snapshot.error.code, "PERMISSION_DENIED");
+  assert.deepEqual(fileBytes(home), before);
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(home, "workspace.json"), "utf8")),
+    identity,
+  );
+  for (const name of ["memory", "imports", "output", "backups", ".gitignore"])
+    assert.equal(existsSync(join(home, name)), false);
+  const reopened = new DiskStorage(home);
+  assert.deepEqual(reopened.workspace, identity);
+  reopened.close();
+});
+
+test("startup accepts benign .local workspace metadata and reopens normal .local/memory", () => {
+  const f = fixture(),
+    local = join(f.project, ".local"),
+    content = '{"ordinary_project":true}\n';
+  mkdirSync(local);
+  writeFileSync(join(local, "workspace.json"), content);
+  const first = f.run("health"),
+    second = f.run("health");
+  assert.notEqual(first.snapshot.available, false);
+  assert.equal(second.snapshot.workspace_id, first.snapshot.workspace_id);
+  assert.equal(readFileSync(join(local, "workspace.json"), "utf8"), content);
+  assert.equal(existsSync(join(local, ".gitignore")), false);
 });

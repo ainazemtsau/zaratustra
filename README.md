@@ -42,8 +42,11 @@ AGENTS file or per-launch environment setup is required. With directory override
 absent, Zaratustra creates `.local/memory`, `.local/imports`, `.local/output` and
 `.local/backups` in Pi's current project directory. A fresh process in the same
 folder reopens that memory; a different project has separate state. The snapshot
-reports the actual paths. `.local/.gitignore` protects new local data without
-editing the project's root ignore file. Existing user content is never overwritten.
+reports the actual paths. `.local` is permanent work data, not a disposable cache.
+Memory, plans/history, retained originals and generated results are available to
+ordinary Git versioning. You decide what to exclude and where to push. Zaratustra
+does not create, edit or remove ignore rules, or automatically commit/push your data.
+Existing manual ignore rules remain yours to change.
 
 Use Pi's normal authentication and deliberately selected model. Never copy
 credentials into this repository. Advanced explicit `ZARATUSTRA_HOME` deployments
@@ -51,6 +54,8 @@ keep their existing optional directory behavior and authority settings. Partial
 directory overrides without a home fail rather than opening different memory.
 See [startup behavior and reproducibility](docs/PROJECT-STARTUP.md) for limits,
 native verification and explicit configuration.
+This change makes saved files available to your own private Git workflow. It does
+not add synchronization, multi-computer recovery or a running-system restore promise.
 Daily use is conversation only: ask to create an area, send a material, recall useful
 resources, plan using their current conditions, correct a record, or continue.
 Ask to save a useful approach; a later suitable task can discover and reuse it without

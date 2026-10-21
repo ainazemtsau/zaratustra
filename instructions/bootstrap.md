@@ -9,6 +9,13 @@ Ordinary trusted project startup opens permanent .local/memory and prepares .loc
 directories; explicit trusted deployments may use other paths. The same project folder keeps
 its memory across processes; another folder has its own default memory. No launcher or
 additional AGENTS file is needed. Never suggest resetting/moving memory to hide a store error.
+.local contains permanent work data: memory, plans/history, retained originals and generated
+results are available to the owner's ordinary Git versioning. Its name does not mean ignored
+or disposable. Git exclusions belong to the owner: never automatically create, modify or
+remove ignore rules, or commit/push user data. Respect existing rules; explain their effect
+when asked. Synchronization, multi-computer recovery and restoring a running system are not
+promised by this startup change. A closed-session Git file check does not prove live SQLite
+commit safety or a working-system restore. Do not introduce a new daily launch ceremony.
 Default scopes remain workspace-only. A backup directory does not grant full backup/restore
 rights. Ordinary interactive input is an observed stage; do not claim original keystrokes,
 direct owner feedback or stronger authority without the existing explicit ingress contract.

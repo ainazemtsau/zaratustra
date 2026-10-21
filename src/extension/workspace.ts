@@ -1,11 +1,5 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import {
-  existsSync,
-  lstatSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, lstatSync, mkdirSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { requireThat } from "../core/index.ts";
 import { resolvedLocation, safePath, within } from "../storage/index.ts";
@@ -72,7 +66,7 @@ export function workspacePaths(
       "Each project-local root must be an ordinary directory.",
     );
   }
-  for (let parent = project; ; parent = dirname(parent)) {
+  for (let parent = local; ; parent = dirname(parent)) {
     requireThat(
       !existsSync(join(parent, "zara.sqlite")) &&
         !(
@@ -84,28 +78,8 @@ export function workspacePaths(
     );
     if (dirname(parent) === parent) break;
   }
-  const ignore = safePath(project, join(local, ".gitignore"));
-  if (existsSync(ignore)) {
-    const stat = lstatSync(ignore);
-    requireThat(
-      stat.isFile() && stat.nlink === 1 && stat.size <= 64000,
-      "PERMISSION_DENIED",
-      "The .local ignore file must be a bounded ordinary file.",
-    );
-    // Leading whitespace is meaningful to Git. Accept only exact blanket rules;
-    // trimming could mistake " *" for protection of every local file.
-    const lines = readFileSync(ignore, "utf8").split(/\r?\n/);
-    requireThat(
-      lines.some((line) => line === "*" || line === "/*") &&
-        !lines.some((line) => line.startsWith("!")),
-      "PERMISSION_DENIED",
-      "Existing .local/.gitignore does not protect all local data. Preserve it and configure protection before retrying; Zaratustra will not overwrite it.",
-    );
-  } else {
-    mkdirSync(local, { recursive: true });
-    // Exclusive creation preserves existing user content, including races.
-    writeFileSync(ignore, "*\n", { flag: "wx" });
-  }
+  // Git tracking/exclusion policy belongs to the owner. Never inspect, create,
+  // change or remove ignore files to make project startup succeed.
   for (const path of paths) mkdirSync(path, { recursive: true });
   return {
     profile: "project-local" as const,

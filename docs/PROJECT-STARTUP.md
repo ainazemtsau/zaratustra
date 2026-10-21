@@ -1,160 +1,116 @@
-# Ordinary project Pi startup
+# Ordinary project startup and owner-controlled Git tracking
 
-The owner-authorized startup fix replaces mandatory environment/launcher setup for
-new ordinary projects. It changes directory selection in the Pi adapter only.
-Core, schema 6, existing explicit deployments and approval policy remain intact.
-This assignment supersedes the earlier E3 directory setup recommendation, not the
-full specification or its retained provenance/access guarantees. Full R1, F,
-independent review and owner usefulness/T31 remain separate.
-
-## Install and daily use
-
-In the intended project root, install the selected public commit once:
+Install the selected published ref once in the intended project root, then use
+ordinary Pi there:
 
 ```powershell
-pi install --local git:github.com/ainazemtsau/zaratustra@ac662c0383f025c4e04cfb6fd9d8cbb90dd34b54
+pi install --local git:github.com/ainazemtsau/zaratustra@<published-corrected-ref>
 pi
 ```
 
-Review the package and use native Pi project trust. Choose/authenticate the model
-in Pi normally. There is no Zaratustra launcher, additional AGENTS file, mandatory
-status command, per-launch environment setup or requirement to disable extensions.
-Daily use remains conversation. Close Pi and run `pi` in the same folder to reuse
-existing memory without resuming a transcript.
+Review the package and grant native Pi project trust. No launcher, per-launch
+Zaratustra environment variables, extra project AGENTS file or disabled peer
+extensions are required. Native cwd chooses the project; there is no Git-root
+search and model tool arguments cannot choose memory. A fresh process in the same
+folder reopens its memory; another folder has separate defaults.
 
-| Default path relative to native Pi cwd | Purpose and lifetime                                                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `.local/memory`                        | DiskStorage identity, active epoch/control, SQLite, original materials and staging; persistent across sessions/processes |
-| `.local/imports`                       | Permitted input directory; original files stay here while imports retain managed copies                                  |
-| `.local/output`                        | Designated native write/edit output; existing exact preview, native confirmation and postcondition checks apply          |
-| `.local/backups`                       | Designated bundle destination; full-read/write administrative policy still applies                                       |
+| Persistent path relative to native cwd | Contents                                                                                                               |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `.local/memory`                        | SQLite records, Work/plans, versions, Changes, receipts, control/manifest and retained original/derived material blobs |
+| `.local/imports`                       | Input/source files; imports also retain managed originals                                                              |
+| `.local/output`                        | Generated work results, using existing native preview/confirmation controls                                            |
+| `.local/backups`                       | Existing designated bundle destination; creation does not grant administrative scopes                                  |
 
-The adapter uses native `ctx.cwd` and `ctx.isProjectTrusted()`. It does not search
-for a Git root or take a memory path from model tool arguments. A different cwd,
-including a subfolder, gets its own default memory. Always start in the intended
-project root. A personal/global package also requires project trust before default
-creation or opening. Project package declarations themselves remain trust-gated
-by Pi. No migration or automatic relocation is performed.
+`.local` means persistent local work data. It does not mean disposable or ignored.
+All saved files are available to ordinary Git versioning and the owner's private
+GitHub workflow. Git tracks files, so empty directories need no placeholder and
+are recreated on startup. The product does not create, inspect, modify or remove
+`.gitignore` rules or `.git/info/exclude`, and does not automatically commit or push
+user data. Existing owner rules can exclude data; the owner decides whether to
+change them. This policy supersedes the earlier preview's automatic ignore policy.
+An old preview's `.local/.gitignore` is preserved, not silently removed.
 
-`.local/.gitignore` is exclusively created with `*` before data roots. The root
-ignore file is untouched. An existing bounded regular ignore file is preserved
-only when it contains a whole-directory `*` or `/*` rule and no negations;
-otherwise startup refuses without overwriting it. This protects untracked data,
-not files already tracked by Git or deliberately force-added by the user.
+The owner wants access to saved files if a machine dies. This change does not add
+synchronization, multi-computer working recovery, automatic backup/export machinery,
+a second export format, Git hooks or a running-system restore workflow. Those
+outcomes remain deferred. Existing separately implemented administrative tools and
+their permissions are unchanged.
 
-## Compatibility and authority
+## Compatibility and boundaries
 
-An explicitly present `ZARATUSTRA_HOME` retains the legacy absolute-home profile:
-optional `ZARATUSTRA_IMPORT_ROOTS` defaults to `[]`; output and backup roots remain
-optional and retain their existing validation. The home is independent of cwd.
-Existing deployments do not acquire `.local` roots. An empty/relative home fails;
-backup/output/import overrides without a home fail instead of silently selecting
-new memory. Set all legacy directory fields deliberately, or remove all of them
-to select project defaults. Do not remove configuration expecting migration.
+An explicitly present absolute `ZARATUSTRA_HOME` retains its legacy profile and
+cwd-independent identity. Optional import roots default to `[]`; output/backup
+roots remain optional. Empty/relative homes and directory overrides without a home
+refuse rather than opening fallback memory. No migration or relocation occurs.
 
-Default scopes are still `[]`. Workspace memory and supported imports work;
-full backup/export requires explicitly preconfigured `restricted:read`; restore,
-full body deletion and cleanup retain their full-read/write requirements. Native
-confirmations remain mandatory for protected actions. RPC `hasUI` alone grants no
-owner authority; a real TUI or explicitly registered synthetic controller remains
-required by `dialogAuthority`. The fix never sets a test controller or input contract.
+Default preflight checks the destination layout and every ancestor starting at
+`project/.local`, not merely at the project root. A `zara.sqlite` or the existing
+control/manifest pair there refuses nested initialization before any new roots are
+created. This fixes the reviewed case where a legacy `.local` store could otherwise
+contain a different fresh `.local/memory`. Normal `.local/memory` reuse remains
+valid. A benign standalone `workspace.json` in `.local` or the project remains valid.
+Links/junctions, device aliases, package/Pi-cache overlap and known corrupt/missing
+stores retain refusal behavior. Removing all identity/control metadata manually is
+outside the supported recovery protocol.
 
-Native input hooks can receive earlier extension transformations. Default sources
-remain `observed_stage_only`, `original_keystrokes:false`, owner-ineligible, with
-exact observed text retained. They support ordinary Evidence and grounded Knowledge;
-they cannot certify `user_feedback`. Explicit first-untransformed deployment
-contracts retain their existing meaning. Other extension inputs/messages are retained.
+Scopes remain `[]` by default. Full backup/export and restore retain existing
+explicit administrative scope requirements. Native protected-action confirmations
+are unchanged; RPC `hasUI` alone is insufficient. Input remains
+`observed_stage_only`, with `original_keystrokes:false` and no owner-feedback
+eligibility. Explicit first-untransformed deployments retain their existing
+contract. Other extensions' transformations and messages remain intact. These are
+managed local controls for one trusted writer, not OS isolation or arbitrary-command
+deduplication.
 
-All default roots are checked before creation. Links/junctions, device aliases,
-package/Pi-cache overlap and nesting within existing memory/control ancestors are
-refused. These are local managed-surface checks, not OS isolation against same-user
-tools or malicious extensions. One trusted writer and no outside output writer
-remain the supported profile. Existing known corrupt or missing databases are
-refused by DiskStorage, never reset. Removing all storage/control metadata manually
-is outside the recovery protocol and cannot be detected as an intact known store.
+## Focused verification and version boundaries
 
-## Focused reproducibility
+Windows 11 x64, Node 22.19.0, npm 11.6.2 and official Pi 1.3.0 are the exercised
+profile. Core/storage/schema/approvals/dependencies are unchanged from
+`1806881d0b560903a642e098031c5843f0dc42a5`. The previous complete `deliver-3` result
+was 132 tests: 130 passed, 0 failed, 2 inherited Windows skips on runtime candidate
+`ac662c0383f025c4e04cfb6fd9d8cbb90dd34b54` (unchanged runtime at `1806881`). That is
+prior evidence, not a full-suite run on this corrected revision.
 
-Use Node 22.19.0, npm 11.6.2 and native Pi 1.3.0 on Windows x64. No dependency
-update, installer, auth system, model service, workflow engine or Core/schema change
-is needed. The actual official local declarations were checked for `cwd`, `mode`,
-`isProjectTrusted()` and public `getAgentDir()`; native loader docs were checked
-for project package/trust behavior.
+The corrected source has 9 startup tests passed, no failures/skips, plus 1 existing
+snapshot regression and 1 existing provenance regression passed. It is checked with
+formatting, ESLint, types, dependency boundaries, build and RESULT structure checks. The exact executed counts and logs are in
+`C:/projects/zaratustra-v1-startup-tracking-evidence-20261021`. The reviewed overlap
+and a fresh executor RED are retained; GREEN controls use actual DiskStorage and
+native package-discovered tools. No old evidence is rewritten.
 
 ```powershell
 npx tsx --test tests/startup.test.ts
-npm run deliver
+npx tsx --test tests/extension.test.ts
+npx tsx --test --test-name-pattern="provenance" tests/experience.test.ts
+npm run format:check
+npm run lint
+npm run types
+npm run boundary
+npm run build
+node scripts/deliver.mjs
 ```
 
-The new suite launches fresh Node processes using official `DefaultResourceLoader`
-and `createAgentSession`, with normal package declarations in `.pi/settings.json`.
-It does not use `noExtensions` or an additional extension path workaround. Synthetic
-personal peer extensions test transformed input and preserved context. Calls enter
-real registered tools; no provider/model prompt is dispatched. The synthetic TUI
-mode injection verifies confirmation mechanics and is not owner testimony.
+The synthetic Git proof runs after SDK session shutdown and SQLite connections
+close. It observes the actual open/closed writer-lock and WAL/SHM lifecycle. It
+never excludes WAL blindly: any remaining file is inventoried and included. With
+fixture-only Pi/cache exclusion and no `.local` exclusion, ordinary `git status`
+and `git add -A` expose the data. `git cat-file` verifies actual indexed blobs match
+SQLite, control/manifest, retained originals/materials, inputs and outputs byte for
+byte. The test disables line-ending conversion/global exclusions only for its own
+synthetic Git commands; it changes no owner configuration. There is no fixture
+remote, commit or push. This is mechanical closed-file versioning evidence, not a
+safe live SQLite Git-commit or multi-machine restore claim, and adds no daily launch
+requirement.
 
-For installed proof, run `scripts/startup-native.mjs` with the absolute official
-SDK entry, installed package root, action (`init`, `read`, `health`, `inspect`,
-`untrusted`, `integrity` or `backup`) and new report path. Run it from the synthetic project
-with normal project package discovery. `init` expects a synthetic `fixture.md`
-in the permitted imports directory; it commits observed Evidence, Activity and
-Knowledge, retains an import and verifies a confirmed native output. `read` is a
-separate process with no old transcript. `backup` needs preconfigured full-read
-scope and does not widen ordinary defaults. Exact native commands, public/installed
-identities and retained results are recorded with the final readback.
+Source reports and formatting are finished before the corrected publication.
+Afterward the exact public ref is installed normally in a fresh synthetic project
+and the existing native test project. No `--no-extensions`, explicit extension path,
+checkout fallback, copied credentials or model call is used. Post-publication
+identity, negative/positive controls, reused workspace identity and Git-object proof
+are recorded only in the new external `FINAL-READBACK.json`; this document does not
+attempt to contain its own final commit SHA. Native npm's known six `peer:true`
+lockfile metadata removals are recorded separately from version/integrity changes.
 
-Evidence lives only in the newly created
-`C:/projects/zaratustra-v1-startup-evidence-20261021` and new isolated synthetic
-fixtures. Prior committed evidence is preserved by Git identity; no historical
-artifact recopy/reseal is required. All failed attempts remain in ATTEMPTS.txt and their original logs: fixture/API
-errors, the initial strict lockfile comparison and the interrupted pre-final check.
-Self-review fixed leading-space ignore acceptance and a generic-metadata false
-positive before publication. No historical artifact was recopied or resealed.
-
-No live model proof is needed for directory selection: zero provider dispatches,
-zero model attempts, USD 0 Pi estimate for this assignment. This does not establish
-semantic model reliability, independent PASS, owner acceptance or T31.
+No independent PASS, owner acceptance, full R1/F/T31, Codex or Sleep claim is made.
 
 next: solmax
-
-## Executed public candidate
-
-Runtime candidate: `ac662c0383f025c4e04cfb6fd9d8cbb90dd34b54`, published only to
-`codex/zaratustra-v1`. The later report commit changes only this document and
-`RESULT.md`; final public/installed identities are recorded in external
-`FINAL-READBACK.json` to avoid a self-referential commit identity.
-
-The exact install command above was run in the newly created ordinary project
-`C:/projects/zaratustra-startup-native-20261021`, using the existing standard Pi
-host/auth configuration. All `ZARATUSTRA_*` and `PI_CODING_AGENT_DIR` overrides were
-absent. Plain `pi` prompted for native trust of that project only, then created all
-four roots and `.local/.gitignore`. It loaded one Zaratustra extension and two skills
-alongside the existing `wmux.js`; no extension was disabled, no extra project AGENTS
-file was created, no explicit extension path was supplied and no checkout fallback
-was used. The actual UI selected openai-codex/gpt-6.1-sol, medium, at USD0.000.
-
-The installed package is at
-`C:/projects/zaratustra-startup-native-20261021/.pi/git/github.com/ainazemtsau/zaratustra`.
-Its shipped SDK probe committed Activity, exact observed-stage Evidence and grounded
-English Knowledge, retained a local import, refused owner feedback/full backup at
-default authority, and verified a native confirmed output. A separately launched
-plain `pi` and fresh SDK read retained workspace
-`a199ac87-ea6e-42e9-b9b7-772e54e0682e`, epoch
-`155a6236-3ff9-4fbd-909f-a7dd3867f002` and committed sequence 2 without an old transcript.
-
-Final focused run: 7 passed, no failures/skips. Final `npm run deliver`: 132 tests,
-130 passed, 0 failed, 2 inherited Windows skips; formatting, ESLint, types,
-dependency boundary, build and RESULT structure passed. Native proof is mechanical,
-with no provider dispatch. Backup destination functionality with explicitly granted
-administrative scopes is covered separately by the focused native suite.
-
-Public Git/source/instruction identity is compared for all 30 inputs. Native npm
-rewrites only six `peer:true` lockfile metadata flags (parser, acorn, eslint,
-typescript, undici, zod); dependency versions/integrities are unchanged. All other
-installed inputs match public Git bytes exactly. Developer checkout line endings
-are recorded separately rather than mistaken for installed/public bytes. No
-repository lockfile/dependency update or installed-file rewrite was performed.
-The final report-only commit is compared against the candidate across every runtime
-and instruction input. Prior tracked documentation/fixtures have no modifications
-or deletions from the base commit. Public main remains
-`d956c6dfe18b49754fabd0773b798a01e5fcb017`.

@@ -1,6 +1,6 @@
 // Native package discovery + real SDK tool calls. No prompt/provider dispatch.
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -83,7 +83,8 @@ const snap = async () => {
     messages.find((m) => m.customType === "zaratustra.snapshot.v1").content,
   );
 };
-let snapshot;
+let snapshot,
+  storageFilesWhileOpen = [];
 try {
   snapshot = await snap();
   if (action === "inspect" || action === "untrusted") {
@@ -96,8 +97,8 @@ try {
       assert.equal(paths.memory, join(cwd, ".local/memory"));
       for (const name of ["memory", "imports", "output", "backups"])
         assert.ok(existsSync(join(cwd, ".local", name)));
-      assert.equal(readFileSync(join(cwd, ".local/.gitignore"), "utf8"), "*\n");
     }
+    storageFilesWhileOpen = readdirSync(paths.memory);
     const health = await run("zara_doctor", {});
     assert.notEqual(health.ok, false, JSON.stringify(health));
     if (action === "integrity") {
@@ -165,6 +166,33 @@ try {
                 source_ref: { client_ref: "origin" },
                 source_language: "en",
               },
+            },
+          },
+          {
+            op: "create_record",
+            client_ref: "work",
+            kind: "work",
+            title: "Synthetic durable plan",
+            visibility: "workspace",
+            data: {
+              activity_id: { client_ref: "activity" },
+              parent_work_id: null,
+              objective: "Keep a durable synthetic plan with history",
+              acceptance: [
+                {
+                  criterion_id: "note",
+                  description: "A retained note can be read later",
+                  verification: "Read current saved files",
+                  required: true,
+                },
+              ],
+              status: "active",
+              current_state: "Synthetic plan recorded",
+              next_action: "Read the retained note",
+              steps: [],
+              waits: [],
+              context_refs: [{ client_ref: "origin" }],
+              completion: null,
             },
           },
         ],
@@ -305,6 +333,10 @@ try {
         provider_dispatches: 0,
         mechanical_only: true,
         contextTypes,
+        storage_files_while_open: storageFilesWhileOpen,
+        storage_files_after_close: snapshot?.workspace_paths?.memory
+          ? readdirSync(snapshot.workspace_paths.memory)
+          : [],
       },
       null,
       2,
