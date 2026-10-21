@@ -19,6 +19,7 @@ import {
 import { Core, CoreError, canonical, digest } from "../src/core/index.ts";
 import type { RecordRow, FileEffect, JsonObject } from "../src/core/index.ts";
 import { DiskStorage, OutputBoundary } from "../src/storage/index.ts";
+import { renderApproval } from "../src/extension/preview.ts";
 import { simulateNative } from "../src/extension/managed.ts";
 
 const rejects = (f: () => unknown, code: string) =>
@@ -1048,4 +1049,258 @@ test("E2 disk old source cannot authorize a new write after an active epoch chan
     ],
   });
   assert.equal(r.committed, true);
+});
+
+test("E2 disk connected corrected identities merge from current staged values with exact sequential preview, history, access and replay", (t) => {
+  for (const kind of ["entity", "concept", "activity"]) {
+    for (const protectedSource of [false, true]) {
+      const f = fixture(
+        protectedSource ? ["restricted:read", "restricted:write"] : [],
+      );
+      t.after(() => f.disk.close());
+      const a = f.node(
+          "Old source",
+          kind,
+          protectedSource ? "restricted" : "workspace",
+        ),
+        b = f.node("Old target", kind);
+      const data = (id: string, name: string) => ({
+        ...f.read(id).data,
+        ...(kind === "entity"
+          ? { disambiguation: name, external_ids: { serial: "E2-B62" } }
+          : kind === "activity"
+            ? { purpose: name }
+            : { definition: name }),
+        aliases: [name + " alias"],
+      });
+      const req = f.request(
+        [
+          {
+            op: "update_record",
+            ref: { id: a },
+            title: "Corrected source",
+            body: "Source correction",
+            data: data(a, "Corrected source"),
+          },
+          {
+            op: "update_record",
+            ref: { id: b },
+            title: "Corrected target",
+            body: "Target correction",
+            data: data(b, "Corrected target"),
+          },
+          {
+            op: kind === "activity" ? "merge_activity" : "merge_identity",
+            from_ref: { id: a },
+            to_ref: { id: b },
+            ...(kind === "activity" ? { moved_work_refs: [] } : {}),
+          },
+        ],
+        [a, b],
+      );
+      const preview = f.core.prepareCommit(
+        req,
+        "Correct both identities and merge the corrected source into the corrected target",
+        "Keep them separate",
+      );
+      const shown = renderApproval(preview.payload);
+      assert.match(
+        shown,
+        /Merge (entity|concept|activity) “Corrected source” into “Corrected target”/,
+      );
+      assert.match(
+        shown,
+        /Destination aliases will include: Corrected target alias; Corrected source; Corrected source alias/,
+      );
+      f.approve(preview.request_id);
+      const approved = { ...req, preview_ref: preview.request_id },
+        receipt = f.core.commit(approved),
+        target = f.read(b),
+        source = f.read(a);
+      assert.equal(target.title, "Corrected target");
+      assert.equal(target.body, "Target correction");
+      assert.equal(source.title, "Corrected source");
+      assert.equal(source.body, "Source correction");
+      assert.equal(source.data.status, "merged");
+      assert.deepEqual(source.data.redirect_to, { id: b });
+      assert.deepEqual(target.data.aliases, [
+        "Corrected target alias",
+        "Corrected source",
+        "Corrected source alias",
+      ]);
+      if (kind === "entity")
+        assert.equal((target.data.external_ids as JsonObject).serial, "E2-B62");
+      assert.equal(
+        target.visibility,
+        protectedSource ? "restricted" : "workspace",
+      );
+      assert.equal(target.revision, 2);
+      assert.equal(f.read(b, 1).title, "Old target");
+      assert.equal(f.read(a, 1).data.status, "active");
+      const seq = f.core.snapshot().snapshot_seq;
+      assert.deepEqual(f.core.commit(approved), receipt);
+      assert.equal(f.core.snapshot().snapshot_seq, seq);
+    }
+  }
+});
+
+test("E2 disk connected merge/catalog order retains staged aliases and catalog changes or rejects atomically; late writes cannot leave Work in merged Activity", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const a = f.node("First source"),
+    b = f.node("Destination"),
+    c = f.node("Second source");
+  const req = f.request(
+    [
+      {
+        op: "reorganize_catalog",
+        changes: [{ ref: { id: b }, title: "Renamed destination" }],
+      },
+      { op: "merge_identity", from_ref: { id: a }, to_ref: { id: b } },
+      { op: "merge_identity", from_ref: { id: c }, to_ref: { id: b } },
+    ],
+    [a, b, c],
+  );
+  f.core.commit(f.bound(req));
+  assert.equal(f.read(b).title, "Renamed destination");
+  assert.deepEqual(f.read(b).data.aliases, ["First source", "Second source"]);
+  const x = f.node("Reverse source"),
+    y = f.node("Reverse target");
+  for (const last of [
+    {
+      op: "update_record",
+      ref: { id: y },
+      title: "Too late correction",
+      data: f.read(y).data,
+    },
+    {
+      op: "reorganize_catalog",
+      changes: [{ ref: { id: y }, title: "Too late catalog" }],
+    },
+  ]) {
+    const invalid = f.request(
+      [{ op: "merge_identity", from_ref: { id: x }, to_ref: { id: y } }, last],
+      [x, y],
+    );
+    const approved = f.bound(invalid),
+      before = f.read(y),
+      seq = f.core.snapshot().snapshot_seq;
+    rejects(() => f.core.commit(approved), "VALIDATION_ERROR");
+    assert.deepEqual(f.read(y), before);
+    assert.equal(f.read(x).data.status, "active");
+    assert.equal(f.core.snapshot().snapshot_seq, seq);
+    assert.equal(
+      f.disk.get(
+        "SELECT request_id FROM receipts WHERE request_id=?",
+        invalid.request_id,
+      ),
+      undefined,
+    );
+  }
+  const activity = f.node("Source area", "activity"),
+    target = f.node("Target area", "activity");
+  const work = {
+    op: "create_record",
+    client_ref: "lateWork",
+    kind: "work",
+    title: "Explicit late member",
+    visibility: "workspace",
+    data: {
+      activity_id: { id: activity },
+      parent_work_id: null,
+      objective: "Retain note",
+      acceptance: [
+        {
+          criterion_id: "note",
+          description: "Note retained",
+          verification: "Read note",
+          required: true,
+        },
+      ],
+      status: "active",
+      current_state: "Ready",
+      next_action: "Read",
+      steps: [],
+      waits: [],
+      context_refs: [],
+      completion: null,
+    },
+  };
+  for (const beforeMerge of [true, false]) {
+    const merge = {
+      op: "merge_activity",
+      from_ref: { id: activity },
+      to_ref: { id: target },
+      moved_work_refs: [],
+    };
+    const invalid = f.request(beforeMerge ? [work, merge] : [merge, work], [
+      activity,
+      target,
+    ]);
+    const approved = f.bound(invalid),
+      seq = f.core.snapshot().snapshot_seq;
+    rejects(() => f.core.commit(approved), "VALIDATION_ERROR");
+    assert.equal(f.read(activity).data.status, "active");
+    assert.equal(f.core.snapshot().snapshot_seq, seq);
+  }
+});
+
+test("E2 disk sequential merges propagate staged protected identity to final destination without losing intermediate aliases", (t) => {
+  for (const kind of ["entity", "concept", "activity"]) {
+    const f = fixture(["restricted:read", "restricted:write"]);
+    t.after(() => f.disk.close());
+    const a = f.node("Protected original", kind, "restricted"),
+      b = f.node("Intermediate", kind),
+      c = f.node("Final target", kind);
+    const merge = (from: string, to: string) => ({
+      op: kind === "activity" ? "merge_activity" : "merge_identity",
+      from_ref: { id: from },
+      to_ref: { id: to },
+      ...(kind === "activity" ? { moved_work_refs: [] } : {}),
+    });
+    const req = f.request([merge(a, b), merge(b, c)], [a, b, c]);
+    const preview = f.core.prepareCommit(
+      req,
+      "Merge the exact chain and retain protection throughout",
+      "Keep original identities separate",
+    );
+    assert.equal(
+      (
+        renderApproval(preview.payload).match(
+          /Destination visibility: restricted/g,
+        ) ?? []
+      ).length,
+      2,
+    );
+    f.approve(preview.request_id);
+    f.core.commit({ ...req, preview_ref: preview.request_id });
+    assert.equal(f.read(c).visibility, "restricted");
+    assert.deepEqual(f.read(c).data.aliases, [
+      "Intermediate",
+      "Protected original",
+    ]);
+    const low = new Core(f.disk, {
+      ...f.core.context,
+      scopes: [],
+      runtime_id: "fresh-low",
+      session_id: "fresh-low",
+    });
+    rejects(() => low.read(c), "REFERENCE_NOT_FOUND");
+    assert.equal(
+      low.search({ query: "Protected original", match: "all", channel: "both" })
+        .data.cards.length,
+      0,
+    );
+    assert.equal(
+      low.browse(
+        kind === "activity"
+          ? "activities"
+          : kind === "entity"
+            ? "entities"
+            : "concepts",
+      ).data.cards.length,
+      0,
+    );
+    assert.ok(!JSON.stringify(low.map()).includes("Protected original"));
+  }
 });

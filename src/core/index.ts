@@ -65,6 +65,14 @@ export const digest = (value: string | Uint8Array) =>
   createHash("sha256").update(value).digest("hex");
 const id = (prefix: string) => prefix + "-" + randomUUID();
 const unpack = (row: { json: string }) => JSON.parse(row.json) as RecordRow;
+/** Shared exact generated values for domain merge and its native presentation. */
+export const mergedAliases = (from: RecordRow, to: RecordRow) => [
+  ...new Set([
+    ...((to.data.aliases as string[]) ?? []),
+    from.title,
+    ...((from.data.aliases as string[]) ?? []),
+  ]),
+];
 export class Core {
   private sources = new Map<string, Source>();
   private _approvals?: Approvals;
@@ -1629,6 +1637,12 @@ export class Core {
         );
         return current;
       };
+      // Guards always verify persisted before revisions; merge semantics use the
+      // latest staged row so earlier approved edits cannot be silently overwritten.
+      const guardedStaged = (recordId: string) => {
+        const original = guarded(recordId);
+        return changed.get(recordId) ?? original;
+      };
       const guardedAddress = (recordId: string) => {
         const current = this.addressed(recordId);
         requireThat(
@@ -1815,8 +1829,8 @@ export class Core {
         const op = resolve(raw) as typeof raw;
         if (experience.apply(op)) continue;
         if (op.op === "merge_activity") {
-          const from = guarded(op.from_ref.id),
-            to = guarded(op.to_ref.id);
+          const from = guardedStaged(op.from_ref.id),
+            to = guardedStaged(op.to_ref.id);
           requireThat(
             from.kind === "activity" &&
               to.kind === "activity" &&
@@ -1853,20 +1867,18 @@ export class Core {
               plan_version: ((w.data.plan_version as number) ?? 1) + 1,
             });
           }
-          const aliases = [
-            ...new Set([
-              ...((to.data.aliases as string[]) ?? []),
-              from.title,
-              ...((from.data.aliases as string[]) ?? []),
-            ]),
-          ];
+          const aliases = mergedAliases(from, to);
           requireThat(
             aliases.length <= 30,
             "VALIDATION_ERROR",
             "Activity alias bound exceeded.",
           );
           stage(to, { ...to.data, aliases });
-          if (this.previewAccess([from, to]).some((a) => a.restricted))
+          if (
+            from.visibility === "restricted" ||
+            to.visibility === "restricted" ||
+            this.previewAccess([from, to]).some((a) => a.restricted)
+          )
             changed.get(to.id)!.visibility = "restricted";
           stage(from, {
             ...from.data,
@@ -1876,8 +1888,8 @@ export class Core {
           continue;
         }
         if (op.op === "merge_identity") {
-          const from = guarded(op.from_ref.id),
-            to = guarded(op.to_ref.id);
+          const from = guardedStaged(op.from_ref.id),
+            to = guardedStaged(op.to_ref.id);
           requireThat(
             from.id !== to.id &&
               from.kind === to.kind &&
@@ -1893,20 +1905,18 @@ export class Core {
               "REFERENCE_TYPE_MISMATCH",
               "Entity types differ.",
             );
-          const aliases = [
-            ...new Set([
-              ...(to.data.aliases as string[]),
-              from.title,
-              ...(from.data.aliases as string[]),
-            ]),
-          ];
+          const aliases = mergedAliases(from, to);
           requireThat(
             aliases.length <= 30,
             "VALIDATION_ERROR",
             "Merged alias limit exceeded; choose a smaller explicit proposal.",
           );
           stage(to, { ...to.data, aliases });
-          if (this.previewAccess([from, to]).some((a) => a.restricted))
+          if (
+            from.visibility === "restricted" ||
+            to.visibility === "restricted" ||
+            this.previewAccess([from, to]).some((a) => a.restricted)
+          )
             changed.get(to.id)!.visibility = "restricted";
           stage(from, {
             ...from.data,
@@ -2496,6 +2506,18 @@ export class Core {
         ...all.filter((r) => !changed.has(r.id)),
         ...changed.values(),
       ];
+      for (const raw of request.ops) {
+        if (raw.op !== "merge_activity") continue;
+        const op = resolve(raw) as typeof raw;
+        requireThat(
+          !final.some(
+            (r) =>
+              r.kind === "work" && refId(r.data.activity_id) === op.from_ref.id,
+          ),
+          "VALIDATION_ERROR",
+          "Final Activity merge cannot leave or introduce current Work in the merged source; list every moved Work in a separate valid finite proposal.",
+        );
+      }
       validateMemory(final, get);
       validateMethods(final, get);
       for (const r of changed.values()) {

@@ -1,4 +1,4 @@
-import { canonical } from "../core/index.ts";
+import { canonical, mergedAliases } from "../core/index.ts";
 import type { JsonObject, RecordRow } from "../core/index.ts";
 /** Native dialog formatter. Model supplies the explanation in the conversation language. */
 export function renderApproval(b: {
@@ -53,7 +53,7 @@ export function renderApproval(b: {
     if (op.op === "merge_identity" || op.op === "merge_activity") {
       const from = byId.get((op.from_ref as { id: string }).id)!,
         to = byId.get((op.to_ref as { id: string }).id)!;
-      return `Merge ${from.kind} “${from.title}” into “${to.title}”.\nSource identity: ${value(from.data)}\nDestination identity: ${value(to.data)}\nDestination aliases will include: ${value([...new Set([...((to.data.aliases as string[]) ?? []), from.title, ...((from.data.aliases as string[]) ?? [])])])}.\n${op.moved_work_refs ? `Move only these Work records: ${value(op.moved_work_refs)}.\n` : ""}Destination visibility: ${((e.effective_access as { id: string; restricted: boolean }[]) ?? []).some((a) => [from.id, to.id].includes(a.id) && a.restricted) ? "restricted" : "workspace"}. Source keeps a current redirect; historical identities and references stay exact.`;
+      return `Merge ${from.kind} “${from.title}” into “${to.title}”.\nSource identity: ${value(from.data)}\nDestination identity: ${value(to.data)}\nDestination aliases will include: ${value(mergedAliases(from, to))}.\n${op.moved_work_refs ? `Move only these Work records: ${value(op.moved_work_refs)}.\n` : ""}Destination visibility: ${from.visibility === "restricted" || to.visibility === "restricted" || ((e.effective_access as { id: string; restricted: boolean }[]) ?? []).some((a) => [from.id, to.id].includes(a.id) && a.restricted) ? "restricted" : "workspace"}. Source keeps a current redirect; historical identities and references stay exact.`;
     }
     if (op.op === "reorganize_catalog")
       return (op.changes as JsonObject[])
@@ -72,10 +72,60 @@ export function renderApproval(b: {
       return `Retain original source as Evidence “${op.title}” with captured provenance. Source text remains untrusted data.`;
     return `${label(String(op.op))}:\n${value(op)}`;
   };
+  // Presentation-only projection of explicitly ordered finite fields. No validation,
+  // authority or execution occurs here; the domain independently stages/validates.
+  const descriptions = ops.map((op) => {
+    const text = describe(op);
+    if (op.op === "update_record") {
+      const r = byId.get((op.ref as { id: string }).id)!;
+      byId.set(r.id, {
+        ...r,
+        title: (op.title as string | undefined) ?? r.title,
+        body: op.body === undefined ? r.body : (op.body as string | null),
+        data: op.data as JsonObject,
+        concept_ids: (op.concept_ids ??
+          r.concept_ids) as RecordRow["concept_ids"],
+      });
+    } else if (op.op === "reorganize_catalog") {
+      for (const c of op.changes as JsonObject[]) {
+        const r = byId.get((c.ref as { id: string }).id)!;
+        byId.set(r.id, {
+          ...r,
+          title: (c.title as string | undefined) ?? r.title,
+          concept_ids: (c.concept_ids ??
+            r.concept_ids) as RecordRow["concept_ids"],
+          data: {
+            ...r.data,
+            ...(c.broader_ids ? { broader_ids: c.broader_ids } : {}),
+          },
+        });
+      }
+    } else if (op.op === "merge_identity" || op.op === "merge_activity") {
+      const from = byId.get((op.from_ref as { id: string }).id)!,
+        to = byId.get((op.to_ref as { id: string }).id)!;
+      byId.set(to.id, {
+        ...to,
+        visibility:
+          from.visibility === "restricted" ||
+          to.visibility === "restricted" ||
+          (
+            (e.effective_access as { id: string; restricted: boolean }[]) ?? []
+          ).some((a) => [from.id, to.id].includes(a.id) && a.restricted)
+            ? "restricted"
+            : "workspace",
+        data: { ...to.data, aliases: mergedAliases(from, to) },
+      });
+      byId.set(from.id, {
+        ...from,
+        data: { ...from.data, status: "merged", redirect_to: { id: to.id } },
+      });
+    }
+    return text;
+  });
   const exact =
     b.action === "managed_file"
       ? `File: ${e.target}\nAction: ${e.before_hash === null ? "Create new file (expected absent)" : "Replace/edit the exact observed existing file"}. Existing size: ${e.before_length} bytes.\nComplete resulting ${e.method_export ? "Method content (the file also carries internal source/version/hash metadata)" : "text"}:\n${e.method_snapshot ? value(e.method_snapshot) : e.final_text}\n${e.work_ref ? `Work: ${(e.work_snapshot as JsonObject)?.title ?? "Selected Work"}. Goal: ${(e.work_snapshot as JsonObject)?.objective}. ${(e.work_snapshot as JsonObject)?.step_intent ? `Step: ${(e.work_snapshot as JsonObject).step_intent}` : ""}` : `Independent action: ${e.independent_basis}`}\n${e.retry_of ? `Risky repeat: ${e.retry_risk}. The prior uncertain attempt stays linked internally.` : ""}`
-      : ops.map(describe).join("\n\n") +
+      : descriptions.join("\n\n") +
         ((
           e.assigned_method_versions as
             | { id: string; content_version: number }[]
