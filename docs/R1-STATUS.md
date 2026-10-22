@@ -1,3 +1,5 @@
+Current Sleep privacy qualification: see [SLEEP-PRIVACY.md](SLEEP-PRIVACY.md). Frozen runtime f280459; current M157/155pass/2inherited skips and fresh L on actual Pi1.3/1.4. All five coordinator categories addressed. Full R1/T31, owner usefulness and fresh physical independent review remain open. Historical rows below retain their original artifact attribution.
+
 # Full R1/R2 disposition
 
 The coordinator follow-up reproduced four counterexample categories before independent

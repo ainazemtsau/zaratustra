@@ -1,0 +1,20 @@
+{
+  "runtime_sha": "f280459b7f219e1e29076d9205ecfeaa449c3642",
+  "supplements_immutable_live_seal": true,
+  "hosts": [
+    {
+      "host": "130",
+      "all_current_restricted_record_ids_and_exact_blob_case_source_ids_filtered": true,
+      "protected_review_item_and_batch_ids_filtered": true,
+      "actual_canary_filtered": true,
+      "attempts": [46, 47]
+    },
+    {
+      "host": "140",
+      "all_current_restricted_record_ids_and_exact_blob_case_source_ids_filtered": true,
+      "protected_review_item_and_batch_ids_filtered": true,
+      "actual_canary_filtered": true,
+      "attempts": [48, 49]
+    }
+  ]
+}

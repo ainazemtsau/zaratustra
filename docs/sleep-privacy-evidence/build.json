@@ -1,0 +1,93 @@
+{
+  "runtime_sha": "f280459b7f219e1e29076d9205ecfeaa449c3642",
+  "node": "v22.19.0",
+  "npm": "11.6.2",
+  "compiled_build": [
+    {
+      "path": "dist/core/approval.js",
+      "sha256": "a55491eb62248c5fdd5c20df226d49be978f064f3ad8eb4f9ba3eb84d5a874d2"
+    },
+    {
+      "path": "dist/core/contracts.js",
+      "sha256": "f3cb8abd72a88f4fa80623048a83c024270294635de04f8ce7c93783eb7e9df0"
+    },
+    {
+      "path": "dist/core/effects.js",
+      "sha256": "c701ae81913d72c81a88d8fbd2afc86c314eea59f6488a612d5213f3b69e5849"
+    },
+    {
+      "path": "dist/core/experience.js",
+      "sha256": "ac3e5366b18b598b715a69b6b0520c959bc24f8f87dd9ac6d19cafc848c1be92"
+    },
+    {
+      "path": "dist/core/index.js",
+      "sha256": "95dfb27e4140398384dc06c05244300fac7f4d0283775e2dbb3c07d6ad26117e"
+    },
+    {
+      "path": "dist/core/lifecycle.js",
+      "sha256": "afdf5893188fde9166faaa83fe0f1d65768a69d3d2f9026bffb885c11ba97cb0"
+    },
+    {
+      "path": "dist/core/memory.js",
+      "sha256": "f672eecc9bead5a526818f821ea6f6d3475d97294ccfd29973033f482c1145ac"
+    },
+    {
+      "path": "dist/core/sleep.js",
+      "sha256": "0045ae139bfdd688b7c0365f7b10fd18d259bf908feb3b1b964bafe7396da3c9"
+    },
+    {
+      "path": "dist/core/work.js",
+      "sha256": "30c7d6379e2081bf69c01c26fd2b79887f2c6a6e4e64bc67f7deb8ecce8a1ec0"
+    },
+    {
+      "path": "dist/extension/administration.js",
+      "sha256": "1da1a2a6271dd1c4b9daffc5b17a6fd6ae369e04d54a9a678437f2e2edbc7d63"
+    },
+    {
+      "path": "dist/extension/authority.js",
+      "sha256": "999db281e3ba73dc749e1dfce1f0becff9925319cb64b7e2c251010683ee3ef8"
+    },
+    {
+      "path": "dist/extension/index.js",
+      "sha256": "a97b8d4c777ae57a4940a91cffb6d635eb12ba8e84764f6d6a0c8f5928296957"
+    },
+    {
+      "path": "dist/extension/managed.js",
+      "sha256": "c1033c615ce3b02d93aa4b64d43ef7594defd3b4913ebcbc661c1a53b1d8f65c"
+    },
+    {
+      "path": "dist/extension/preview.js",
+      "sha256": "20dc8a4fa1c75f6d63070d845368b1b4e5a81c0831c5a78bd07c16ac2562f5da"
+    },
+    {
+      "path": "dist/extension/workspace.js",
+      "sha256": "7193aa9da545c62a8930d3a8b53ec372a1ee152cdd10de36c11c0da0536eec25"
+    },
+    {
+      "path": "dist/storage/administration.js",
+      "sha256": "938748d8bea50dbe3da3d9a07ce63bd3ee5e211ebc488c7aad24a520171cf705"
+    },
+    {
+      "path": "dist/storage/control.js",
+      "sha256": "2abe26f0ad10183e029a40d47a174c916e036d4f1baa5f8175138d7a4af5195d"
+    },
+    {
+      "path": "dist/storage/extract.js",
+      "sha256": "4b2ae7282b11a424d00ec68643ed17c18796486b0901b6f676169230d249341f"
+    },
+    {
+      "path": "dist/storage/index.js",
+      "sha256": "7ec7fa50b62489fedc0742cf91463c4505380f0dfa83db337c1bf7074a37e287"
+    },
+    {
+      "path": "dist/storage/indexes.js",
+      "sha256": "239695bafe1c627e816920b84d987111fd51057a9deebf91d040d95151cc92d7"
+    },
+    {
+      "path": "dist/storage/output.js",
+      "sha256": "be9090939f9610eb299dd006dc9c1cd2fea58d7ad0700ef9ec9b5b43c84d1685"
+    }
+  ],
+  "native_runtime": "Pi loads matching TypeScript extension source through the actual host JIT, not checkout dist",
+  "final_source_and_resources": "See final-public-installed.json external receipt after documentation-only final commit"
+}

@@ -1,0 +1,122 @@
+{
+  "runtime_sha": "f280459b7f219e1e29076d9205ecfeaa449c3642",
+  "mechanical_preparation": "Actual public installed372 Core generated retained private input, correction/progress and public controls; not model improvement or owner testimony",
+  "hosts": [
+    {
+      "host": "130",
+      "attempts": [
+        {
+          "attempt": 46,
+          "host": "1.3.0",
+          "provider_dispatches": 9,
+          "usage_messages": 9,
+          "empty_transcript": true,
+          "protected_payloads_filtered": true,
+          "permitted_history_positive": true,
+          "history_views": ["changes", "operations"],
+          "controller_os_cwd": "C:\\projects\\zaratustra-v1",
+          "sdk_workspace_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi130\\cwd",
+          "settlement": "deliberate after-checkpoint termination (observer calls exit86)",
+          "observed_wrapper_exit": 1
+        },
+        {
+          "attempt": 47,
+          "host": "1.3.0",
+          "provider_dispatches": 9,
+          "usage_messages": 9,
+          "empty_transcript": true,
+          "protected_payloads_filtered": true,
+          "permitted_history_positive": true,
+          "history_views": ["changes", "operations"],
+          "controller_os_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi130\\cwd",
+          "sdk_workspace_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi130\\cwd",
+          "settlement": "fresh model settled",
+          "observed_wrapper_exit": 0
+        }
+      ],
+      "new_review_count": 1,
+      "frozen_members": 13,
+      "completed_members": 13,
+      "original_records_unchanged": true
+    },
+    {
+      "host": "140",
+      "attempts": [
+        {
+          "attempt": 48,
+          "host": "1.4.0",
+          "provider_dispatches": 8,
+          "usage_messages": 8,
+          "empty_transcript": true,
+          "protected_payloads_filtered": true,
+          "permitted_history_positive": true,
+          "history_views": ["changes", "operations"],
+          "controller_os_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi140\\cwd",
+          "sdk_workspace_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi140\\cwd",
+          "settlement": "deliberate after-checkpoint termination (observer calls exit86)",
+          "observed_wrapper_exit": 86
+        },
+        {
+          "attempt": 49,
+          "host": "1.4.0",
+          "provider_dispatches": 13,
+          "usage_messages": 13,
+          "empty_transcript": true,
+          "protected_payloads_filtered": true,
+          "permitted_history_positive": true,
+          "history_views": ["changes", "operations"],
+          "controller_os_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi140\\cwd",
+          "sdk_workspace_cwd": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\install-pi140\\cwd",
+          "settlement": "fresh model settled",
+          "observed_wrapper_exit": 0
+        }
+      ],
+      "new_review_count": 1,
+      "frozen_members": 13,
+      "completed_members": 13,
+      "original_records_unchanged": true
+    }
+  ],
+  "phase": {
+    "attempts": 4,
+    "requests": 39,
+    "input": 2428116,
+    "output": 11361,
+    "cache_read": 1713920,
+    "estimated_usd": 1.713394,
+    "errors": [],
+    "tool_errors": []
+  },
+  "combined": {
+    "attempts": 49,
+    "requests": 558,
+    "input": 33130839,
+    "output": 185762,
+    "cache_read": 23899776,
+    "estimated_usd": 22.7097236
+  },
+  "actual_billing": "unknown; Pi estimate only",
+  "independent_review": "pending root fresh physical review",
+  "next": "solmax",
+  "product_resources": "One normally discovered product extension and three skills; existing synthetic inline observer only logs/faults",
+  "controlled_interruptions": [
+    {
+      "attempt": 46,
+      "observed_powershell_exit": 1,
+      "observer_calls_exit": 86,
+      "committed_members": 10,
+      "pending_members": 3
+    },
+    {
+      "attempt": 48,
+      "observed_native_exit": 86,
+      "committed_members": 10,
+      "pending_members": 3
+    }
+  ],
+  "fresh_settlements": [47, 49],
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "thinking": "medium",
+  "all_observed_dispatches_have_usage": true
+}

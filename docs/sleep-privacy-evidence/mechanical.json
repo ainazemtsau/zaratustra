@@ -1,0 +1,48 @@
+{
+  "runtime_sha": "f280459b7f219e1e29076d9205ecfeaa449c3642",
+  "full_deliver": {
+    "total": 157,
+    "passed": 155,
+    "failed": 0,
+    "inherited_windows_skips": 2,
+    "log_sha256": "b425d0cd3bf8d52530bf783f85e50c3a01fe469de3ec4786ccab759c9e248372"
+  },
+  "installed_focused": {
+    "passed": 5,
+    "failed": 0,
+    "log_sha256": "475950529cba950eae298924e4f46ccfed56f6dbded85b3beaec18fef9886e90"
+  },
+  "unchanged_coordinator_privacy_expectations": {
+    "initial_public_372_failed": 4,
+    "final_f280_passed": 4,
+    "final_log_sha256": "ce548cdd35ad8ec938daa3c857dffa0deeed39fab5a487e6206e3712d7d76cba"
+  },
+  "coverage": [
+    "Protected-only progress, exact actual protected body, Changes/operations/history/guessed receipt replay, snapshot/visible sequence/generation",
+    "Derived Method and later revision, bound Work/Run, declared exact grounds, permitted-source controls",
+    "Actual pre-fix schema7 reopen; true second read-only connection; stale index lifecycle/reconciliation refusal before rebuild",
+    "Prepared-start crash/rollback; monotone read-only interleaving; no canonical rewrites or new retention pins",
+    "Rebuild/restore, inherited deferred grounds, old epochs, E3 barriers, original four categories and startup/P2/E1/E2/E3 regressions"
+  ],
+  "actual_old7_restore": {
+    "mechanical_only": true,
+    "source_writer_sha": "372db2bd0179af35c7bb0896351298651bc9bad4",
+    "reader_package": "C:/projects/zaratustra-v1-sleep-evidence-20261022/privacy-continuation-20261022/install-pi130/cwd/.pi/git/github.com/ainazemtsau/zaratustra",
+    "source_bundle_unchanged": true,
+    "canonical_old_records_unchanged": true,
+    "derived_method_work_run_and_history_filtered": true,
+    "permitted_source_visible": true,
+    "old_epoch_resume_refused": true,
+    "e3_barriers_retained": true,
+    "approval": "injected synthetic native decision, not owner",
+    "provider_dispatches": 0
+  },
+  "genuine_schema6_proof": "../sleep-continuation-evidence/schema6-current.json remains version-attributed to EF9 with actual171 predecessor writer; unchanged storage/admin/migration code and current regressions support transfer",
+  "retained_unsuccessful_M": [
+    "deliver01/02 deliberately stopped after justified implementation changes, partial logs retained",
+    "deliver03:152pass/1old profile expectation failure/2skip; strengthened read-without-write refusal and independent new-profile positive",
+    "focused02/03 fixture omitted archive revision; fixed without rights expansion",
+    "interleaved-projection-red: genuine fallback downgrade, fixed beforef280",
+    "old7-restore01: designated backupRoot did not contain source bundle; correct refusal, failed target retained; newtarget02 passed"
+  ]
+}

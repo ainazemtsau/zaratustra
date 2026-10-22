@@ -1,0 +1,148 @@
+{
+  "qualified_public_runtime": "2e4d25dce289eaf482bc40d165308e6215354901",
+  "privacy_runtime": "f280459b7f219e1e29076d9205ecfeaa449c3642",
+  "unchanged_files": [
+    {
+      "file": "instructions/bootstrap.md",
+      "sha256": "3c65ddc30709492335bd4c21ca008ab26acd17bc17743f25b5c9cddb736d751d"
+    },
+    {
+      "file": "skills/zaratustra-memory/SKILL.md",
+      "sha256": "5f8289acce9b26fb8f4b870a6d90f07ab4f6cdf06015a3b8b1b5b5f2cb9a1117"
+    },
+    {
+      "file": "skills/zaratustra-sleep/SKILL.md",
+      "sha256": "08bb1489854354316aabc03634f0ea91d9826c3fab215738248880d2e1b4600c"
+    },
+    {
+      "file": "skills/zaratustra-work/SKILL.md",
+      "sha256": "fbb464645535bfc348011b27b65b347a0029d26ac76118e69f55a3aa5176d278"
+    },
+    {
+      "file": "src/core/contracts.ts",
+      "sha256": "d71bbfbe938f44a1d1c59a930f60add4a9eb39a0ac12f456b6b23f4f50340b20"
+    },
+    {
+      "file": "src/core/experience.ts",
+      "sha256": "b07398647dd2ba248eaf8aac02a146b890094cb743d5d003679bed98191ec367"
+    },
+    {
+      "file": "src/core/work.ts",
+      "sha256": "a89dca3ddcbb8c62a24479e0efef383d6e1c3378f2d56fcc66407a80eb99ea86"
+    },
+    {
+      "file": "src/extension/AGENTS.md",
+      "sha256": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b"
+    },
+    {
+      "file": "src/extension/administration.ts",
+      "sha256": "ed5beaa32afc181eae7ca92812b1b7b0cac9c86665d0516d1d2659674f398092"
+    },
+    {
+      "file": "src/extension/authority.ts",
+      "sha256": "6dc1df9e139036a4f80e9e5fcd959e8d63bd1a99eda353646e072e5fe6d0e92e"
+    },
+    {
+      "file": "src/extension/index.ts",
+      "sha256": "f2ec0af300f654fe204b5b04ca8efd5cde76935677946b563996dd726e1b218a"
+    },
+    {
+      "file": "src/extension/managed.ts",
+      "sha256": "2963f1c3d467de2b6856d4ca30be35adb1d0f6413948bb3108406a3c31d7d85c"
+    },
+    {
+      "file": "src/extension/preview.ts",
+      "sha256": "a6dcbf714d8973638a64d3fe132e86d36a343a7180c7a11d58b4cd608b5fa41e"
+    },
+    {
+      "file": "src/extension/workspace.ts",
+      "sha256": "43457e891d0dcdec33cdb72b5b8b0cab698f25bcd25400f132198329b05b035a"
+    },
+    {
+      "file": "src/storage/AGENTS.md",
+      "sha256": "3500f00508a66803f7ad84f0ae962d9cf6f8270c5ad87574157793c78d73e83f"
+    },
+    {
+      "file": "src/storage/administration.ts",
+      "sha256": "5ed3704ca9765f10246c939103596be1fa1a4c0d7c437121ca53f6c83d5f5893"
+    },
+    {
+      "file": "src/storage/control.ts",
+      "sha256": "8bc28d2b2ba344fdcd8ab2b56b200e72db681cb22f486bcf1f44477118b7a4c5"
+    },
+    {
+      "file": "src/storage/extract.ts",
+      "sha256": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f"
+    },
+    {
+      "file": "src/storage/index.ts",
+      "sha256": "9e27bf5c006600915212df03b7eca49d52c61f85c34e7b93d868619ca31372aa"
+    },
+    {
+      "file": "src/storage/indexes.ts",
+      "sha256": "0d3292f86031719e03cd214975cbde11167c21ad91f3dfe6c8fb5cdfbe482886"
+    },
+    {
+      "file": "src/storage/output.ts",
+      "sha256": "f3f9f995f0ff2b06fb9f8606ab5118bf6c452d85ac8081fd9031c3919b798008"
+    },
+    {
+      "file": "src/storage/parser-worker.mjs",
+      "sha256": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec"
+    }
+  ],
+  "existing_sleep_functions": "Diff inserts only the new access-edge helper, 40 added / 0 removed lines; prior scope, routing, deferral and retention functions unchanged",
+  "sleep_diff": "40\t0\tsrc/core/sleep.ts",
+  "public_fixture_checks": [
+    {
+      "attempt_config": 19,
+      "qualification_host": "1.3.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 22,
+      "qualification_host": "1.3.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 23,
+      "qualification_host": "1.3.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 27,
+      "qualification_host": "1.4.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 30,
+      "qualification_host": "1.4.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 31,
+      "qualification_host": "1.4.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 38,
+      "qualification_host": "1.3.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    },
+    {
+      "attempt_config": 42,
+      "qualification_host": "1.4.0",
+      "restricted_canonical_rows": 0,
+      "effective_restricted_flag": 0
+    }
+  ],
+  "inference": "Version-attributed public-ground model stories retain applicability because no restricted grounding is present and their semantics/adapter/Method/storage/routing functions are unchanged. This is not a full fresh L rerun or independent acceptance.",
+  "fresh_required_L": "Lower-profile managed history filtering, public positive and no-transcript continuation on f280, actual Pi1.3 and separately1.4"
+}

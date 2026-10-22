@@ -1,0 +1,53 @@
+{
+  "uncapped": true,
+  "prior_immutable_links": [
+    {
+      "path": "../usage.json",
+      "bytes": 3053,
+      "sha256": "3fb816250ad2b88bda46a8c2e0dd261d63dff4acfc275f07d2e8317b058e3e1c"
+    },
+    {
+      "path": "../final-public-installed.json",
+      "bytes": 34362,
+      "sha256": "932117539c7cfeb0fbd8e7e673b210570dbd1ae0f127daecc2257546f6a31c86"
+    },
+    {
+      "path": "../live-verification.json",
+      "bytes": 1946,
+      "sha256": "bf5ed3be5a33e30c5d20af4c31745ce3123194af26ac9702313558f699e3dc5c"
+    },
+    {
+      "path": "../continuation-20261022/usage-continuation.json",
+      "bytes": 5609,
+      "sha256": "1b762a25a91f2ec6b33d1891c7e6c41cdf45985f5cc0cb3b4a02039ce0073922"
+    },
+    {
+      "path": "../continuation-20261022/ledger-seal.json",
+      "bytes": 1602,
+      "sha256": "49976dac4f588c2f9b0e9b54a5ae57cf42faf67f72cffb9fa55b5bd0e85a3db7"
+    }
+  ],
+  "phase": {
+    "attempts": 4,
+    "requests": 39,
+    "input": 2428116,
+    "output": 11361,
+    "cache_read": 1713920,
+    "estimated_usd": 1.713394,
+    "errors": [],
+    "tool_errors": []
+  },
+  "combined": {
+    "attempts": 49,
+    "requests": 558,
+    "input": 33130839,
+    "output": 185762,
+    "cache_read": 23899776,
+    "estimated_usd": 22.7097236
+  },
+  "third_ledger_sha256": "9485558975bc2c3471b2f6a7fe1b9eee1ed5d5177a831e1cbdc1d2ebd0bd1e41",
+  "third_seal_sha256": "b040b209ee5fed71073e69b0d2a8e095bab826d1e3558b4b3b5f1037a621e3d5",
+  "reported_error_history": "Five prior provider error messages and five prior Core tool errors retained; no new native provider/tool errors in46–49",
+  "orchestration": "Builder02 and03 CLI capacity failures are retained separately, not counted as Pi attempts; Codex monetary usage unavailable",
+  "billing": "Native Pi estimate only; actual billing unknown"
+}
