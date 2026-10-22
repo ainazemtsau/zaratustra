@@ -1,4 +1,4 @@
-Current Sleep follow-up: [SLEEP-PREVIEW.md](SLEEP-PREVIEW.md), runtime07510ec. Exact commit-preview disclosure reproduced on676f438 and corrected across typed start/checkpoint preparations. M161/159pass/2inherited skips; native low/high full-read/authorized/permitted controls on actualPi1.3/1.4. Prior subcases retain exact source/host attribution. Separate fresh independent review/fullR1/T31/owner usefulness remain open. Historical rows below are unchanged.
+Current Sleep host amendment: [SLEEP-PI14.md](SLEEP-PI14.md). The owner now requires Pi 1.4 only; the development SDK is pinned to 1.4.0. Production runtime remains bytewise equal to d9b6551/runtime07510ec. Previous Pi 1.3 results are historical; genuine Pi 1.4 observations retain exact source/host attribution. New toolchain validation is in progress. Separate fresh independent review/fullR1/T31/owner usefulness remain open. Historical rows below are unchanged.
 
 # Full R1/R2 disposition
 

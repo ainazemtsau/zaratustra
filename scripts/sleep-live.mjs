@@ -67,9 +67,9 @@ const piVersion = JSON.parse(
     "utf8",
   ),
 ).version;
-const expectedPi = config.qualificationHost ?? "1.3.0";
+const expectedPi = config.qualificationHost ?? "1.4.0";
 if (
-  !["1.3.0", "1.4.0"].includes(expectedPi) ||
+  expectedPi !== "1.4.0" ||
   piVersion !== expectedPi ||
   sdk.VERSION !== piVersion
 )
@@ -97,10 +97,7 @@ if (!auth)
 log("identity", {
   pi: piVersion,
   sdk_version: sdk.VERSION,
-  qualification_profile:
-    expectedPi === "1.3.0"
-      ? "pinned baseline"
-      : "separate current-host compatibility",
+  qualification_profile: "owner-amended Pi 1.4-only target",
   pid: process.pid,
   os_cwd: process.cwd(),
   sdk_cwd: cwd,

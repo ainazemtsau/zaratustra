@@ -8,12 +8,16 @@ docs/sleep-predecessor-AGENTS-171415b.md and its DEVELOPMENT companion. Preserve
 prior E1/E2/E3 evidence and failed attempts. Full R1/T31, independent review and owner
 usefulness remain separate; the single implementation writer claims none of them.
 
-Commands (Node 22.19.0, npm 11.6.2, Pi 1.3.0):
+Commands (Node 22.19.0, npm 11.6.2, Pi 1.4.0):
+
+Owner amendment, 2026-10-22: «если что работаем только на pi 1.4».
+Development and current qualification use Pi 1.4 only; no further Pi 1.3 executions.
+Prior Pi 1.3 observations retain their historical attribution. Keep global Pi unchanged.
 
 - npm ci installs pinned development dependencies.
 - npm run check checks format, ESLint, types, boundaries, build and disk tests.
 - npx tsx --test tests/sleep.test.ts runs focused Sleep disk/fault tests.
-- npm run deliver repeats required checks and validates RESULT fields.
+- npm run deliver includes check and validates RESULT fields; run it once for final validation.
 
 One executor; no chats/subagents. Root arranges fresh physical independent review.
 Own the complete bounded Sleep implementation, same-store schema/backup integration,

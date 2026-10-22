@@ -7,6 +7,13 @@ remain historical. The owner explicitly rejected all total resource budgets: no 
 token, attempt, dispatch, case, time or continuation limits. Complete actual accounting has
 no reset. Ten cards per technical batch and existing per-call validation/pagination remain.
 
+Owner host amendment, 2026-10-22: «если что работаем только на pi 1.4».
+Current development and release qualification use Pi 1.4 only, actual 1.4.0 on Node 22.19.0,
+Windows x64. This supersedes the earlier 1.3 baseline/separate 1.4 arrangement; no further
+1.3 executions. Historical reports, original specification source and sealed ledgers retain
+their original labels and bytes. Core remains portable and global Pi is unchanged.
+See SLEEP-PI14.md for scoped dependency alignment and isolated reproduction.
+
 Ordinary chat invokes a third English native Pi entry skill, using the same extension/Core,
 selected Pi model and existing trusted cwd/.local defaults. No launcher, mandatory extra
 AGENTS, environment ceremony, scheduler, daemon, new provider, runtime, database, semantic
