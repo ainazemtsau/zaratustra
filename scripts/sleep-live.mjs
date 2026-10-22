@@ -61,6 +61,16 @@ if (b.uncapped !== true)
   throw new Error("A new explicitly uncapped ledger is required");
 b.attempts++;
 saveLedger(b);
+const piVersion = JSON.parse(
+  readFileSync(
+    new URL("../package.json", pathToFileURL(process.env.ZARA_PI_SDK)),
+    "utf8",
+  ),
+).version;
+if (piVersion !== "1.3.0")
+  throw new Error(
+    `Required qualification host is Pi 1.3.0; actual ${piVersion}. No provider call was dispatched.`,
+  );
 const log = (name, value) =>
   appendFileSync(join(output, name + ".jsonl"), JSON.stringify(value) + "\n");
 const runtime = await ModelRuntime.create({
@@ -80,6 +90,7 @@ if (!auth)
     "Native authentication is unavailable; no substitute authorized",
   );
 log("identity", {
+  pi: piVersion,
   pid: process.pid,
   os_cwd: process.cwd(),
   sdk_cwd: cwd,
@@ -247,6 +258,22 @@ log("resources", {
 });
 if (ext.errors.length)
   throw new Error("Extension load failed; see resources log");
+const requiredSkills = [
+  "zaratustra-work",
+  "zaratustra-memory",
+  "zaratustra-sleep",
+];
+if (
+  ext.extensions.filter(
+    (e) => e.tools.has("zara_commit") && e.tools.has("zara_sleep_batch"),
+  ).length !== 1 ||
+  requiredSkills.some(
+    (name) => !loader.getSkills().skills.some((s) => s.name === name),
+  )
+)
+  throw new Error(
+    "Required one product extension and three native skills are unavailable; no provider call was dispatched.",
+  );
 const { session } = await createAgentSession({
   cwd,
   agentDir,

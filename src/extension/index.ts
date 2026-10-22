@@ -1167,7 +1167,7 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_sleep_batch",
-    "Read durable Sleep reviews or one prepared batch of ten routing cards/exact refs. Read bodies with zara_read. No cursor/coverage can be supplied. Read zaratustra-sleep before start_sleep/sleep_checkpoint inside zara_commit. Profile, scope and epoch are immutable; interrupted review retains its prepared batch. No new cycle starts automatically.",
+    "Read durable Sleep reviews or one prepared batch of ten routing cards/exact refs. Read bodies with zara_read. Optional cursor paginates the review list only; input coverage/frontier is never caller-selected. Read zaratustra-sleep before start_sleep/sleep_checkpoint inside zara_commit. Profile, scope and epoch are immutable; interrupted review retains its prepared batch. No new cycle starts automatically.",
     z.strictObject({
       run_id: z.string().min(1).optional(),
       cursor: z.string().min(1).optional(),

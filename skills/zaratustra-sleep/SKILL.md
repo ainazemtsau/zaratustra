@@ -47,6 +47,11 @@ The checkpoint atomically saves corrections, dispositions, deferred anchors, nex
 Changes and receipt. Keep calls within normal validation bounds; there is no total limit
 on batches, reads, attempts, continuations, tokens, money, cases or elapsed time.
 
+Every disposition's evidence_refs accepts only retained Evidence records. Method/Run refs
+are read premises or change_refs, not Evidence; keep evidence_refs empty for a considered
+item unless it cites actual retained source Evidence. A changed disposition still requires
+Evidence grounds as well as exact changed refs. Core rejects mixed kinds without progress.
+
 An unchanged item may remain unknown or open. A deferred item needs a concrete reason,
 addressed continuation and next_check condition. Pending approval may be deferred while
 independent work continues; deferred never means resolved. For changed items retain source
