@@ -15,7 +15,7 @@ Exact qualified-runtime isolated install (ordinary current Pi, no production wra
 ```powershell
 Set-Location C:/projects/zaratustra-v1-sleep-evidence-20261022/privacy-continuation-20261022/install-pi140/cwd
 $env:PI_CODING_AGENT_DIR = 'C:/projects/zaratustra-v1-sleep-evidence-20261022/privacy-continuation-20261022/install-pi140/agent'
-pi.cmd install --local git:github.com/ainazemtsau/zaratustra@f280459b7f219e1e29076d9205ecfeaa449c3642
+pi.cmd install --local --approve git:github.com/ainazemtsau/zaratustra@f280459b7f219e1e29076d9205ecfeaa449c3642
 ```
 
-The final handback and external receipt give the exact final documentation SHA install command; runtime bytes equal this qualified pin. Six normal npm peer-flag removals are recorded separately from public lock bytes.
+Pi's existing local-package trust gate required `--approve` in these isolated post-model directories; both initial refusals are retained. This is installer configuration authorization, not Sleep confirmation or a production launcher. The final handback and external receipt give the exact final documentation SHA install command; runtime bytes equal this qualified pin. Six normal npm peer-flag removals are recorded separately from public lock bytes.

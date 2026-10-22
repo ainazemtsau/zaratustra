@@ -90,4 +90,9 @@ byte-for-byte. The new final-public-installed.json checks final public/installed
 instruction/test/harness files and three authority docs against f280, actual resources/dependencies,
 and separate lock hashes. Six normal peer-flag removals are disclosed; no identical-lock claim.
 
+Pi's existing local-package trust gate refused the first final installs in both isolated
+post-model directories. Both refusal logs are retained. Native `--approve` authorizes that
+installer configuration update; it does not change Sleep rights, native shared-write confirmation,
+global Pi installation or production launch. The isolated install command includes this flag.
+
 next: solmax
