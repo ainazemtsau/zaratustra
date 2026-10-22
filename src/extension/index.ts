@@ -72,6 +72,7 @@ const productInputs = [
   "src/core/approval.ts",
   "src/core/effects.ts",
   "src/core/lifecycle.ts",
+  "src/core/sleep.ts",
   "src/storage/administration.ts",
   "src/storage/control.ts",
   "src/extension/administration.ts",
@@ -87,6 +88,7 @@ const productInputs = [
   "instructions/bootstrap.md",
   "skills/zaratustra-work/SKILL.md",
   "skills/zaratustra-memory/SKILL.md",
+  "skills/zaratustra-sleep/SKILL.md",
 ];
 const resourceHashes = Object.fromEntries(
   productInputs.map((path) => [
@@ -1162,6 +1164,19 @@ export default function extension(pi: ExtensionAPI) {
     "Atomically save linked domain/support rows, exact versions, Change, indexes and receipt. Read work/memory skills. Methods: create_record kind:method starts content_version 1; revise_method/update_record supply current version, Core increments behavioral changes. start_run/finish_run retain meaningful episodes; invoke_method pins complete selected_versions before use; report_application keeps model report distinct from output_refs and observed tool Evidence. record_evaluation targets exact result/version; use reported_feedback for RPC/quoted reports, never owner user_feedback. open_signal/review_signal preserve problems and independent reviews; editing alone never resolves. Exact guards required for changes. Existing Work claim/transition/handoff contracts remain. Knowledge is canonical fact storage; originals stay exact. E2 consequential changes require zara_preview then zara_confirm; commit the identical request plus preview_ref. merge_identity and finite reorganize_catalog preserve historical identities. Native file effects use zara_file_preview and ordinary write/edit. Storage operations use zara_storage_preview/confirm/apply; restore uses zara_restore_preview/confirm/restore and named reconciliation.",
     CommitSchema,
     (p) => get().commit(p),
+  );
+  register(
+    "zara_sleep_batch",
+    "Read durable Sleep reviews or one prepared batch of ten routing cards/exact refs. Read bodies with zara_read. No cursor/coverage can be supplied. Read zaratustra-sleep before start_sleep/sleep_checkpoint inside zara_commit. Profile, scope and epoch are immutable; interrupted review retains its prepared batch. No new cycle starts automatically.",
+    z.strictObject({
+      run_id: z.string().min(1).optional(),
+      cursor: z.string().min(1).optional(),
+    }),
+    (p) =>
+      get().sleepBatch(
+        p.run_id as string | undefined,
+        p.cursor as string | undefined,
+      ),
   );
   register(
     "zara_doctor",

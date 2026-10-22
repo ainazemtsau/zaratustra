@@ -221,7 +221,7 @@ export const MethodData = z.strictObject({
 });
 export const RunData = z.strictObject({
   work_ref: Ref.nullable(),
-  mode: z.enum(["work", "conversation", "correction"]),
+  mode: z.enum(["work", "conversation", "correction", "sleep"]),
   episode_key: text,
   case_id: text,
   continuation_of: Ref.nullable(),
@@ -480,6 +480,35 @@ const create = z.discriminatedUnion("kind", [
     data: MethodData,
   }),
 ]);
+export const SleepOps = [
+  z.strictObject({
+    op: z.literal("start_sleep"),
+    work_ref: Ref,
+    run_ref: Ref,
+  }),
+  z.strictObject({
+    op: z.literal("sleep_checkpoint"),
+    run_ref: Ref,
+    batch_id: text,
+    abort: z.boolean().optional(),
+    dispositions: z
+      .array(
+        z.strictObject({
+          item_id: text,
+          disposition: z.enum(["considered", "changed", "deferred"]),
+          reason: text,
+          continuation: text.nullable(),
+          evidence_refs: z.array(Ref).max(20),
+          change_refs: z.array(Ref).max(20),
+          expected_benefit: text.nullable(),
+          limits: text.nullable(),
+          next_check: text.nullable(),
+          check_signal_ref: Ref.nullable(),
+        }),
+      )
+      .max(10),
+  }),
+] as const;
 export const CommitSchema = z.strictObject({
   preview_ref: text.optional(),
   request_id: z.string().min(1).max(160),
@@ -499,6 +528,7 @@ export const CommitSchema = z.strictObject({
       z.union([
         create,
         ...ExperienceOps,
+        ...SleepOps,
         z.strictObject({
           op: z.literal("merge_activity"),
           from_ref: z.strictObject({ id: text }),

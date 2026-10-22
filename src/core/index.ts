@@ -1,4 +1,6 @@
 import { Lifecycle } from "./lifecycle.ts";
+import { Sleep } from "./sleep.ts";
+export { SleepSchemaSQL, validateSleep, sleepGrounds } from "./sleep.ts";
 export {
   LifecycleSchemaSQL,
   StorageActionSchema,
@@ -80,6 +82,7 @@ export const mergedAliases = (from: RecordRow, to: RecordRow) => [
   ]),
 ];
 export class Core {
+  private activeSleepReview?: string;
   private sources = new Map<string, Source>();
   private _approvals?: Approvals;
   get approvals() {
@@ -161,10 +164,21 @@ export class Core {
       if (
         this.storage.get("SELECT id FROM addressed_current WHERE id=?", ref.id)
       ) {
-        const row = this.addressed(ref.id, ref.revision);
+        const current = this.addressed(ref.id);
+        const updated = request.ops.some(
+          (op) => "ref" in op && op.ref.id === ref.id,
+        );
+        const future =
+          updated &&
+          (ref.revision === current.revision + 1 ||
+            (current.kind === "method" &&
+              ref.content_version ===
+                Number(current.data.content_version) + 1));
+        const row = future ? current : this.addressed(ref.id, ref.revision);
         dependencies.set(ref.id, this.addressed(ref.id).revision);
         requireThat(
-          !ref.content_version ||
+          future ||
+            !ref.content_version ||
             row.data.content_version === ref.content_version,
           "REFERENCE_TYPE_MISMATCH",
           "Method version mismatch.",
@@ -433,6 +447,7 @@ export class Core {
     return this.effects.observe(request, observation, call);
   }
   private requiresApproval(request: ReturnType<typeof CommitSchema.parse>) {
+    if (this.sleep.needsApproval(request, this.activeSleepReview)) return true;
     const catalogUpdates = request.ops.filter(
       (op) =>
         op.op === "update_record" &&
@@ -543,6 +558,22 @@ export class Core {
   private cursors = new Map<string, CursorState>();
   private get memory() {
     return new Memory(this.storage, this.context, this.cursors);
+  }
+  private get sleep() {
+    return new Sleep(
+      this.storage,
+      this.context,
+      (id, revision) => this.addressed(id, revision),
+      (id, revision) => this.memory.allowed(id, revision),
+    );
+  }
+  sleepBatch(runId?: string, cursor?: string) {
+    this.authorize();
+    this.memory.barrier();
+    const result = this.sleep.batch(runId, cursor);
+    if (runId && "status" in result && result.status === "active")
+      this.activeSleepReview = runId;
+    return result;
   }
   constructor(
     public storage: StoragePort,
@@ -2184,6 +2215,7 @@ export class Core {
       let focus: unknown = undefined;
       for (const raw of request.ops) {
         const op = resolve(raw) as typeof raw;
+        if (op.op === "start_sleep" || op.op === "sleep_checkpoint") continue;
         if (experience.apply(op)) continue;
         if (op.op === "merge_activity") {
           const from = guardedStaged(op.from_ref.id),
@@ -3140,6 +3172,24 @@ export class Core {
           work = get(work.data.parent_work_id, "work");
         }
       }
+      const sleepOps = request.ops.filter(
+        (op) => op.op === "start_sleep" || op.op === "sleep_checkpoint",
+      );
+      requireThat(
+        sleepOps.length <= 1,
+        "VALIDATION_ERROR",
+        "One Sleep start/checkpoint per atomic commit.",
+      );
+      for (const raw of sleepOps) {
+        const op = resolve(raw) as typeof raw;
+        this.sleep.apply(
+          op,
+          request,
+          (id, revision) =>
+            experience.address({ id, ...(revision ? { revision } : {}) }),
+          [...changed.values(), ...experience.changed.values()],
+        );
+      }
       const revisions: Record<string, number> = {};
       for (const r of changed.values()) {
         revisions[r.id] = r.revision;
@@ -3164,6 +3214,13 @@ export class Core {
       const seq = this.domainSequence() + 1;
       const transaction_id = id("txn");
       const change = {
+        ...(sleepOps.length
+          ? {
+              sleep_review_ref: (
+                resolve(sleepOps[0]) as (typeof sleepOps)[number]
+              ).run_ref,
+            }
+          : {}),
         transaction_id,
         request_id: request.request_id,
         change_seq: seq,
@@ -3291,6 +3348,17 @@ export class Core {
       this.fault?.("before_commit");
       this.storage.exec("COMMIT");
       this.fault?.("after_commit");
+      if (sleepOps.length) {
+        const sleepOp = resolve(sleepOps[0]) as (typeof sleepOps)[number];
+        if ("id" in sleepOp.run_ref) {
+          const review = this.storage.get<{ id: string }>(
+            "SELECT id FROM sleep_reviews WHERE (id=? OR episode_id=?) AND status='active'",
+            sleepOp.run_ref.id,
+            sleepOp.run_ref.id,
+          );
+          this.activeSleepReview = review?.id;
+        }
+      }
       return this.memory.sanitizeTechnical(receipt);
     } catch (error) {
       try {

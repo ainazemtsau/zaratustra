@@ -143,7 +143,15 @@ backups, logs and Pi transcripts are separate copies. Never promise forensic era
 call archive deletion. Exact zara_cleanup_preview/confirm/cleanup removes only orphan
 managed files/expired staging under fresh pins/ref/identity checks. Pending source handles
 expire after 30 minutes or lifecycle invalidation. No daemon/semantic retention planner.
-Sleep, Codex and full R1 qualification remain separate.
+For an explicitly requested accumulated-experience review, read zaratustra-sleep. Default
+scope is all permitted memory; explicit Activity reviews have independent coverage. Discover
+interrupted reviews with zara_sleep_batch; start_sleep and sleep_checkpoint are ordinary
+zara_commit operations. Frozen input makes each cycle finite. No total resource budgets;
+new arrivals wait for the next explicitly requested cycle. Never restart a cycle yourself.
+Review/bookkeeping is not new experience or a Method application. Activity origin does not
+make Knowledge/Methods local: shared changes require exact native confirmation in Activity
+mode. Keep later real checks open; no compulsory improvement without grounds.
+Codex and full R1 qualification remain separate.
 Unconsented automatic routing is unsupported. Pi's before_provider_request observer catches
 exceptions and cannot be treated as a veto. Stopping new reads does not purge transcript
 or prove that no data was previously transmitted. Zaratustra never selects a model.

@@ -1500,7 +1500,7 @@ test("E1 schema-3 upgrade faults preserve filled canonical rows and material byt
       ),
     );
     f.disk.exec(
-      "DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; PRAGMA user_version=3",
+      "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; PRAGMA user_version=3",
     );
     f.disk.workspace.schema_version = 3;
     f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
@@ -1518,7 +1518,7 @@ test("E1 schema-3 upgrade faults preserve filled canonical rows and material byt
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 6);
+    assert.equal(recovered.workspace.schema_version, 7);
     assert.equal(
       canonical(
         tables.map((table) =>

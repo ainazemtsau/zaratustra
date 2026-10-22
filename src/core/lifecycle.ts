@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sleepGrounds } from "./sleep.ts";
 import { randomUUID, createHash } from "node:crypto";
 import { addressedIds, addressedRefs, refreshMemory } from "./memory.ts";
 import { canonical, requireThat } from "./contracts.ts";
@@ -112,6 +113,7 @@ export class Lifecycle {
     const add = (value: unknown, root: string) => {
       for (const ref of addressedRefs(value)) queue.push({ ref, root });
     };
+    add(sleepGrounds(this.db), "pending Sleep batch/deferred check");
     for (const r of this.db.all<{ work_id: string }>(
       "SELECT DISTINCT work_id FROM recovery_barriers WHERE json_extract(json,'$.status')='required'",
     ))

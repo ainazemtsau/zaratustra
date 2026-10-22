@@ -1,0 +1,13 @@
+outcome: Corrected ordinary trusted project startup from 1806881d0b560903a642e098031c5843f0dc42a5 under the latest explicit owner assignment. Persistent .local/{memory,imports,output,backups} remains automatic; all ignore creation/prerequisites are removed and Git exclusions belong to the owner. Existing .local stores now refuse nested .local/memory initialization before writes. No migration or automatic data commit/push is performed.
+
+evidence: [Focused reproduction and policy](docs/PROJECT-STARTUP.md), updated tests/startup.test.ts, scripts/startup-native.mjs and scripts/startup-git.mjs. New evidence: C:/projects/zaratustra-v1-startup-tracking-evidence-20261021, including preserved RED/GREEN, corrected-source checks and later external FINAL-READBACK.json. The previous deliver-3 result (132 tests,130 pass,0 fail,2 Windows skips) belongs to ac662c0383f025c4e04cfb6fd9d8cbb90dd34b54/unchanged runtime at1806881, not this correction. Corrected source: entire startup suite9 pass/0 fail/0 skip; existing snapshot1 pass and source-provenance1 pass; format/ESLint/types/boundary/build/RESULT structure pass. Post-publication installed identity/results are recorded separately in the new external receipt.
+
+assumptions: Windows11x64/Node22.19.0/npm11.6.2/Pi1.3.0, one trusted writer, no outside controlled-output writer/router. Core/storage/schema/approvals/dependencies remain byte-identical to1806881. All user-data Git indexing is synthetic, closed/quiescent and has no remote. Existing owner ignore files are preserved regardless of contents. No private ZT path, backup or old ledger is accessed. Public main remains d956c6dfe18b49754fabd0773b798a01e5fcb017.
+
+cuts: No synchronization, multi-computer recovery, new automatic backup/export framework, live SQLite Git-commit safety, running-system restore, Git hooks or additional launch ceremony. Git versioning makes saved files available; owner rules/filters determine inclusion/transformation. Default scopes remain[] and observed-stage input is not promoted to original keystrokes/owner feedback. Existing native confirmations and corruption refusal remain. Full R1/F/T31, independent PASS, owner acceptance, Codex and Sleep are separate.
+
+cost: Zero model attempts/provider dispatches and USD0 Pi model estimate. No live ledger opened or reset. All correction attempts and errors stay in the new external evidence; historical committed evidence and prior commits remain intact.
+
+manual-acceptance: Executor verification only. The owner manually operates/updates the private project later. Independent review follows separately; no owner usefulness or full R1/T31 acceptance is assigned here. Only source is pushed to codex/zaratustra-v1; no fixture/user data is committed or pushed.
+
+next: solmax

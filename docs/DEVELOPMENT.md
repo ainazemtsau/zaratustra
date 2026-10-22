@@ -1,32 +1,32 @@
-# Authorized outcome E3
+# Current authorized outcome: Sleep
 
-Exact E2 094c0df4ef893a0668ee87dcff92e5abbad3514d is independently limited technical
-PASS and coordinator-accepted under explicit owner overnight delegation. The root gate
-was reread accepted with E3 writes allowed before implementation. This is separate from
-Anton usefulness/T31 and full R1. E2 current docs are preserved as exact Git-byte copies
-ending -094c0df4.md. Preflight on old0d6 remains an unchanged external historical note.
+The 2026-10-22 owner assignment authorizes the single implementation writer to publish
+and qualify the complete bounded Sleep candidate on codex/zaratustra-sleep from exact
+171415b48061e8f1a0da5b0653bb087931ca41fc. Read AGENTS.md and SLEEP-CONTRACT.md. It
+supersedes E3-only scope, branch restrictions and budgets. Historical AGENTS/DEVELOPMENT
+bytes are in sleep-predecessor-\*-171415b.md; prior E1/E2/E3 evidence remains unchanged.
+Full specification including appendices was read. Current section 12.3/T37 now reflect the
+owner's explicit no-budget decision. Full R1, F, Codex, T31, independent review and owner
+usefulness remain separate. Root arranges review and eventual main merge; the owner updates
+private ZT manually. No private workspace access is authorized.
 
-E3 authorizes consistent backup plus versioned JSON export, exact raw managed blobs/pins,
-quarantine restore (including unavailable DB), external authoritative control epoch,
-per-action restored reconciliation including no receipt, archive/minimal tombstones,
-conservative addressed retention and bounded file cleanup. Read E3-DESIGN for mechanism
-necessity and limits. Portable Core remains independent of Pi. No SQL transaction spans
-model/human/tool waits; no new dependency, planner, second model, daemon or installer.
+One extension/Core, three native entry skills, ordinary conversation; portable Core and
+same SQLite, schema 6 to 7 verified backup/receipt/manifest repair, E3 quarantine restore
+and external epoch barriers. No SQL transaction spans model/human/provider/file waits.
+No dependency, planner, second model, daemon, launcher or runtime Git action is added.
+Trusted cwd/.local startup and owner Git policies remain intact. Sleep grants no new rights.
 
-The unchanged complete specification including appendices was read. Original SHA256
-7d3bd88d71dd954949ad33caae38859f9e06c460b8537ed3259780d11668fac4;
-public derivative 4940e16e39174df941da98889c43b713c48287d4aeda8754fd57660d462a77cb.
-Full R1 remains the target. Full F/T30, actual owner usefulness/T31, Sleep and Codex remain
-separate. The sole executor assigns no independent E3 PASS or acceptance.
+Default scope is all permitted memory; Activity coverage is independent and shared Knowledge/
+Methods require exact confirmation. Frozen initial inputs make a review finite; arrivals wait
+for the next explicitly requested cycle. No total USD/token/attempt/dispatch/case/time/
+continuation budgets. Ten routing cards per batch and normal per-call validation remain.
+Keep all actual usage/errors in one new uncapped ledger under
+C:/projects/zaratustra-v1-sleep-evidence-20261022, without resetting prior attempts.
+Synthetic L uses openai-codex/gpt-6.1-sol medium with native auth. Mechanical fixture preparation,
+synthetic native approvals and real model choices are reported separately.
 
-One new non-reset external E3 ledger: 30 conversations,240 actual provider dispatches,
-USD20 Pi estimate; stop at the first cap. All errors/retries/candidates remain charged.
-Fixed openai-codex/gpt-6.1-sol medium, supported native authPath only. No credential read
-or copy. Predeclared low scopes[] and protected restricted:read/write synthetic profiles
-use separate external agent/home/cwd/output/backup roots. The registered controller may
-approve only those fixtures; it never supplies owner testimony or T31. No escalation
-inside a refused history. Existing E2/reviewer/raw evidence and Direction OS remain frozen.
-
-E3 is implemented and executor-qualified on de96b982 in the declared profile. See E3-VALIDATION/REPRODUCE/ATTEMPTS
-for actual version-attributed results and limits; independent exact final qualification/acceptance stays with root. Known braces dev advisory and two
-Windows controls remain separate. next: solmax.
+Run npm run check and npm run deliver. Freeze and publicly install outside checkout before L.
+Retain failures. Final docs may add commits only with runtime/instruction/test equality to
+the live-qualified candidate and explicit final public install/readback, including normal
+peer lockfile transformations. Only git push -u origin codex/zaratustra-sleep; no main merge,
+force push, foreign-ref or tag mutation. Return RESULT.md; next: solmax.

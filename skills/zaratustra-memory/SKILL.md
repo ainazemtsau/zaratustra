@@ -131,3 +131,9 @@ maintenance with pins/ref/identity checks; it does not choose semantic forgettin
 Full retained-version body deletion also requires fixed full-read/write administrative
 setup before dependency analysis: the complete reverse graph/technical-copy coverage
 cannot be exposed or modified by a lower-scope observer. Archive/retain remain per-record.
+
+For an explicitly requested review of accumulated experience use zaratustra-sleep in this same
+extension/Core. Discover prepared batches with zara_sleep_batch; commit start_sleep and
+sleep_checkpoint through zara_commit. Reviews are finite by frozen initial input, with no total
+resource budget and no automatic new cycle. Review/bookkeeping is not a Method application or
+independent success. Activity origin does not make shared Knowledge/Methods locally writable.

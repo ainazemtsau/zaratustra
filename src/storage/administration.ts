@@ -30,6 +30,8 @@ import {
   TombstoneSchema,
   PersistedSupportData,
   PersistedEvidenceData,
+  SleepSchemaSQL,
+  validateSleep,
 } from "../core/index.ts";
 import type {
   CallContext,
@@ -68,6 +70,7 @@ const tables = [
   "recovery_barriers",
   "lifecycle_events",
 ];
+const sleepTables = ["sleep_reviews", "sleep_items", "sleep_coverage"];
 const component = z.strictObject({
   path: z
     .string()
@@ -77,7 +80,7 @@ const component = z.strictObject({
 });
 const Manifest = z.strictObject({
   format: z.literal("zaratustra.bundle.v1"),
-  schema: z.literal(6),
+  schema: z.union([z.literal(6), z.literal(7)]),
   workspace_id: z.string(),
   captured_epoch: z.string(),
   captured_seq: z.number().int().nonnegative(),
@@ -129,10 +132,12 @@ function port(db: DatabaseSync, home: string): StoragePort {
 }
 function dbRows(db: DatabaseSync) {
   return Object.fromEntries(
-    tables.map((t) => [
-      t,
-      db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all(),
-    ]),
+    [
+      ...tables,
+      ...(db.prepare("PRAGMA user_version").get()!.user_version === 7
+        ? sleepTables
+        : []),
+    ].map((t) => [t, db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all()]),
   );
 }
 function blobs(db: DatabaseSync) {
@@ -162,7 +167,9 @@ function validate(
   allowDerivedIndexRepair = false,
 ) {
   requireThat(
-    db.prepare("PRAGMA user_version").get()!.user_version === 6,
+    [6, 7].includes(
+      Number(db.prepare("PRAGMA user_version").get()!.user_version),
+    ),
     "STORE_UNAVAILABLE",
     "Unsupported bundle schema.",
   );
@@ -184,6 +191,12 @@ function validate(
       .prepare("SELECT json FROM records")
       .all()
       .map((r) => JSON.parse(String(r.json)) as RecordRow);
+  requireThat(
+    s.workspace.schema_version ===
+      Number(db.prepare("PRAGMA user_version").get()!.user_version),
+    "STORE_UNAVAILABLE",
+    "Snapshot schema metadata mismatch.",
+  );
   const schemas: Record<string, z.ZodType> = {
     activity: ActivityData,
     work: WorkData,
@@ -341,6 +354,7 @@ function validate(
       );
     else get(ref);
   });
+  if (s.workspace.schema_version === 7) validateSleep(s, get);
   if (materials)
     for (const h of blobs(db)) {
       const p = safePath(home, join(home, "materials", h));
@@ -491,6 +505,7 @@ export class Administration {
       index_repairs_required = checked.index_repairs_required;
       requireThat(
         storage.workspace.workspace_id === manifest.workspace_id &&
+          storage.workspace.schema_version === manifest.schema &&
           storage.workspace.epoch === manifest.captured_epoch &&
           Number(
             db.prepare("SELECT coalesce(max(seq),0) AS seq FROM changes").get()!
@@ -515,6 +530,7 @@ export class Administration {
       );
       requireThat(
         exported.format === "zaratustra.export.v1" &&
+          exported.schema === manifest.schema &&
           exported.workspace_id === manifest.workspace_id &&
           canonical(exported.tables) === canonical(dbRows(db)),
         "STORE_UNAVAILABLE",
@@ -574,7 +590,7 @@ export class Administration {
         const exported = {
           format: "zaratustra.export.v1",
           workspace_id: s.workspace.workspace_id,
-          schema: 6,
+          schema: s.workspace.schema_version,
           coverage:
             "current and retained history; tombstones have no retained bodies; authority is historical",
           tables: dbRows(db),
@@ -588,7 +604,7 @@ export class Administration {
         ];
         manifest = {
           format: "zaratustra.bundle.v1",
-          schema: 6,
+          schema: s.workspace.schema_version as 6 | 7,
           workspace_id: s.workspace.workspace_id,
           captured_epoch: s.workspace.epoch,
           captured_seq: Number(
@@ -661,7 +677,46 @@ export class Administration {
     try {
       db.exec("PRAGMA foreign_keys=ON;");
       const { storage, rows } = validate(db, quarantine, true, true);
+      let migration:
+        | {
+            before: string;
+            after: string;
+            backup: string;
+            backup_sha256: string;
+            recorded_at: string;
+          }
+        | undefined;
+      if (storage.workspace.schema_version === 6) {
+        const backup = join(
+          quarantine,
+          "pre-schema-7-" + randomUUID() + ".sqlite",
+        );
+        db.prepare("VACUUM INTO ?").run(backup);
+        const check = new DatabaseSync(backup, { readOnly: true });
+        try {
+          validate(check, quarantine, true, true);
+        } finally {
+          check.close();
+        }
+        migration = {
+          before: JSON.stringify(storage.workspace),
+          after: JSON.stringify({ ...storage.workspace, schema_version: 7 }),
+          backup,
+          backup_sha256: bytesHash(readFileSync(backup)),
+          recorded_at: new Date().toISOString(),
+        };
+        this.fault?.("restore_sleep_after_backup");
+      }
       db.exec("BEGIN IMMEDIATE");
+      if (migration) {
+        db.exec(SleepSchemaSQL);
+        db.prepare("INSERT INTO migrations VALUES(7,?)").run(
+          JSON.stringify(migration),
+        );
+        db.exec("PRAGMA user_version=7");
+        storage.workspace = JSON.parse(migration.after);
+        this.fault?.("restore_sleep_before_schema_commit");
+      }
       rebuilt_indexes = checkIndexes(db, "repair");
       const workspace = { ...storage.workspace, epoch };
       db.prepare("UPDATE meta SET json=?").run(JSON.stringify(workspace));
@@ -830,7 +885,7 @@ export class Administration {
           JSON.stringify({
             workspace_id: e.workspace_id,
             epoch: e.new_epoch,
-            schema_version: 6,
+            schema_version: 7,
             inactive_generation_guard: true,
           }),
         );

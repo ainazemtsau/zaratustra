@@ -1,6 +1,6 @@
 # Zaratustra — durable work, memory and textual Methods
 
-A development Pi package with one extension, English bootstrap and two small skills.
+A development Pi package with one extension, English bootstrap and three small skills.
 Through conversation, the model saves Activity/Work, exact original Evidence and
 English Knowledge; a fresh process can discover the continuation from disk.
 Nested Work and addressed steps preserve dependencies, partial waits, results and lifecycle
@@ -76,6 +76,13 @@ package filters `extensions:[]` and `skills:[]` disable both resources.
 Developer commands: `npm ci`, `npm run check`, `npm run deliver`. See `AGENTS.md`
 and `docs/DEVELOPMENT.md`. Source tests use synthetic directories outside checkout.
 E2 supplies exact confirmations, managed actions/recovery and SKILL.md export/drift.
-E3 qualification/acceptance is separate; full F/R1/T31, Codex and Sleep remain open.
+Sleep adds an explicitly requested finite review of accumulated cases and open problems.
+Ask “Review accumulated experience” or request one Activity. The same model reviews exact
+sources, saves grounded small corrections and addressed later checks, and resumes after an
+interruption without the old transcript. Shared Knowledge/Methods require exact confirmation
+in Activity-only reviews. Initial inputs are frozen; new arrivals wait for another explicit
+request. There are no total resource budgets and no self-starting next review. An edit is not
+proven improvement. See [current Sleep contract](docs/SLEEP-CONTRACT.md).
+Full F/R1/T31, independent Sleep review, owner usefulness and Codex remain separate.
 
 END_OF_FILE: README.md

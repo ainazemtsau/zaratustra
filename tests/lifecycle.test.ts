@@ -771,7 +771,7 @@ test("E3 disk lifecycle migration faults retain filled schema5 data and consiste
     const f = fixture();
     const rows = f.disk.all("SELECT * FROM records");
     f.disk.exec(
-      "DROP TABLE lifecycle_pins; DROP TABLE lifecycle_events; DROP TABLE recovery_barriers; PRAGMA user_version=5;",
+      "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; DROP TABLE lifecycle_pins; DROP TABLE lifecycle_events; DROP TABLE recovery_barriers; PRAGMA user_version=5;",
     );
     f.disk.workspace.schema_version = 5;
     f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
@@ -789,7 +789,7 @@ test("E3 disk lifecycle migration faults retain filled schema5 data and consiste
     );
     const next = new DiskStorage(f.home);
     t.after(() => next.close());
-    assert.equal(next.workspace.schema_version, 6);
+    assert.equal(next.workspace.schema_version, 7);
     assert.deepEqual(next.all("SELECT * FROM records"), rows);
     const receipt = JSON.parse(
       next.get<{ json: string }>("SELECT json FROM migrations WHERE version=6")!

@@ -15,7 +15,8 @@
     ],
     "skills": [
       "skills/zaratustra-work",
-      "skills/zaratustra-memory"
+      "skills/zaratustra-memory",
+      "skills/zaratustra-sleep"
     ]
   },
   "peerDependencies": {

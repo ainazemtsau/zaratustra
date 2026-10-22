@@ -3,6 +3,7 @@ import {
   ApprovalSchemaSQL,
   ExperienceSchemaSQL,
   MemorySchemaSQL,
+  SleepSchemaSQL,
   requireThat,
 } from "../core/index.ts";
 
@@ -18,6 +19,7 @@ const definitions = [
   MemorySchemaSQL,
   ExperienceSchemaSQL,
   ApprovalSchemaSQL,
+  SleepSchemaSQL,
 ].flatMap((sql) =>
   [...sql.matchAll(/CREATE (UNIQUE )?INDEX (\w+) [^;]+;/g)].map((m) => ({
     sql: m[0],
@@ -34,6 +36,11 @@ export function checkIndexes(
 ) {
   const missing: string[] = [];
   for (const expected of definitions) {
+    if (
+      expected.name.startsWith("sleep_") &&
+      Number(db.prepare("PRAGMA user_version").get()!.user_version) < 7
+    )
+      continue;
     let actual = db
       .prepare("SELECT sql FROM sqlite_schema WHERE type='index' AND name=?")
       .get(expected.name);

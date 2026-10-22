@@ -34,6 +34,7 @@ const skills = loader
   .skills.filter((s) => s.name.startsWith("zaratustra-"));
 assert.deepEqual(skills.map((s) => s.name).sort(), [
   "zaratustra-memory",
+  "zaratustra-sleep",
   "zaratustra-work",
 ]);
 assert.ok(

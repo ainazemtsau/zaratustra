@@ -222,3 +222,9 @@ author. Reconcile that named action under fresh guards and exact native decision
 zara_reconcile_preview/confirm/reconcile. Keep unknown honest; explicitly risky repeats
 are new decisions. Read-only recovery and demonstrably independent new work remain useful.
 Do not bypass through a new operation ID, independent_basis, ordinary shell or old claim.
+
+For an explicitly requested review of accumulated experience use zaratustra-sleep in this same
+extension/Core. Discover prepared batches with zara_sleep_batch; commit start_sleep and
+sleep_checkpoint through zara_commit. Reviews are finite by frozen initial input, with no total
+resource budget and no automatic new cycle. Review/bookkeeping is not a Method application or
+independent success. Activity origin does not make shared Knowledge/Methods locally writable.

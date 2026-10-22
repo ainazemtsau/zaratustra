@@ -1,52 +1,58 @@
-# Zaratustra development
+# Zaratustra development — current Sleep assignment
+
+Read the complete docs/specification-v1.1.html, docs/DEVELOPMENT.md and
+docs/SLEEP-CONTRACT.md. The owner-authorized 2026-10-22 Sleep assignment supersedes
+E3-only scope, obsolete branch restrictions and budgets. Exact approved predecessor:
+171415b48061e8f1a0da5b0653bb087931ca41fc. Historical instructions are retained in
+docs/sleep-predecessor-AGENTS-171415b.md and its DEVELOPMENT companion. Preserve all
+prior E1/E2/E3 evidence and failed attempts. Full R1/T31, independent review and owner
+usefulness remain separate; the single implementation writer claims none of them.
 
 Commands (Node 22.19.0, npm 11.6.2, Pi 1.3.0):
 
-- `npm ci` — install pinned development dependencies.
-- `npm run check` — format, ESLint, TypeScript, dependency graph, build, disk tests.
-- `npm run format` — format maintained sources/docs.
-- `npx tsx --test --test-name-pattern="disk" tests/core.test.ts` — focused tests.
-- `npx prettier --check src/core/index.ts`; `npx eslint src/core/index.ts`.
-- `npm run deliver` — check plus required RESULT fields.
+- npm ci installs pinned development dependencies.
+- npm run check checks format, ESLint, types, boundaries, build and disk tests.
+- npx tsx --test tests/sleep.test.ts runs focused Sleep disk/fault tests.
+- npm run deliver repeats required checks and validates RESULT fields.
 
-Read `docs/specification-v1.1.html` completely and `docs/DEVELOPMENT.md` for the
-approved block and decisions. The full R1 contract remains the target. The current
-owner-authorized block is E3: consistent backup/export, quarantine restore and external
-control epoch, per-action reconciliation, archive/tombstone/retention and bounded cleanup.
-D is independently scope-qualified PASS and separately owner-accepted on
-1b742a6e774eaa14826c036977ae2a42ff1ca46a. E1 is independently scope-qualified PASS and technically accepted by the coordinator
-under explicit owner delegation on 0b45c0853d7ee0c2f3c294b9bc4dd9803117462a.
-This is not personal usefulness/T31. E2 is independently limited technical PASS and coordinator-accepted under explicit owner
-delegation on 094c0df4ef893a0668ee87dcff92e5abbad3514d. E3 acceptance remains separate. Full E/R1/T31 remain open.
+One executor; no chats/subagents. Root arranges fresh physical independent review.
+Own the complete bounded Sleep implementation, same-store schema/backup integration,
+instructions, tests, new synthetic qualification/evidence, docs, commits and publication
+ONLY on codex/zaratustra-sleep. Use git push -u origin codex/zaratustra-sleep explicitly;
+never force-push, merge main or mutate main/foreign refs/tags. Preserve unexpected
+concurrent edits and report them before touching their files. No runtime Git operations
+or edits to owner exclusions, attributes or .gitignore.
 
-## Run contract (PROBA)
+All product writes stay in this checkout and visibly isolated synthetic/output paths.
+Never access C:/projects/ZT, real Health/personal repositories, backups or credentials.
+Never read Direction-OS archive/\*\* or modify Direction OS/live state. Native Pi may use
+its existing auth normally; never read, print or copy credentials into model context,
+test config or Git. Publish only allowlisted synthetic evidence; preserve unsuccessful
+attempts outside source/package storage.
 
-1. Authority is the owner assignment plus this repo contract and full specification.
-2. Native build/hygiene and nonvisual persistence checks are required. OPORA frozen-pair,
-   mutation, stage receipt, notification and orchestration machinery do not apply here.
-3. Real product/authority changes and unavailable required tools stop for owner input.
-4. This assignment uses one executor; no chats or subagents. The owner launches fresh review.
-5. Correct routine preserving engineering defects in this assignment; retain all failed attempts.
-6. Return root `RESULT.md`: outcome, evidence, assumptions, cuts, cost, manual-acceptance, next.
-7. `next: solmax`; do not write Direction OS or issue successor tasks. No R1/owner acceptance claim.
+Pi/model own understanding, planning, language and context selection. No keyword planner,
+second LLM or executor. Core is Pi-independent; cross-module imports use public index.ts.
+SQLite stays behind StoragePort. Original bytes/quotes stay original; English translations/
+paraphrases are derived. State, versions, Changes, progress and receipts commit atomically.
+No SQL transaction spans model/human/provider/external-tool waits. One trusted writer;
+managed access is not OS isolation or arbitrary-command deduplication.
 
-## Principles
+One extension and three English entry skills; ordinary chat and trusted cwd/.local defaults.
+Sleep grants no rights. Activity origin/focus/classification/prose never make shared
+Knowledge/Methods local; their Activity-review changes require exact native confirmation.
+Existing approval policy governs goals/acceptance/priorities, identity/bulk, archive/deletion
+and external actions. No total USD/token/attempt/dispatch/case/time/continuation budgets.
+Ten routing cards per technical batch and existing per-call validation/pagination remain,
+without limiting total review/test work. Frozen initial input makes each review finite;
+no self-started next cycle or bookkeeping recursion. Keep complete uncapped usage/errors.
 
-- Pi/model own understanding, planning, language and context selection. No keyword planner.
-- Core is Pi-independent; module imports use public `index.ts`. SQLite is behind StoragePort.
-- Original bytes/quotes stay original; English working representations are labelled derived.
-- State, versions, Changes and receipts commit atomically; prose never proves persistence.
-- Personal data, credentials and private transcripts never enter Git. Only synthetic evidence.
-- One trusted personal writer, no OS-isolation or arbitrary-command deduplication claim.
-
-All product writes stay in this checkout and explicitly isolated synthetic/output paths.
-Keep imports bounded; no database transaction spans model, human or external-tool waits.
-Test actual installed public refs outside checkout; never copy credentials into test config.
-Live E3 budget: one new non-reset ledger, 30 attempts / 240 dispatches / USD 20 Pi estimate;
-openai-codex/gpt-6.1-sol, medium, native Pi authentication. Retain all errors/retries.
-Real merges and finite catalog reorganization require exact E2 bound approvals.
-E3 is authorized by the accepted root gate. F and R2 Sleep/Codex remain separate.
-Read root E3-COORDINATION.json before freeze/final. Preserve all E2 bytes/evidence.
-Public route is only `codex/zaratustra-v1`; no force push, main/foreign ref/tag mutation.
+Live synthetic qualification uses exactly openai-codex/gpt-6.1-sol, medium, native Pi auth,
+normal package discovery and a frozen public installed SHA outside checkout/package storage.
+Unavailable required exact model/native capability is a concrete blocker; no substitute or
+mock L. Preserve all actual errors/retries. Root RESULT.md includes outcome/evidence/
+assumptions/cuts/cost/manual-acceptance/next, exact published/installed SHAs, actual M/L,
+evidence locations, source equality/readback, blockers/limits, uncapped usage and isolated
+install command. next: solmax. No Direction close or successor tasks. Root handles review
+and eventual main merge; the owner manually updates private ZT.
 
 END_OF_FILE: AGENTS.md

@@ -840,7 +840,9 @@ test("E2 disk schema-4 filled migration: all canonical rows preserved, verified 
     const f = fixture();
     const id = f.node("Persisted predecessor");
     const before = canonical(f.disk.all("SELECT * FROM records"));
-    f.disk.exec("DROP INDEX intent_kind; PRAGMA user_version=4");
+    f.disk.exec(
+      "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; DROP INDEX intent_kind; PRAGMA user_version=4",
+    );
     f.disk.workspace.schema_version = 4;
     f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
     writeFileSync(
@@ -857,7 +859,7 @@ test("E2 disk schema-4 filled migration: all canonical rows preserved, verified 
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 6);
+    assert.equal(recovered.workspace.schema_version, 7);
     assert.equal(canonical(recovered.all("SELECT * FROM records")), before);
     assert.ok(recovered.get("SELECT id FROM records WHERE id=?", id));
     const m = JSON.parse(
