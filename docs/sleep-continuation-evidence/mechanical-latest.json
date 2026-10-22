@@ -1,0 +1,38 @@
+{
+  "source_sha": "2e4d25dce289eaf482bc40d165308e6215354901",
+  "command": "npm run deliver includes npm run check",
+  "total": 153,
+  "passed": 151,
+  "failed": 0,
+  "skipped": 2,
+  "sleep_disk_tests": 19,
+  "coordinator_knowledge_and_start_tests_added": 6,
+  "same_start_variant": "ef9 baselinefailed; latestfocused three cases existing/stagedActivity/historicalWork allpassed and require exactapproval",
+  "logs": [
+    {
+      "name": "deliver-02.log",
+      "bytes": 50998,
+      "sha256": "e73967105a4e0d32d682eeafeab0d5b5fe6cc5dadd98408841f0e89a4790c91a"
+    },
+    {
+      "name": "start-scope-baseline-01.log",
+      "bytes": 1303,
+      "sha256": "32341db012fa1bb271239ea8f87a392d07cd03d29654e97f2312db4704628623"
+    },
+    {
+      "name": "start-scope-focused-01.log",
+      "bytes": 610,
+      "sha256": "38b3589c1a48bde3a69ae2a4967cf5c4c37475c63d46a2c5bbb093cff6cf9623"
+    },
+    {
+      "name": "verify-final-01.log",
+      "bytes": 941,
+      "sha256": "7759ae4bf73b5bd20b19fb311b299ebfe16e5ed625a17cb1c9ebad495d9f6fed"
+    },
+    {
+      "name": "verify-latest-pi130-01.log",
+      "bytes": 909,
+      "sha256": "fc4f20841b1765dce11696e58192481a1f44e8fd5313458a27ea9af8c3e79b7c"
+    }
+  ]
+}

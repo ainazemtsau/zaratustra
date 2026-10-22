@@ -1,0 +1,56 @@
+{
+  "actual_host": "1.4.0",
+  "layer": "M",
+  "frozen_public_sha": "ef9ddf1c65a5778479f87a105f987222af794939",
+  "provenance_cases": 12,
+  "projection_controls": 4,
+  "provenance_provider_dispatches": 0,
+  "effect_provider_approval_controls": {
+    "mechanical_only": true,
+    "provider_network_requests": 0,
+    "actual_selected_model_changed": false,
+    "checks": [
+      {
+        "profile": "workspace",
+        "merge": true,
+        "refusal": true,
+        "forged_flag": true,
+        "write_readback": true,
+        "replay_no_dispatch": true,
+        "lost_after_write": true,
+        "throwing_observer_returns_original": true,
+        "unexplained_event_denies_new_reads": true,
+        "loaded_transcript_not_purged": true,
+        "actual_selected_model_unchanged": true
+      },
+      {
+        "profile": "workspace",
+        "fresh_process_inspect_without_repeat": true,
+        "opaque_command_has_no_managed_dedup_receipt": true,
+        "opaque_actual_invocations": 1
+      },
+      {
+        "profile": "protected",
+        "merge": true,
+        "refusal": true,
+        "forged_flag": true,
+        "write_readback": true,
+        "replay_no_dispatch": true,
+        "lost_after_write": true,
+        "throwing_observer_returns_original": true,
+        "unexplained_event_denies_new_reads": true,
+        "loaded_transcript_not_purged": true,
+        "actual_selected_model_unchanged": true
+      },
+      {
+        "profile": "protected",
+        "fresh_process_inspect_without_repeat": true,
+        "opaque_command_has_no_managed_dedup_receipt": true,
+        "opaque_actual_invocations": 1
+      }
+    ]
+  },
+  "initial_failure": "Isolated empty auth made native setModel refuse before provider dispatch; retained retry with allowed native authPath passed",
+  "real_owner_feedback": false,
+  "credential_handling": "Native auth may authenticate/refresh normally; contents not exposed/copied/manually altered. No credential-file immutability assertion."
+}

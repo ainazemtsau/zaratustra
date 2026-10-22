@@ -1,0 +1,77 @@
+{
+  "fixed_runtime_sha": "ef9ddf1c65a5778479f87a105f987222af794939",
+  "full_command": "npm run deliver includes npm run check",
+  "tests": 152,
+  "passed": 150,
+  "failed": 0,
+  "skipped": 2,
+  "sleep_disk_tests": 18,
+  "added_counterexample_and_knowledge_tests": 5,
+  "skips": [
+    "File symlink unavailable under existing permissions",
+    "Case-only filenames unavailable on case-insensitive directory"
+  ],
+  "baseline_counterexample_reproduction": {
+    "failed_expectations": 5,
+    "categories": 4,
+    "required_bookkeeping_control_passed": true
+  },
+  "all_original_evidence_preserved": true,
+  "logs": [
+    {
+      "name": "counterexamples-baseline-01.log",
+      "sha256": "7601f12ba8f32c94912bc3a296b77986432def3cbb6379f8836fbdb001f45bf9",
+      "bytes": 6869
+    },
+    {
+      "name": "focused-01.log",
+      "sha256": "f3e659a1466430cc4ed0bf7c56e9afe781c680d2d4998cf483d42fcdafa952c4",
+      "bytes": 1577
+    },
+    {
+      "name": "deliver-01.log",
+      "sha256": "25b0486e3fb5088437d2af11b76b65454ca77cbbe463445098296d273184cc48",
+      "bytes": 50699
+    },
+    {
+      "name": "pi140-e1-provenance-01.log",
+      "sha256": "0ab8ce3e0061f4a0ee1cb3bad7661258ce5389b6966a4789df098ecaa320fbcc",
+      "bytes": 286
+    },
+    {
+      "name": "pi140-e2-native-01.log",
+      "sha256": "ea14c6d6928b9f963eaefc32dc9c797095695512ceca8e2a28fa11d6db2cdf60",
+      "bytes": 798
+    },
+    {
+      "name": "pi140-e2-native-02.log",
+      "sha256": "370da5501e10f636d6bdd59af5ecfd9e03c7a2ede8fe4a31a1dcba2ee0242269",
+      "bytes": 227
+    },
+    {
+      "name": "restore-predecessor-bundle-01.log",
+      "sha256": "c0212eec47ed71b491284db2502eab2943524b73178bddac5dac94ff5497a4d8",
+      "bytes": 2406
+    },
+    {
+      "name": "restore-predecessor-bundle-02.log",
+      "sha256": "de0ff75faeab0c443d07066c11b40c417b5138cc096418848c4ec230d48243fd",
+      "bytes": 1054
+    },
+    {
+      "name": "restore-predecessor-bundle-03.log",
+      "sha256": "3e213ed58589bc7fc288a65cbbcff7c374db61c492e7be638d045a3c20154a07",
+      "bytes": 925
+    },
+    {
+      "name": "verify-pi130-01.log",
+      "sha256": "a015e80f49263bdece203c4c1c4a515e6db9fa238dbe55384740f21c5b237c09",
+      "bytes": 379
+    },
+    {
+      "name": "verify-pi130-02.log",
+      "sha256": "c709e56531173db2593d3cadf74228d12c3586b22a5b77720b8d45de7b2858d1",
+      "bytes": 2610
+    }
+  ]
+}

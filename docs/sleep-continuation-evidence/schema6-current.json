@@ -1,0 +1,51 @@
+{
+  "mechanical_only": true,
+  "provider_dispatches": 0,
+  "source_runtime": "171415b48061e8f1a0da5b0653bb087931ca41fc",
+  "target_runtime": "ef9ddf1c65a5778479f87a105f987222af794939",
+  "genuine_retained_predecessor_generated_bundle": true,
+  "source_bundle_schema": 6,
+  "active_restored_schema": 7,
+  "source_bundle_all_files_unchanged": true,
+  "source_bundle_inventory": [
+    {
+      "path": "database.sqlite",
+      "sha256": "284fae8c37368a96927da6915ab3317bc8b7d2b7eb937b44b437e481d363fb8b"
+    },
+    {
+      "path": "database.sqlite-shm",
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    {
+      "path": "database.sqlite-wal",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "export.json",
+      "sha256": "f6b22853576ceeeb2d69a4a563a5e1c56455fcb87b4c7042377c800252fccf7b"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "d3eed7a1faac0266fbc06d12afbeb7c1f6da41bf986e3fc8b6a939ed735352c9"
+    },
+    {
+      "path": "materials/a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27",
+      "sha256": "a5d2e2c83e0895dada7a59e15becb5013af60fadf6f6066671785bc601029d27"
+    }
+  ],
+  "canonical_exact_tables": [
+    "records",
+    "revisions",
+    "receipts",
+    "claims",
+    "handoffs",
+    "experience_rows",
+    "experience_versions"
+  ],
+  "new_epoch_and_action_barriers": true,
+  "old_writer_refused_schema7": true,
+  "old_writer_database_bytes_unchanged": true,
+  "old_writer_rejection": "Error: Unknown schema or workspace identity mismatch; no replacement store will be created.",
+  "synthetic_native_approval_not_owner": true,
+  "approval_layer": "M: injected existing exact decision protocol, not native UI, model or owner verdict"
+}

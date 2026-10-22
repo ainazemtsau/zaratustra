@@ -1,5 +1,13 @@
 # Full R1/R2 disposition
 
+The coordinator follow-up reproduced four counterexample categories before independent
+review. The first fix is `ef9ddf1c65a5778479f87a105f987222af794939`; a further same-start
+scope variant is fixed on `2e4d25dce289eaf482bc40d165308e6215354901`. See
+[SLEEP-FOLLOWUP.md](SLEEP-FOLLOWUP.md) for exact expectations, retained failures, current
+mechanical results and separately attributed native host qualification. First-handback
+results below remain attributed to their original versions and do not imply the reproduced
+counterexamples had already been covered. Full R1/R2 admission remains open.
+
 Sleep is implemented and executor-qualified on
 `afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969`, under the owner's 2026-10-22 assignment.
 The bounded mechanical and genuine native Pi/model results are in

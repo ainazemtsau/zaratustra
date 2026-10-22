@@ -1,0 +1,341 @@
+{
+  "frozen_public_sha": "ef9ddf1c65a5778479f87a105f987222af794939",
+  "all_selected_native_source_bytes_equal_public": true,
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "public_sha256": "4ad8b43792d60b33c33277f8c46d7dd3c60a96845b27e1c54f92416e4e5491be",
+      "native_sha256": "4ad8b43792d60b33c33277f8c46d7dd3c60a96845b27e1c54f92416e4e5491be"
+    },
+    {
+      "path": "instructions/bootstrap.md",
+      "public_sha256": "3c65ddc30709492335bd4c21ca008ab26acd17bc17743f25b5c9cddb736d751d",
+      "native_sha256": "3c65ddc30709492335bd4c21ca008ab26acd17bc17743f25b5c9cddb736d751d"
+    },
+    {
+      "path": "package.json",
+      "public_sha256": "119db4af42ede69ca4940fe7b4ed50756dce8c57628503024359100f86240615",
+      "native_sha256": "119db4af42ede69ca4940fe7b4ed50756dce8c57628503024359100f86240615"
+    },
+    {
+      "path": "scripts/sleep-fixture.mjs",
+      "public_sha256": "5b3a6c317d7ee2985652460b796a0e10599d1a7402d32de94dea0ddff997bf23",
+      "native_sha256": "5b3a6c317d7ee2985652460b796a0e10599d1a7402d32de94dea0ddff997bf23"
+    },
+    {
+      "path": "scripts/sleep-live.mjs",
+      "public_sha256": "1d3774e072f60970fb5b2748c3511b2746aee44d8a9db2de7bf8de8a353df7dd",
+      "native_sha256": "1d3774e072f60970fb5b2748c3511b2746aee44d8a9db2de7bf8de8a353df7dd"
+    },
+    {
+      "path": "scripts/sleep-upgrade.mjs",
+      "public_sha256": "37cf5138b616976e12999af30a28492a9696cf8621be9059d64eff7e43145650",
+      "native_sha256": "37cf5138b616976e12999af30a28492a9696cf8621be9059d64eff7e43145650"
+    },
+    {
+      "path": "scripts/startup-native.mjs",
+      "public_sha256": "1d6a22345c58d79c9b5243263f50422a48369d49c6d0f28b8edf5ee9a551151e",
+      "native_sha256": "1d6a22345c58d79c9b5243263f50422a48369d49c6d0f28b8edf5ee9a551151e"
+    },
+    {
+      "path": "skills/zaratustra-memory/SKILL.md",
+      "public_sha256": "5f8289acce9b26fb8f4b870a6d90f07ab4f6cdf06015a3b8b1b5b5f2cb9a1117",
+      "native_sha256": "5f8289acce9b26fb8f4b870a6d90f07ab4f6cdf06015a3b8b1b5b5f2cb9a1117"
+    },
+    {
+      "path": "skills/zaratustra-sleep/SKILL.md",
+      "public_sha256": "e9ede6d31483f3b619b1f416374ebca7cc4fe77b67ea75fcf455063244797bfe",
+      "native_sha256": "e9ede6d31483f3b619b1f416374ebca7cc4fe77b67ea75fcf455063244797bfe"
+    },
+    {
+      "path": "skills/zaratustra-work/SKILL.md",
+      "public_sha256": "fbb464645535bfc348011b27b65b347a0029d26ac76118e69f55a3aa5176d278",
+      "native_sha256": "fbb464645535bfc348011b27b65b347a0029d26ac76118e69f55a3aa5176d278"
+    },
+    {
+      "path": "src/core/AGENTS.md",
+      "public_sha256": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff",
+      "native_sha256": "4901b042a7a1fc797e574efe9299ccfba7b89d6a90b9efbfa4326501349d63ff"
+    },
+    {
+      "path": "src/core/approval.ts",
+      "public_sha256": "1f4fc7061360a7c46d0ea164902a839781072a766a7c6c2fb38f2b1f0ee84998",
+      "native_sha256": "1f4fc7061360a7c46d0ea164902a839781072a766a7c6c2fb38f2b1f0ee84998"
+    },
+    {
+      "path": "src/core/contracts.ts",
+      "public_sha256": "d71bbfbe938f44a1d1c59a930f60add4a9eb39a0ac12f456b6b23f4f50340b20",
+      "native_sha256": "d71bbfbe938f44a1d1c59a930f60add4a9eb39a0ac12f456b6b23f4f50340b20"
+    },
+    {
+      "path": "src/core/effects.ts",
+      "public_sha256": "662246406804445a037925eb279fda747383f2f57a03437e9cefd40b670c1bd8",
+      "native_sha256": "662246406804445a037925eb279fda747383f2f57a03437e9cefd40b670c1bd8"
+    },
+    {
+      "path": "src/core/experience.ts",
+      "public_sha256": "b07398647dd2ba248eaf8aac02a146b890094cb743d5d003679bed98191ec367",
+      "native_sha256": "b07398647dd2ba248eaf8aac02a146b890094cb743d5d003679bed98191ec367"
+    },
+    {
+      "path": "src/core/index.ts",
+      "public_sha256": "acd42489aa3466d928e0170a774d71573854bf3a8d6c3311ba10d0cf948ee9e5",
+      "native_sha256": "acd42489aa3466d928e0170a774d71573854bf3a8d6c3311ba10d0cf948ee9e5"
+    },
+    {
+      "path": "src/core/lifecycle.ts",
+      "public_sha256": "f1fb1ab70aaf5f79a698731280dcbbff34d80b85ccde53c90b8fc7651a02de99",
+      "native_sha256": "f1fb1ab70aaf5f79a698731280dcbbff34d80b85ccde53c90b8fc7651a02de99"
+    },
+    {
+      "path": "src/core/memory.ts",
+      "public_sha256": "b72d12370c5fef162aa2977d2b0f004baee14488f14b0372ef5f5755bae22388",
+      "native_sha256": "b72d12370c5fef162aa2977d2b0f004baee14488f14b0372ef5f5755bae22388"
+    },
+    {
+      "path": "src/core/sleep.ts",
+      "public_sha256": "efe8d33c9cd279db9262273776623bdd419849470f9b0bbf97f74cddddc951d4",
+      "native_sha256": "efe8d33c9cd279db9262273776623bdd419849470f9b0bbf97f74cddddc951d4"
+    },
+    {
+      "path": "src/core/work.ts",
+      "public_sha256": "a89dca3ddcbb8c62a24479e0efef383d6e1c3378f2d56fcc66407a80eb99ea86",
+      "native_sha256": "a89dca3ddcbb8c62a24479e0efef383d6e1c3378f2d56fcc66407a80eb99ea86"
+    },
+    {
+      "path": "src/extension/AGENTS.md",
+      "public_sha256": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b",
+      "native_sha256": "5e01278e0f9e23d61e562b98627a3c3ba71b02cecfb5b2b416dd08df1cd51b0b"
+    },
+    {
+      "path": "src/extension/administration.ts",
+      "public_sha256": "ed5beaa32afc181eae7ca92812b1b7b0cac9c86665d0516d1d2659674f398092",
+      "native_sha256": "ed5beaa32afc181eae7ca92812b1b7b0cac9c86665d0516d1d2659674f398092"
+    },
+    {
+      "path": "src/extension/authority.ts",
+      "public_sha256": "6dc1df9e139036a4f80e9e5fcd959e8d63bd1a99eda353646e072e5fe6d0e92e",
+      "native_sha256": "6dc1df9e139036a4f80e9e5fcd959e8d63bd1a99eda353646e072e5fe6d0e92e"
+    },
+    {
+      "path": "src/extension/index.ts",
+      "public_sha256": "f2ec0af300f654fe204b5b04ca8efd5cde76935677946b563996dd726e1b218a",
+      "native_sha256": "f2ec0af300f654fe204b5b04ca8efd5cde76935677946b563996dd726e1b218a"
+    },
+    {
+      "path": "src/extension/managed.ts",
+      "public_sha256": "2963f1c3d467de2b6856d4ca30be35adb1d0f6413948bb3108406a3c31d7d85c",
+      "native_sha256": "2963f1c3d467de2b6856d4ca30be35adb1d0f6413948bb3108406a3c31d7d85c"
+    },
+    {
+      "path": "src/extension/preview.ts",
+      "public_sha256": "a6dcbf714d8973638a64d3fe132e86d36a343a7180c7a11d58b4cd608b5fa41e",
+      "native_sha256": "a6dcbf714d8973638a64d3fe132e86d36a343a7180c7a11d58b4cd608b5fa41e"
+    },
+    {
+      "path": "src/extension/workspace.ts",
+      "public_sha256": "43457e891d0dcdec33cdb72b5b8b0cab698f25bcd25400f132198329b05b035a",
+      "native_sha256": "43457e891d0dcdec33cdb72b5b8b0cab698f25bcd25400f132198329b05b035a"
+    },
+    {
+      "path": "src/storage/AGENTS.md",
+      "public_sha256": "3500f00508a66803f7ad84f0ae962d9cf6f8270c5ad87574157793c78d73e83f",
+      "native_sha256": "3500f00508a66803f7ad84f0ae962d9cf6f8270c5ad87574157793c78d73e83f"
+    },
+    {
+      "path": "src/storage/administration.ts",
+      "public_sha256": "5ed3704ca9765f10246c939103596be1fa1a4c0d7c437121ca53f6c83d5f5893",
+      "native_sha256": "5ed3704ca9765f10246c939103596be1fa1a4c0d7c437121ca53f6c83d5f5893"
+    },
+    {
+      "path": "src/storage/control.ts",
+      "public_sha256": "8bc28d2b2ba344fdcd8ab2b56b200e72db681cb22f486bcf1f44477118b7a4c5",
+      "native_sha256": "8bc28d2b2ba344fdcd8ab2b56b200e72db681cb22f486bcf1f44477118b7a4c5"
+    },
+    {
+      "path": "src/storage/extract.ts",
+      "public_sha256": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f",
+      "native_sha256": "2009e2598f67e82e0b5cf962ff32c6be9b4699f0063bf88bae0f133a9c95e22f"
+    },
+    {
+      "path": "src/storage/index.ts",
+      "public_sha256": "9e27bf5c006600915212df03b7eca49d52c61f85c34e7b93d868619ca31372aa",
+      "native_sha256": "9e27bf5c006600915212df03b7eca49d52c61f85c34e7b93d868619ca31372aa"
+    },
+    {
+      "path": "src/storage/indexes.ts",
+      "public_sha256": "0d3292f86031719e03cd214975cbde11167c21ad91f3dfe6c8fb5cdfbe482886",
+      "native_sha256": "0d3292f86031719e03cd214975cbde11167c21ad91f3dfe6c8fb5cdfbe482886"
+    },
+    {
+      "path": "src/storage/output.ts",
+      "public_sha256": "f3f9f995f0ff2b06fb9f8606ab5118bf6c452d85ac8081fd9031c3919b798008",
+      "native_sha256": "f3f9f995f0ff2b06fb9f8606ab5118bf6c452d85ac8081fd9031c3919b798008"
+    },
+    {
+      "path": "src/storage/parser-worker.mjs",
+      "public_sha256": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec",
+      "native_sha256": "363079486797fcf9408d06119f55474e2e0e6b91cf2bf50d8c72690de7ed49ec"
+    },
+    {
+      "path": "tests/core.test.ts",
+      "public_sha256": "c259fae7fb19d296a33316d194d5dd59c508e6f1eb471855dd2b680f7046687a",
+      "native_sha256": "c259fae7fb19d296a33316d194d5dd59c508e6f1eb471855dd2b680f7046687a"
+    },
+    {
+      "path": "tests/effects.test.ts",
+      "public_sha256": "d908da4efa2ec0ab57f17f92fb6e643b1988836543624fcc2050e5292ffabd6b",
+      "native_sha256": "d908da4efa2ec0ab57f17f92fb6e643b1988836543624fcc2050e5292ffabd6b"
+    },
+    {
+      "path": "tests/evidence.test.ts",
+      "public_sha256": "be3037f0e9096c1fb419e51b28a5d6d600bb01872e84f3b4541839ab60b0da19",
+      "native_sha256": "be3037f0e9096c1fb419e51b28a5d6d600bb01872e84f3b4541839ab60b0da19"
+    },
+    {
+      "path": "tests/experience.test.ts",
+      "public_sha256": "759d04a1457313c8234b1e2c4b1dfe517e3f370ad5e9be406e53a8843b194e70",
+      "native_sha256": "759d04a1457313c8234b1e2c4b1dfe517e3f370ad5e9be406e53a8843b194e70"
+    },
+    {
+      "path": "tests/extension.test.ts",
+      "public_sha256": "e66184ea07a7e5cd459cef96574834ad49cdb237bb0474e4c0a3fbef9836c3a1",
+      "native_sha256": "e66184ea07a7e5cd459cef96574834ad49cdb237bb0474e4c0a3fbef9836c3a1"
+    },
+    {
+      "path": "tests/fixtures/c/blank.pdf",
+      "public_sha256": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064",
+      "native_sha256": "226ee53a1c7cbcbe2cd8a5fa09daa83f3897e21422c60319ed87b857ad8cf064"
+    },
+    {
+      "path": "tests/fixtures/c/book.epub",
+      "public_sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a",
+      "native_sha256": "fc7f55c8fd4b2200723d5565054e01369c0a59c05a36a2b98435fb0e52e6979a"
+    },
+    {
+      "path": "tests/fixtures/c/book.pdf",
+      "public_sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406",
+      "native_sha256": "51b4039c0287808a6348e759d232da64b6dd19484ffa5403d2b318e37a0d3406"
+    },
+    {
+      "path": "tests/fixtures/c/damaged.pdf",
+      "public_sha256": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76",
+      "native_sha256": "1347eeb6725c82af82dff79efdfef4f03ae8ea71982ecad3966bc7540dc76c76"
+    },
+    {
+      "path": "tests/fixtures/c/encrypted.epub",
+      "public_sha256": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970",
+      "native_sha256": "d7af556a1f65d22ea9b449841f1eb7e57ddca5670bc044ffdce76850d4663970"
+    },
+    {
+      "path": "tests/fixtures/c/encrypted.pdf",
+      "public_sha256": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879",
+      "native_sha256": "2c4189b18f08cf924174ca47e79685ce645253964182aad42626cbe0a3a7f879"
+    },
+    {
+      "path": "tests/fixtures/c/entities.epub",
+      "public_sha256": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23",
+      "native_sha256": "1730894c9ec78df72b5ae7d7cbf8d2dc8a5fa1691ac430e6247b61c965f30a23"
+    },
+    {
+      "path": "tests/fixtures/c/image-only.epub",
+      "public_sha256": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990",
+      "native_sha256": "953730e0b3ccec3fe70ddb4197c45532bf382daf89d1e8966b443fe57d23e990"
+    },
+    {
+      "path": "tests/fixtures/c/large.pdf",
+      "public_sha256": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7",
+      "native_sha256": "13ef961efedc6880b2377f79f659a8e3c43fa2dc3b33a80c2895f42562579cd7"
+    },
+    {
+      "path": "tests/fixtures/c/notes.md",
+      "public_sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54",
+      "native_sha256": "4b82682dfc9eb1074a4bb551e1f6904c2ffbef6c95007635bb37cf1b399bce54"
+    },
+    {
+      "path": "tests/fixtures/c/output-limit.epub",
+      "public_sha256": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171",
+      "native_sha256": "bc3cd497059f6e75e933588b4aafad31ca73f53fc446e2e56ea887fe3dd47171"
+    },
+    {
+      "path": "tests/fixtures/c/partial.epub",
+      "public_sha256": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468",
+      "native_sha256": "80047ef545614db91b45b2a14d68c7490b9fee08de5b46e789e98bd63467a468"
+    },
+    {
+      "path": "tests/fixtures/c/remote.epub",
+      "public_sha256": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b",
+      "native_sha256": "d2d3c2ce217254eabd28276d309755fc4c755d97ae5b6f6ab581316671a7f75b"
+    },
+    {
+      "path": "tests/fixtures/c/traversal.epub",
+      "public_sha256": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c",
+      "native_sha256": "735e01e917561fdefc378dff76e2cc974e7a6eb7fedc83f803000ff9062b796c"
+    },
+    {
+      "path": "tests/fixtures/c/zip-limit.epub",
+      "public_sha256": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce",
+      "native_sha256": "fe9ada6c6d66993cbe0b0d314c8e8766bdc7f4db6620a3fe5f0355a18ac1a0ce"
+    },
+    {
+      "path": "tests/lifecycle-controls.test.ts",
+      "public_sha256": "89c3521c31649eb359f9ed541559f875b0002d6b4d17b12fd179f67896ba108f",
+      "native_sha256": "89c3521c31649eb359f9ed541559f875b0002d6b4d17b12fd179f67896ba108f"
+    },
+    {
+      "path": "tests/lifecycle.test.ts",
+      "public_sha256": "b0c1668bcbb03b50721bd07d3d0675dbad926dbefb7220c6bc23a5946af47a13",
+      "native_sha256": "b0c1668bcbb03b50721bd07d3d0675dbad926dbefb7220c6bc23a5946af47a13"
+    },
+    {
+      "path": "tests/materials.test.ts",
+      "public_sha256": "8eee0d9c98342b7314cf56896e5264e96acf1d03aa2e2a4619317c4b3563dadc",
+      "native_sha256": "8eee0d9c98342b7314cf56896e5264e96acf1d03aa2e2a4619317c4b3563dadc"
+    },
+    {
+      "path": "tests/memory.test.ts",
+      "public_sha256": "4d7ef21405abb034522f2039c51b532de7766683efcd6b457a5f42cd0144366c",
+      "native_sha256": "4d7ef21405abb034522f2039c51b532de7766683efcd6b457a5f42cd0144366c"
+    },
+    {
+      "path": "tests/p2.test.ts",
+      "public_sha256": "4462e26f0658ff2e124016c91227ecf18057379f12dbcc824c0f0c51c75a52a3",
+      "native_sha256": "4462e26f0658ff2e124016c91227ecf18057379f12dbcc824c0f0c51c75a52a3"
+    },
+    {
+      "path": "tests/sleep.test.ts",
+      "public_sha256": "2c6363f3ae5610d7eed8a1490ffbd6858b38973070f9756e6b2d2cc38406a442",
+      "native_sha256": "2c6363f3ae5610d7eed8a1490ffbd6858b38973070f9756e6b2d2cc38406a442"
+    },
+    {
+      "path": "tests/startup.test.ts",
+      "public_sha256": "ada57a78a115126f7c37c9d3cf963777079a0918bb886ee2a05cf9a3891b59ec",
+      "native_sha256": "ada57a78a115126f7c37c9d3cf963777079a0918bb886ee2a05cf9a3891b59ec"
+    },
+    {
+      "path": "tests/work.test.ts",
+      "public_sha256": "96286c8e0e6c11f59d91d5cfec5cf55e80f931a31b71833a524c95c528d4b730",
+      "native_sha256": "96286c8e0e6c11f59d91d5cfec5cf55e80f931a31b71833a524c95c528d4b730"
+    }
+  ],
+  "hosts": {
+    "130": {
+      "pi_package_version": "1.3.0",
+      "actual_cli_version_output": "1.3.0",
+      "sdk_sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+      "cli_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "installed_head": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "native_worktree_status": "M package-lock.json"
+    },
+    "140": {
+      "pi_package_version": "1.4.0",
+      "actual_cli_version_output": "1.4.0",
+      "sdk_sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+      "cli_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "installed_head": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "native_worktree_status": "M package-lock.json"
+    }
+  },
+  "resources": "Each host: normal native discovery, one product extension, three skills, zara_sleep_batch, zero extension errors",
+  "peer_lockfile_transformations": "Final readback records lock byte hashes and exact metadata changes separately; no identical-lock claim"
+}

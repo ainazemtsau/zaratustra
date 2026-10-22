@@ -1,5 +1,10 @@
 # Sleep executor qualification
 
+This records the first handback's version-attributed results. The coordinator follow-up,
+reproduced counterexamples, fixed runtime and separately attributed current-host compatibility
+are recorded in [SLEEP-FOLLOWUP.md](SLEEP-FOLLOWUP.md). Original evidence JSON and raw attempts
+remain unchanged; they are not relabelled as new-candidate results.
+
 Runtime candidate: `afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969`, descended from approved
 `171415b48061e8f1a0da5b0653bb087931ca41fc`, published only on `codex/zaratustra-sleep`.
 The implementation writer assigns no independent PASS, full R1/T31 admission or owner
@@ -70,7 +75,9 @@ unavailable memory without persisting anything. Attempts 009–010 verified empt
 the preceding instruction snapshot. The final runner now rejects a wrong host or missing
 resources before dispatch. An initially untrusted local-package update was retried with
 native `--approve` under the owner-authorized synthetic installation scope. No global Pi
-installation, private workspace, credentials, Health data, Direction OS or ZT was modified.
+installation, private workspace, Health data, Direction OS or ZT was modified. Credential
+contents were not exposed, copied or manually altered; native auth may authenticate/refresh
+normally. No credential-file immutability is asserted.
 All earlier failed disk/hygiene attempts remain external; none were reset or hidden.
 
 There are no total USD, token, attempt, dispatch, case, time or continuation budgets. Frozen

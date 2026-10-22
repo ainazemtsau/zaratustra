@@ -1,0 +1,457 @@
+{
+  "latest_qualified_runtime_sha": "2e4d25dce289eaf482bc40d165308e6215354901",
+  "latest_affected_path_checks": [
+    {
+      "host": "130",
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "layer": "L",
+      "cases": [38, 39, 40],
+      "observed": "Activity start succeeds with fixed current/staged binding; sharedv1 remains through deferral and actual native decline; fresh exact synthetic confirmation commitsv2 with real verification still open"
+    },
+    {
+      "host": "130",
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "layer": "L",
+      "case": 41,
+      "observed": "Latest global start empty review completes without fake Knowledge/Method/application or extra cycle"
+    },
+    {
+      "host": "130",
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed": "Actual SDK/package/CLI identities match candidate2-identity; wire model/medium, empty native transcript and normal three-skill resource discovery checked"
+    },
+    {
+      "host": "140",
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "layer": "L",
+      "cases": [42, 43, 44],
+      "observed": "Activity start succeeds with fixed current/staged binding; sharedv1 remains through deferral and actual native decline; fresh exact synthetic confirmation commitsv2 with real verification still open"
+    },
+    {
+      "host": "140",
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "layer": "L",
+      "case": 45,
+      "observed": "Latest global start empty review completes without fake Knowledge/Method/application or extra cycle"
+    },
+    {
+      "host": "140",
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed": "Actual SDK/package/CLI identities match candidate2-identity; wire model/medium, empty native transcript and normal three-skill resource discovery checked"
+    }
+  ],
+  "preserved_phase1_global_and_continuation_L": {
+    "runtime": "ef9ddf1c65a5778479f87a105f987222af794939",
+    "report_sha256": "2b0155eaac33b5b2512f5d53f809125ffc75dd713f510aea5e01a5fc0cb020ea",
+    "checks": [
+      {
+        "host": "1.3.0",
+        "check": "Grounded v2 checkpoint plus ten dispositions survives intentionally lost reply; fresh transcript discovers receipt and disposes only remaining nine of 19 frozen members",
+        "result": "executed"
+      },
+      {
+        "host": "1.3.0",
+        "check": "Suitable subsequent real model work actually selects/reports v2, retains correct 19-unit result and native numerical check, with separate unknown usefulness and no owner-feedback attribution; hidden row identifiers absent from initial prompt/provider input",
+        "result": "executed"
+      },
+      {
+        "host": "1.3.0",
+        "check": "Late supplied negative usability report remains tied to actual v2 use; compatible v3 retains old v2 and negative history, leaves future check unresolved and creates no new Method application from review",
+        "result": "executed"
+      },
+      {
+        "host": "1.3.0",
+        "check": "Activity scope preserves shared v1 through no-approval deferral and actual native decline; fresh exact native synthetic confirmation commits shared v2 with checks retained",
+        "result": "executed"
+      },
+      {
+        "host": "1.3.0",
+        "check": "Explicit empty/no-new-ground review fabricates no Knowledge, Method, application or automatic extra cycle",
+        "result": "executed"
+      },
+      {
+        "host": "1.3.0",
+        "check": "Actual package/SDK identity, exact selected model/thinking and empty-transcript normal native resource discovery on frozen installed source",
+        "result": "executed"
+      },
+      {
+        "host": "1.4.0",
+        "check": "Grounded v2 checkpoint plus ten dispositions survives intentionally lost reply; fresh transcript discovers receipt and disposes only remaining nine of 19 frozen members",
+        "result": "executed"
+      },
+      {
+        "host": "1.4.0",
+        "check": "Suitable subsequent real model work actually selects/reports v2, retains correct 19-unit result and native numerical check, with separate unknown usefulness and no owner-feedback attribution; hidden row identifiers absent from initial prompt/provider input",
+        "result": "executed"
+      },
+      {
+        "host": "1.4.0",
+        "check": "Late supplied negative usability report remains tied to actual v2 use; compatible v3 retains old v2 and negative history, leaves future check unresolved and creates no new Method application from review",
+        "result": "executed"
+      },
+      {
+        "host": "1.4.0",
+        "check": "Activity scope preserves shared v1 through no-approval deferral and actual native decline; fresh exact native synthetic confirmation commits shared v2 with checks retained",
+        "result": "executed"
+      },
+      {
+        "host": "1.4.0",
+        "check": "Explicit empty/no-new-ground review fabricates no Knowledge, Method, application or automatic extra cycle",
+        "result": "executed"
+      },
+      {
+        "host": "1.4.0",
+        "check": "Actual package/SDK identity, exact selected model/thinking and empty-transcript normal native resource discovery on frozen installed source",
+        "result": "executed"
+      }
+    ],
+    "attribution": "Historical real Model/Method/late-negative/lost-reply coverage; no claim all reran on latest source. Latest start/scoped/empty changes qualified above; other affected mechanics covered by final full deliver."
+  },
+  "continuation_totals": {
+    "attempts": 27,
+    "requests": 319,
+    "input": 19093090,
+    "output": 106550,
+    "cache_read": 13738368,
+    "estimated_usd": 13.148780799999988
+  },
+  "combined_cumulative_totals": {
+    "attempts": 45,
+    "requests": 519,
+    "input": 30702723,
+    "output": 174401,
+    "cache_read": 22185856,
+    "estimated_usd": 20.99632959999999
+  },
+  "reported_usage_messages": 319,
+  "unmatched_observed_requests": [],
+  "continuation_tool_errors": {
+    "STORE_UNAVAILABLE": 1,
+    "SOURCE_EXPIRED": 1
+  },
+  "continuation_provider_errors": [
+    {
+      "artifact_attempt": 32,
+      "error": "WebSocket closed 1006"
+    },
+    {
+      "artifact_attempt": 32,
+      "error": "fetch failed"
+    },
+    {
+      "artifact_attempt": 32,
+      "error": "fetch failed"
+    },
+    {
+      "artifact_attempt": 32,
+      "error": "fetch failed"
+    },
+    {
+      "artifact_attempt": 40,
+      "error": "WebSocket closed 1006"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": 19,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 8,
+      "usage_messages": 8,
+      "pi_estimated_usd": 0.308922,
+      "tool_errors": [],
+      "summary_present": false,
+      "intentional_checkpoint_loss": true,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 20,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 10,
+      "usage_messages": 10,
+      "pi_estimated_usd": 0.565138,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 21,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 9,
+      "usage_messages": 9,
+      "pi_estimated_usd": 0.308316,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 22,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 16,
+      "usage_messages": 16,
+      "pi_estimated_usd": 0.860774,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 23,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 13,
+      "usage_messages": 13,
+      "pi_estimated_usd": 0.433596,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 24,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 13,
+      "usage_messages": 13,
+      "pi_estimated_usd": 0.673504,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 25,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 12,
+      "usage_messages": 12,
+      "pi_estimated_usd": 0.721352,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 26,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 3,
+      "usage_messages": 3,
+      "pi_estimated_usd": 0.11421999999999999,
+      "tool_errors": ["STORE_UNAVAILABLE"],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 27,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 10,
+      "usage_messages": 10,
+      "pi_estimated_usd": 0.38916599999999996,
+      "tool_errors": [],
+      "summary_present": false,
+      "intentional_checkpoint_loss": true,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 28,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 11,
+      "usage_messages": 11,
+      "pi_estimated_usd": 0.545542,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 29,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 11,
+      "usage_messages": 11,
+      "pi_estimated_usd": 0.332222,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 30,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 15,
+      "usage_messages": 15,
+      "pi_estimated_usd": 0.839926,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 31,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 13,
+      "usage_messages": 13,
+      "pi_estimated_usd": 0.43142,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 32,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 12,
+      "usage_messages": 12,
+      "pi_estimated_usd": 0.340222,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 33,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 9,
+      "usage_messages": 9,
+      "pi_estimated_usd": 0.391946,
+      "tool_errors": ["SOURCE_EXPIRED"],
+      "summary_present": false,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": true
+    },
+    {
+      "attempt": 34,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 9,
+      "usage_messages": 9,
+      "pi_estimated_usd": 0.17184000000000002,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 35,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 9,
+      "usage_messages": 9,
+      "pi_estimated_usd": 0.260584,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 36,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 9,
+      "usage_messages": 9,
+      "pi_estimated_usd": 0.39657000000000003,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 37,
+      "source": "ef9ddf1c65a5778479f87a105f987222af794939",
+      "observed_dispatches": 16,
+      "usage_messages": 16,
+      "pi_estimated_usd": 0.643304,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 38,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 15,
+      "usage_messages": 15,
+      "pi_estimated_usd": 0.46177199999999996,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 39,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 15,
+      "usage_messages": 15,
+      "pi_estimated_usd": 0.7661779999999999,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 40,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 12,
+      "usage_messages": 12,
+      "pi_estimated_usd": 0.40976360000000006,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 41,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 12,
+      "usage_messages": 12,
+      "pi_estimated_usd": 0.3297888,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 42,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 15,
+      "usage_messages": 15,
+      "pi_estimated_usd": 0.5504992000000001,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 43,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 15,
+      "usage_messages": 15,
+      "pi_estimated_usd": 0.7897331999999999,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 44,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 14,
+      "usage_messages": 14,
+      "pi_estimated_usd": 0.7687383999999999,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    },
+    {
+      "attempt": 45,
+      "source": "2e4d25dce289eaf482bc40d165308e6215354901",
+      "observed_dispatches": 13,
+      "usage_messages": 13,
+      "pi_estimated_usd": 0.34374360000000004,
+      "tool_errors": [],
+      "summary_present": true,
+      "intentional_checkpoint_loss": false,
+      "operator_interrupted": false
+    }
+  ],
+  "original_first_handback_links_unchanged": true,
+  "billing": "Native Pi reported estimate only; actual billing unknown. All observed usage/errors retained; operator interruption033 disclosed, not qualified as a successful story.",
+  "independent_review": "pending root fresh physical review",
+  "owner_usefulness": "not assessed"
+}

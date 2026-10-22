@@ -1,0 +1,8 @@
+{
+  "expectation": "Review-bound bookkeeping invocation must not reenter next explicit cycle as independent experience; stronger invocation prohibition is not required",
+  "coordinator_expectation": "PREPASS-COUNTEREXAMPLES.md -07",
+  "baseline_replay_control": "passed, counterexamples-baseline-01.log",
+  "technical_function_unchanged": true,
+  "sha256": "5e8f48e6a00af9c9da0ac52c1f57b7267c8831cd48d33541e4410431d3337a40",
+  "whole_change_exclusion_unchanged": true
+}

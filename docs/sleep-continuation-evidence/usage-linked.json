@@ -1,0 +1,51 @@
+{
+  "uncapped": true,
+  "no_reset": true,
+  "original_first_handback_sha": "cbed619da4db118d2b0421505444b2c0c3385576",
+  "original_totals": {
+    "attempts": 18,
+    "requests": 200,
+    "input": 11609633,
+    "output": 67851,
+    "cache_read": 8447488,
+    "estimated_usd": 7.8475488
+  },
+  "continuation_totals": {
+    "attempts": 27,
+    "requests": 319,
+    "input": 19093090,
+    "output": 106550,
+    "cache_read": 13738368,
+    "estimated_usd": 13.148780799999988
+  },
+  "combined_cumulative_totals": {
+    "attempts": 45,
+    "requests": 519,
+    "input": 30702723,
+    "output": 174401,
+    "cache_read": 22185856,
+    "estimated_usd": 20.99632959999999
+  },
+  "continuation_ledger_sha256": "1b762a25a91f2ec6b33d1891c7e6c41cdf45985f5cc0cb3b4a02039ce0073922",
+  "original_links": [
+    {
+      "file": "usage.json",
+      "sha256": "3fb816250ad2b88bda46a8c2e0dd261d63dff4acfc275f07d2e8317b058e3e1c",
+      "bytes": 3053
+    },
+    {
+      "file": "final-public-installed.json",
+      "sha256": "932117539c7cfeb0fbd8e7e673b210570dbd1ae0f127daecc2257546f6a31c86",
+      "bytes": 34362
+    },
+    {
+      "file": "live-verification.json",
+      "sha256": "bf5ed3be5a33e30c5d20af4c31745ce3123194af26ac9702313558f699e3dc5c",
+      "bytes": 1946
+    }
+  ],
+  "reported_usage_messages_continuation": 319,
+  "unmatched_observed_dispatches": [],
+  "billing": "Native Pi estimate only; actual billing unknown",
+  "all_failed_and_interrupted_attempts_retained": true
+}
