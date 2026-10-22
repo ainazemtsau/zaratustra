@@ -1,5 +1,12 @@
 # Ordinary project startup and owner-controlled Git tracking
 
+The ordinary startup and owner Git policy below remain current. Its verification
+section records the predecessor startup task and its exact versions. The later
+Sleep candidate uses the same extension and defaults, adds a third entry skill and
+schema 7, and has separate current evidence in
+[SLEEP-VALIDATION.md](SLEEP-VALIDATION.md). Historical startup results are not
+relabelled as Sleep results.
+
 Install the selected published ref once in the intended project root, then use
 ordinary Pi there:
 
@@ -62,7 +69,7 @@ contract. Other extensions' transformations and messages remain intact. These ar
 managed local controls for one trusted writer, not OS isolation or arbitrary-command
 deduplication.
 
-## Focused verification and version boundaries
+## Predecessor startup verification and version boundaries
 
 Windows 11 x64, Node 22.19.0, npm 11.6.2 and official Pi 1.3.0 are the exercised
 profile. Core/storage/schema/approvals/dependencies are unchanged from

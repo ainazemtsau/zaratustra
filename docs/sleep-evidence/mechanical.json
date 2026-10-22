@@ -1,0 +1,83 @@
+{
+  "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+  "final_full_check": {
+    "command": "npm run deliver (includes npm run check)",
+    "log": "deliver-03.log",
+    "tests": 147,
+    "passed": 145,
+    "failed": 0,
+    "skipped": 2,
+    "skip_reasons": [
+      "File symlink unavailable without changing current permissions",
+      "Distinct case-only names unavailable on this case-insensitive directory"
+    ]
+  },
+  "sleep_disk_tests": 13,
+  "logs": [
+    {
+      "name": "check-01.log",
+      "sha256": "60b705f36523cbf403b3ffcc36cb097b116ad2fb9116e3e136b4dc30a5e22d3b",
+      "bytes": 65538
+    },
+    {
+      "name": "deliver-01.log",
+      "sha256": "a2fe763dd946c42044e502d14b33a9c4c52c154d0ec3002c616ea64ed4c303ae",
+      "bytes": 48802
+    },
+    {
+      "name": "deliver-02.log",
+      "sha256": "5f695b77715a8ae3b11c53010779afd8b2ab451dfdd4da151b39ba5c4f48f0b2",
+      "bytes": 49111
+    },
+    {
+      "name": "deliver-03.log",
+      "sha256": "5a8f5be05f98d374845c6f8b61d8bd46fa06ea925b5c3355adb40326a0251bab",
+      "bytes": 49110
+    },
+    {
+      "name": "mechanical-01.log",
+      "sha256": "ec0d644c4cad9ac0410cad1950d372384a531b271adb0bbc5ff0958a66fa3827",
+      "bytes": 244761
+    },
+    {
+      "name": "mechanical-02.log",
+      "sha256": "40089d10f8c9ee6d4a41b45e4bd721e8b681661c14b9ca2039741c893816a9b6",
+      "bytes": 619
+    },
+    {
+      "name": "mechanical-03.log",
+      "sha256": "3e23220e5dd910872c3a6f72ad32de39310b2ccafd06449e13ba8c373ca6d036",
+      "bytes": 706
+    },
+    {
+      "name": "mechanical-04.log",
+      "sha256": "b8080cce5782ca3536cad1ca65416eaa6df98374649765590d2fa727aee02aeb",
+      "bytes": 2784
+    },
+    {
+      "name": "mechanical-05.log",
+      "sha256": "6eaeaea77a78abc846be5f5966dfa5d274fb542d7d072734fbb5ff821a82c07d",
+      "bytes": 1534
+    },
+    {
+      "name": "mechanical-06.log",
+      "sha256": "6721cc30a41b0b0fcf6df76f07130c72b739627055814451f1ece5b032ae4fdd",
+      "bytes": 1184
+    },
+    {
+      "name": "mechanical-07.log",
+      "sha256": "c86b8256b666b534323938b595b56dc5583b1b66fd08780d73c11abd8bcfd763",
+      "bytes": 1240
+    },
+    {
+      "name": "mechanical-08.log",
+      "sha256": "bf6b89f440925ae203d9c8f3329ebc3b591a6463052cdccc970da1bf3114cf95",
+      "bytes": 1897
+    }
+  ],
+  "actual_predecessor_schema6_bundle": "actual-schema6-bundle.json",
+  "original_filled_upgrade": "upgrade/evidence/verification.json (external)",
+  "old_writer_refusal": "upgrade/evidence/old-rejection.json (external)",
+  "filled_roundtrip": "filled-roundtrip/verification.json (external)",
+  "all_failed_attempts_retained_external": true
+}

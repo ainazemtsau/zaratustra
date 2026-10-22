@@ -1,0 +1,30 @@
+{
+  "node": "v22.19.0",
+  "platform": "win32",
+  "arch": "x64",
+  "os": "Windows_NT 10.0.26200",
+  "pi": "1.3.0",
+  "native_host_peer_resolution": "Normal Pi 1.3.0 loader registered one product extension and three skills, using host Pi/typebox peers",
+  "dependencies": {
+    "zod": {
+      "resolved_in_installed_package": true,
+      "checkout_dependency": false,
+      "package_relative_path": "node_modules/zod/index.cjs"
+    },
+    "htmlparser2": {
+      "resolved_in_installed_package": true,
+      "checkout_dependency": false,
+      "package_relative_path": "node_modules/htmlparser2/dist/index.js"
+    },
+    "pdfjs-dist": {
+      "resolved_in_installed_package": true,
+      "checkout_dependency": false,
+      "package_relative_path": "node_modules/pdfjs-dist/build/pdf.mjs"
+    },
+    "yauzl": {
+      "resolved_in_installed_package": true,
+      "checkout_dependency": false,
+      "package_relative_path": "node_modules/yauzl/index.js"
+    }
+  }
+}

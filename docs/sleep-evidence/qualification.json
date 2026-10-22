@@ -1,0 +1,43 @@
+{
+  "qualified_runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+  "mechanical_preparation": "Prior cases and supplied late/scoped feedback are synthetic, not actual owner testimony",
+  "checks": [
+    {
+      "check": "L final candidate: explicitly requested no-new-ground cycle over retained review bookkeeping has no fabricated Knowledge, Methods or applications or automatic next cycle",
+      "result": "executed"
+    },
+    {
+      "check": "L final candidate: committed checkpoint reply lost; fresh process discovers one review and disposes only remaining membership",
+      "result": "executed"
+    },
+    {
+      "check": "L final candidate: actual subsequent case selects exact Method v2, reports application, retains correct operational total and separate non-owner assessment",
+      "result": "executed"
+    },
+    {
+      "check": "L final candidate: late reported negative usability feedback remains tied to the actual v2 case; revision preserves negative evidence and old v2, with future check unresolved",
+      "result": "executed"
+    },
+    {
+      "check": "L final candidate: Activity review retains mixed shared context, refuses shared change, defers addressed work and changes shared Method only after fresh exact native synthetic confirmation",
+      "result": "executed"
+    },
+    {
+      "check": "L identity: exact owner-selected model/thinking, empty transcripts, native discovery of one product extension and three skills",
+      "result": "executed"
+    }
+  ],
+  "attempts": 18,
+  "observed_provider_dispatches": 200,
+  "reported_input_including_cache": 11609633,
+  "reported_output": 67851,
+  "cache_read": 8447488,
+  "pi_estimated_usd": 7.8475488,
+  "provider_errors": [],
+  "tool_errors": {
+    "REFERENCE_TYPE_MISMATCH": 2,
+    "REVISION_CONFLICT": 1
+  },
+  "owner_usefulness": "not assessed",
+  "independent_review": "not performed by implementation writer"
+}

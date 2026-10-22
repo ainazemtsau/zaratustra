@@ -1,0 +1,206 @@
+{
+  "uncapped": true,
+  "no_reset": true,
+  "all_attempts": [
+    {
+      "attempt": 1,
+      "runtime_sha": "3f912c239e37bb675b82b447fd0bdb4840d134c7",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 16,
+      "pi_estimated_usd": 0.61908,
+      "tool_errors": ["REFERENCE_TYPE_MISMATCH"],
+      "intentional_checkpoint_reply_loss": true,
+      "settled": false
+    },
+    {
+      "attempt": 2,
+      "runtime_sha": "3f912c239e37bb675b82b447fd0bdb4840d134c7",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 10,
+      "pi_estimated_usd": 0.582908,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 3,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 12,
+      "pi_estimated_usd": 0.312186,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 4,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 12,
+      "pi_estimated_usd": 0.321544,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 5,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 9,
+      "pi_estimated_usd": 0.360524,
+      "tool_errors": ["REFERENCE_TYPE_MISMATCH"],
+      "intentional_checkpoint_reply_loss": true,
+      "settled": false
+    },
+    {
+      "attempt": 6,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 10,
+      "pi_estimated_usd": 0.534652,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 7,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.4.0",
+      "status": "retained preliminary/out-of-profile",
+      "provider_dispatches": 12,
+      "pi_estimated_usd": 0.352028,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 8,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.3.0",
+      "status": "unsuccessful: package resources not ready",
+      "provider_dispatches": 4,
+      "pi_estimated_usd": 0.0469088,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 9,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.3.0",
+      "status": "retained preceding-instruction snapshot",
+      "provider_dispatches": 9,
+      "pi_estimated_usd": 0.25482,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 10,
+      "runtime_sha": "9b7cce8c5f3468b004c86e3256e13fa81834b1a0",
+      "pi": "1.3.0",
+      "status": "retained preceding-instruction snapshot",
+      "provider_dispatches": 11,
+      "pi_estimated_usd": 0.299594,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 11,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 10,
+      "pi_estimated_usd": 0.286146,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 12,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 8,
+      "pi_estimated_usd": 0.30687200000000003,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": true,
+      "settled": false
+    },
+    {
+      "attempt": 13,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 10,
+      "pi_estimated_usd": 0.522472,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 14,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 10,
+      "pi_estimated_usd": 0.339428,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 15,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 15,
+      "pi_estimated_usd": 0.713458,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 16,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 13,
+      "pi_estimated_usd": 0.428134,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 17,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 17,
+      "pi_estimated_usd": 0.838954,
+      "tool_errors": ["REVISION_CONFLICT"],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    },
+    {
+      "attempt": 18,
+      "runtime_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+      "pi": "1.3.0",
+      "status": "final runtime qualification",
+      "provider_dispatches": 12,
+      "pi_estimated_usd": 0.7278399999999999,
+      "tool_errors": [],
+      "intentional_checkpoint_reply_loss": false,
+      "settled": true
+    }
+  ],
+  "raw_external_root": "C:/projects/zaratustra-v1-sleep-evidence-20261022",
+  "billing_cost": "unknown; numbers are native Pi estimates"
+}

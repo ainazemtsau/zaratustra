@@ -1,0 +1,112 @@
+{
+  "source_sha": "afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969",
+  "build_command": "npm run build inside npm run deliver",
+  "role": "TypeScript verification output; native public package executes shipped TypeScript, no generated build needed at install",
+  "files": [
+    {
+      "path": "dist/core/approval.js",
+      "sha256": "a55491eb62248c5fdd5c20df226d49be978f064f3ad8eb4f9ba3eb84d5a874d2",
+      "bytes": 7580
+    },
+    {
+      "path": "dist/core/contracts.js",
+      "sha256": "f3cb8abd72a88f4fa80623048a83c024270294635de04f8ce7c93783eb7e9df0",
+      "bytes": 21460
+    },
+    {
+      "path": "dist/core/effects.js",
+      "sha256": "c701ae81913d72c81a88d8fbd2afc86c314eea59f6488a612d5213f3b69e5849",
+      "bytes": 8206
+    },
+    {
+      "path": "dist/core/experience.js",
+      "sha256": "ac3e5366b18b598b715a69b6b0520c959bc24f8f87dd9ac6d19cafc848c1be92",
+      "bytes": 25423
+    },
+    {
+      "path": "dist/core/index.js",
+      "sha256": "4e9b11b081017bdb7ae8f9df41f886b0aca8be06cc61adba60e309cd09cab4c6",
+      "bytes": 118810
+    },
+    {
+      "path": "dist/core/lifecycle.js",
+      "sha256": "7f8120b1c608a41a24fb77e1b3643484cffa33ce1c74c715de279a38e2ce06fd",
+      "bytes": 22143
+    },
+    {
+      "path": "dist/core/memory.js",
+      "sha256": "e65e6b791e75ae341928740aa05d644484e83136fd33dad928845e23751bf3f8",
+      "bytes": 40317
+    },
+    {
+      "path": "dist/core/sleep.js",
+      "sha256": "9f0dc40d3aafcb76517718318ddbee47b9c16dfa98e007f5f1d81b24c54e6c03",
+      "bytes": 29928
+    },
+    {
+      "path": "dist/core/work.js",
+      "sha256": "30c7d6379e2081bf69c01c26fd2b79887f2c6a6e4e64bc67f7deb8ecce8a1ec0",
+      "bytes": 11291
+    },
+    {
+      "path": "dist/extension/administration.js",
+      "sha256": "1da1a2a6271dd1c4b9daffc5b17a6fd6ae369e04d54a9a678437f2e2edbc7d63",
+      "bytes": 8212
+    },
+    {
+      "path": "dist/extension/authority.js",
+      "sha256": "999db281e3ba73dc749e1dfce1f0becff9925319cb64b7e2c251010683ee3ef8",
+      "bytes": 695
+    },
+    {
+      "path": "dist/extension/index.js",
+      "sha256": "a97b8d4c777ae57a4940a91cffb6d635eb12ba8e84764f6d6a0c8f5928296957",
+      "bytes": 43886
+    },
+    {
+      "path": "dist/extension/managed.js",
+      "sha256": "c1033c615ce3b02d93aa4b64d43ef7594defd3b4913ebcbc661c1a53b1d8f65c",
+      "bytes": 3700
+    },
+    {
+      "path": "dist/extension/preview.js",
+      "sha256": "20dc8a4fa1c75f6d63070d845368b1b4e5a81c0831c5a78bd07c16ac2562f5da",
+      "bytes": 9005
+    },
+    {
+      "path": "dist/extension/workspace.js",
+      "sha256": "7193aa9da545c62a8930d3a8b53ec372a1ee152cdd10de36c11c0da0536eec25",
+      "bytes": 3187
+    },
+    {
+      "path": "dist/storage/administration.js",
+      "sha256": "938748d8bea50dbe3da3d9a07ce63bd3ee5e211ebc488c7aad24a520171cf705",
+      "bytes": 39627
+    },
+    {
+      "path": "dist/storage/control.js",
+      "sha256": "2abe26f0ad10183e029a40d47a174c916e036d4f1baa5f8175138d7a4af5195d",
+      "bytes": 3858
+    },
+    {
+      "path": "dist/storage/extract.js",
+      "sha256": "4b2ae7282b11a424d00ec68643ed17c18796486b0901b6f676169230d249341f",
+      "bytes": 1680
+    },
+    {
+      "path": "dist/storage/index.js",
+      "sha256": "7ec7fa50b62489fedc0742cf91463c4505380f0dfa83db337c1bf7074a37e287",
+      "bytes": 31657
+    },
+    {
+      "path": "dist/storage/indexes.js",
+      "sha256": "239695bafe1c627e816920b84d987111fd51057a9deebf91d040d95151cc92d7",
+      "bytes": 2011
+    },
+    {
+      "path": "dist/storage/output.js",
+      "sha256": "be9090939f9610eb299dd006dc9c1cd2fea58d7ad0700ef9ec9b5b43c84d1685",
+      "bytes": 4473
+    }
+  ]
+}

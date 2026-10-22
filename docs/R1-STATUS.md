@@ -1,5 +1,14 @@
 # Full R1/R2 disposition
 
+Sleep is implemented and executor-qualified on
+`afb3b5158aaf43bf8eb37821d90dd1b3ed2fc969`, under the owner's 2026-10-22 assignment.
+The bounded mechanical and genuine native Pi/model results are in
+[SLEEP-VALIDATION.md](SLEEP-VALIDATION.md), including every unsuccessful preliminary
+attempt and the uncapped usage ledger. This updates the current Sleep disposition;
+the exact predecessor of this file remains in
+[sleep-predecessor-R1-STATUS-171415b.md](sleep-predecessor-R1-STATUS-171415b.md).
+Independent Sleep review, full R1/R2 admission and owner usefulness remain separate.
+
 C is independently technical PASS at `e24b2fda260247ab81daf797408f1d5261ea8aff`, then
 separately owner-accepted with “да” as recorded in the D assignment. Independent sources:
 `C:/projects/zaratustra-v1-c-alias-independent-evidence-20261020/REVIEW.txt` and its
@@ -57,12 +66,12 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 | T29 | partial | partial | —       | Fresh sessions/no transcript, authoritative control/epoch and old callback/source/approval/claim negatives; actual no-receipt recovery. Full reload/compaction/multi-platform release qualification remains separate F.                                                                                  |
 | T30 | —       | not_run | —       | Independent newly chosen live case belongs to the owner-launched fresh reviewer.                                                                                                                                                                                                                         |
 | T31 | —       | —       | pending | Actual owner usefulness/acceptance is separate and has not occurred.                                                                                                                                                                                                                                     |
-| T32 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                                                                                                               |
-| T33 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                                                                                                               |
-| T34 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                                                                                                               |
-| T35 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                                                                                                               |
-| T36 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                                                                                                               |
-| T37 | not_run | not_run | —       | Separate R2 Sleep; not in this assignment.                                                                                                                                                                                                                                                               |
+| T32 | passed  | partial | —       | Sleep retained-history/late old-result/open-Signal/deferred/new-arrival M; actual afb 012–015 accumulated synthetic cases and late reported feedback, without fabricated daily runs. Larger missed-week corpora remain unqualified.                                                                      |
+| T33 | passed  | —       | —       | Sleep disk faults/replay/stale premises/all-or-none progress/fresh process pass; actual 012–013 also retain committed membership after intentional lost reply. No independent verdict assigned.                                                                                                          |
+| T34 | passed  | passed  | —       | afb 012 grounded v2; 014 selects and applies that exact version in suitable new work, with actual Node.js result and separate unknown usefulness. Merely considered problems remain open. Synthetic profile only.                                                                                        |
+| T35 | passed  | passed  | —       | afb 015 retains actual v2 application plus supplied synthetic negative usability assessment, narrows v3 and leaves a future check open. No owner testimony or causal usefulness claim.                                                                                                                   |
+| T36 | passed  | partial | —       | Sleep exact-ground retention/backup/access/epoch M plus affected E2/E3 regressions; afb 016–018 shared-scope deferral, native refusal and fresh exact confirmation. No new general live catalog/deletion qualification.                                                                                  |
+| T37 | passed  | partial | —       | Frozen membership, arrivals, abort/restart and typed recursion exclusion M; afb 011 empty/no-new-ground, 012–013 finite continuation and 018 completion without self-restart L. Abort/restart fault layer is M. No total budgets.                                                                        |
 | T38 | passed  | partial | —       | E1/E2 scoped supporting surfaces retained. E3 all-depth technical key/atom and legacy transaction classification, inherited tombstone privacy, hidden-only lifecycle stable low seq/gen/docids/cursor, public/rebuild invalidation. Negative/scale layer M, small low-profile L; no OS isolation.        |
 | T39 | passed  | partial | —       | E1 native SDK M: 12 source/profile cases, four modifier negatives, zero dispatch. L synthetic RPC/caller/quote/stage retained, never Anton. Genuine interactive owner feedback was not exercised.                                                                                                        |
 | T40 | passed  | partial | —       | E2 installed exact-binding M plus synthetic registered-dialog L: fresh merge/file/export decisions, refusal, material change/new decision and ambiguity. Genuine owner TUI approval/usefulness not exercised; no owner acceptance claim.                                                                 |
@@ -74,13 +83,13 @@ Prior statuses remain byte-for-byte in C-R1-STATUS-e24b2fda.md and D-R1-STATUS-1
 M = mechanical; L = actual Pi/model; O = owner usefulness. A dash means no claim
 for that layer in this handoff, not a waiver. Platform/material profiles beyond the
 declared qualified profiles need their own qualification. Accepted C implemented Work/materials; its version-attributed evidence is tracked in
-[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). E3 is the current authorized block. Accepted predecessor evidence is in
+[C-VALIDATION.md](C-VALIDATION.md). Accepted D profile/evidence stay in [D-VALIDATION](D-VALIDATION.md). Sleep is the current authorized block. Accepted predecessor evidence is in
 [E2 validation](E2-VALIDATION-094c0df4.md); new mechanisms are in [E3 design](E3-DESIGN.md).
 E2 executor qualification covers exact confirmations, controlled native
 actions/recovery, finite merges and textual export/drift. E3 implements
 user backup/quarantine restore, archive/delete/retention and the restored-action barrier;
 current version-attributed M/L results are recorded in [E3-VALIDATION](E3-VALIDATION.md).
-Real finite identity/catalog/Activity operations are implemented and qualified within E2 bounds; generic bulk platforms are not introduced. Codex and R2 Sleep remain separate.
+Real finite identity/catalog/Activity operations are implemented and qualified within E2 bounds; generic bulk platforms are not introduced. Codex, full R1/R2 admission and independent Sleep review remain separate. Current Sleep results do not retrospectively waive open R1 criteria.
 The full roadmap remains specification §25.8, with full requirements §24.
 
 END_OF_FILE: docs/R1-STATUS.md
