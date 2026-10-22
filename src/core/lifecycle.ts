@@ -89,6 +89,7 @@ export class Lifecycle {
     private read: (id: string) => RecordRow,
     private approvals: Approvals,
     private allowed: (id: string, revision?: number) => boolean,
+    private restricted: (id: string) => boolean,
   ) {}
   private writeable(r: RecordRow) {
     requireThat(
@@ -96,10 +97,7 @@ export class Lifecycle {
       "REFERENCE_NOT_FOUND",
       "Record unavailable.",
     );
-    const restriction = this.db.get<{ n: number }>(
-      "SELECT max(restricted) AS n FROM memory_docs WHERE id=?",
-      r.id,
-    )?.n;
+    const restriction = this.restricted(r.id);
     requireThat(
       !restriction || this.ctx.scopes?.includes("restricted:write"),
       "PERMISSION_DENIED",
@@ -441,10 +439,7 @@ export class Lifecycle {
           updated_at: now,
         };
         if (action.action === "tombstone") {
-          const effectiveRestricted = !!this.db.get<{ n: number }>(
-            "SELECT max(restricted) AS n FROM memory_docs WHERE id=?",
-            current.id,
-          )?.n;
+          const effectiveRestricted = this.restricted(current.id);
           const tombstone = (row: RecordRow): RecordRow => ({
             ...row,
             visibility: effectiveRestricted ? "restricted" : row.visibility,

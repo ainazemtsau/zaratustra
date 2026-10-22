@@ -100,6 +100,46 @@ function inherited(db: StoragePort, item: Item) {
   };
 }
 
+/** Access edges, not retention pins: reconstruct from existing typed schema-7 rows.
+ * Review progress depends on its frozen inputs. A correction depends on the exact
+ * member and declared grounds, even when the canonical Method has older context.
+ */
+export function sleepAccessRefs(db: StoragePort) {
+  const edges = new Map<string, Item["evidence_refs"]>();
+  if (!db.get("SELECT name FROM sqlite_master WHERE name='sleep_items'"))
+    return edges;
+  const add = (key: string, refs: Item["evidence_refs"]) =>
+    edges.set(key, [...(edges.get(key) ?? []), ...refs]);
+  for (const row of db.all<{
+    json: string;
+    work_id: string;
+    review_id: string;
+    episode_id: string;
+  }>(
+    "SELECT i.json,r.work_id,r.id AS review_id,r.episode_id FROM sleep_items i JOIN sleep_reviews r ON r.id=i.review_id",
+  )) {
+    const item = SleepItem.parse(JSON.parse(row.json)),
+      grounds = inherited(db, item);
+    const refs = [
+      item.ref,
+      ...grounds.evidence_refs,
+      ...grounds.change_refs,
+      ...(grounds.check_signal_ref ? [grounds.check_signal_ref] : []),
+    ];
+    for (const id of [row.work_id, row.review_id, row.episode_id])
+      add(id, refs);
+    // Existing managed access conservatively classifies the identity, including
+    // later revisions that can carry forward the derived text. Exact versions
+    // remain in the disposition; this edge does not retain any extra version.
+    for (const ref of [
+      ...item.change_refs,
+      ...(item.check_signal_ref ? [item.check_signal_ref] : []),
+    ])
+      add(ref.id, [item.ref, ...grounds.evidence_refs]);
+  }
+  return edges;
+}
+
 /** No independent commit path: mutations are called only inside Core.commit's transaction. */
 export class Sleep {
   constructor(

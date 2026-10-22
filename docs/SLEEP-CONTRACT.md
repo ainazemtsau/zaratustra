@@ -44,6 +44,17 @@ rows, not a ninth primary kind or a second semantic memory tree. Pi transcripts 
 atomic durable membership or prove that no event was skipped. Every write participates in the
 existing zara_commit transaction, guards, idempotency, intents, Change and receipt protocol.
 
+Typed frozen membership and disposition grounds also participate in the existing access
+inheritance projection. Review Work/Run progress inherits its frozen inputs; each exact
+correction/check inherits its member and declared grounds. Technical Changes/receipts use
+the normal Core request_id to find their intent, retaining legacy transaction_id lookup.
+Already progressed schema-7 stores reconstruct these edges without canonical/history rewrites,
+including read-only connections and rebuild/restore. Permitted-only history remains visible.
+Prepared starts capable of reading restricted inputs keep unknown sensitivity private through
+crash/rollback; a committed start grounded only in unrestricted inputs clears that temporary
+intent classification. The read-only fallback can add restrictions, never downgrade stored ones.
+Access edges add no retention pins or rights; existing minimal pending/check pins still govern.
+
 First review scans retained permitted meaningful history using change sequence. Later review
 scans new Changes, including late Evaluations of old exact results. Independent frozen inputs
 include open/observing Signals and addressed deferred work behind that frontier. The initial

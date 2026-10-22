@@ -218,6 +218,356 @@ const evaluation = (target: string, revision: number, e: string) => ({
   explanation:
     "Late feedback on an old exact result; causal explanation unknown",
 });
+
+function protectedEvidence(f: ReturnType<typeof fixture>, text: string) {
+  const s = f.core.capture(text, "rpc", "registered-synthetic-controller");
+  const req = f.request([
+    {
+      op: "import_evidence",
+      client_ref: "private",
+      source_handle: s.source_handle,
+      title: "Synthetic protected grounds",
+      source_language: "en",
+      visibility: "restricted",
+    },
+  ]);
+  req.source_handles = [s.source_handle];
+  return f.core.commit(req).created.private;
+}
+
+test("Sleep access: uncommitted start intents keep protected input classification after prepare and transaction rollback", (t) => {
+  for (const point of ["after_prepare", "after_records"]) {
+    const f = fixture();
+    t.after(() => f.disk.close());
+    const secret = "SYNTHETIC-PRIVATE-UNCOMMITTED-" + point;
+    const e = protectedEvidence(f, secret);
+    f.read(e);
+    const low = new Core(f.disk, {
+        ...f.ctx,
+        scopes: [],
+        runtime_id: "low-pending",
+      }),
+      before = low.snapshot(),
+      seq = low.sequence();
+    f.rebind(
+      new Core(f.disk, f.ctx, (p) => {
+        if (p === point) throw Error("Synthetic private start fault");
+      }),
+    );
+    const w = work("w");
+    w.data.current_state = secret;
+    const req = f.request([
+      w,
+      {
+        op: "start_run",
+        client_ref: "r",
+        title: "Synthetic pending review",
+        visibility: "workspace",
+        episode_key: point,
+        work_ref: ref("w"),
+        mode: "sleep",
+        continuation_of: null,
+        summary: "Requested review",
+        starting_refs: [],
+      },
+      { op: "start_sleep", work_ref: ref("w"), run_ref: ref("r") },
+    ]);
+    req.reason = "Actual protected input: " + secret;
+    assert.throws(() => f.core.commit(req), /Synthetic private start fault/);
+    assert.equal(f.disk.all("SELECT * FROM sleep_reviews").length, 0);
+    assert.equal(
+      f.disk.all("SELECT * FROM records WHERE kind='work'").length,
+      0,
+    );
+    assert.deepEqual(low.snapshot(), before);
+    assert.equal(low.sequence(), seq);
+    fail(() => low.operation(req.request_id), "REFERENCE_NOT_FOUND");
+    assert.ok(!JSON.stringify(low.browse("operations")).includes(secret));
+    assert.ok(
+      JSON.stringify(f.core.operation(req.request_id)).includes(secret),
+    );
+  }
+});
+
+test("Sleep access: read-only projection cannot downgrade a writer's newly committed restriction", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const pub = f.evidence("Permitted concurrency control"),
+    r = f.start();
+  f.finish(r);
+  const w = f.commit([work("ordinary")]).created.ordinary;
+  const ro = new DiskStorage(f.home);
+  t.after(() => ro.close());
+  assert.equal(ro.readonly, true);
+  const low = new Core(ro, {
+    ...f.ctx,
+    scopes: [],
+    runtime_id: "low-interleaved",
+  });
+  const original = ro.all.bind(ro);
+  let interleaved = false,
+    priv = "";
+  ro.all = <T>(sql: string, ...params: (string | number | null)[]): T[] => {
+    if (
+      !interleaved &&
+      sql === "SELECT id,revision,restricted FROM memory_docs"
+    ) {
+      interleaved = true;
+      priv = protectedEvidence(f, "SYNTHETIC-INTERLEAVED-PRIVATE-462098");
+      f.commit(
+        [
+          {
+            op: "update_record",
+            ref: { id: w },
+            title: f.read(w).title,
+            data: {
+              ...f.read(w).data,
+              current_state: "SYNTHETIC-INTERLEAVED-PRIVATE-462098",
+              context_refs: [{ id: priv }],
+            },
+          },
+        ],
+        [w],
+      );
+    }
+    return original<T>(sql, ...params);
+  };
+  const result = JSON.stringify(low.snapshot());
+  assert(interleaved);
+  for (const hidden of ["SYNTHETIC-INTERLEAVED-PRIVATE-462098", w, priv])
+    assert.ok(
+      !result.includes(hidden),
+      "Concurrent inherited restriction downgraded by old read projection",
+    );
+  assert.ok(low.read(pub));
+  fail(() => low.read(w), "REFERENCE_NOT_FOUND");
+});
+
+test("Sleep access: protected-only progress hides metadata and preserves visible sequence, generation, snapshot and cursors; public progress stays visible", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const secret = "SYNTHETIC-PRIVATE-PROGRESS-520831",
+    e = protectedEvidence(f, secret);
+  const run = f.start(),
+    w = (f.read(run).data.work_ref as { id: string }).id;
+  const low = new Core(f.disk, { ...f.ctx, scopes: [], runtime_id: "low" });
+  const before = low.snapshot(),
+    seq = low.sequence(),
+    changes = low.browse("changes"),
+    operations = low.browse("operations");
+  fail(() => low.read(e), "REFERENCE_NOT_FOUND");
+  fail(() => low.read(w), "REFERENCE_NOT_FOUND");
+  fail(() => low.read(run), "REFERENCE_NOT_FOUND");
+  const req = f.checkpoint(run);
+  req.reason = "Considered actual source: " + secret;
+  const receipt = f.core.commit(req);
+  assert.deepEqual(low.snapshot(), before);
+  assert.equal(low.sequence(), seq);
+  assert.deepEqual(low.browse("changes"), changes);
+  assert.deepEqual(low.browse("operations"), operations);
+  fail(() => low.operation(req.request_id), "REFERENCE_NOT_FOUND");
+  fail(() => low.browse("history", w), "REFERENCE_NOT_FOUND");
+  fail(() => low.sleepBatch(run), "REFERENCE_NOT_FOUND");
+  fail(() => low.commit(req), "REFERENCE_NOT_FOUND");
+  assert.ok(JSON.stringify(f.core.operation(req.request_id)).includes(secret));
+  assert.ok(receipt.committed);
+  assert.ok(!JSON.stringify(low.diagnostics()).includes(e));
+  // Completed considered rows are access edges, not permanent retention pins.
+  assert.doesNotThrow(() =>
+    f.core.storagePreview(
+      { action: "tombstone", targets: [{ id: e, revision: 1 }] },
+      "Retire considered synthetic grounds",
+      "Keep",
+    ),
+  );
+
+  const p = fixture();
+  t.after(() => p.disk.close());
+  p.evidence("Permitted source one");
+  p.evidence("Permitted source two");
+  const pr = p.start(),
+    pl = new Core(p.disk, { ...p.ctx, scopes: [], runtime_id: "public-low" });
+  const first = pl.browse("changes", undefined, 1).data as {
+    next_cursor: string;
+    generation: string;
+  };
+  const pending = p.checkpoint(pr);
+  pending.reason = "PERMITTED-PROGRESS-710";
+  p.core.commit(pending);
+  assert.ok(JSON.stringify(pl.browse("changes")).includes(pending.reason));
+  assert.ok(pl.operation(pending.request_id));
+  assert.ok(pl.read(pr));
+  assert.notEqual(
+    (pl.browse("changes").data as { generation: string }).generation,
+    first.generation,
+  );
+  fail(
+    () => pl.browse("changes", undefined, 1, first.next_cursor),
+    "CURSOR_INVALIDATED",
+  );
+});
+
+test("Sleep access: exact correction grounds and review status survive stale schema-7 projection, read-only reopen, rebuild and restore without canonical rewrites", async (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const pub = f.evidence(),
+    m = f.commit([method(pub)]).created.m;
+  const secret = "SYNTHETIC-PRIVATE-DERIVATION-843921",
+    e = protectedEvidence(f, secret);
+  const run = f.start(),
+    w = (f.read(run).data.work_ref as { id: string }).id;
+  const req = f.checkpoint(
+    run,
+    [
+      {
+        op: "revise_method",
+        ref: { id: m },
+        data: { ...f.read(m).data, instructions: secret },
+      },
+      {
+        op: "update_record",
+        ref: { id: w },
+        title: f.read(w).title,
+        data: { ...f.read(w).data, current_state: secret },
+      },
+      signal(e, { id: m, revision: 2 }),
+    ],
+    {
+      disposition: "changed",
+      evidence_refs: [{ id: e, revision: 1 }],
+      change_refs: [{ id: m, revision: 2 }],
+      expected_benefit: "Synthetic grounded fix",
+      limits: "Unverified",
+      next_check: "Suitable real case",
+      check_signal_ref: ref("s"),
+    },
+  );
+  req.guards.push({ ref: { id: w }, expected_revision: f.read(w).revision });
+  f.core.commit(req);
+  f.commit(
+    [
+      {
+        op: "revise_method",
+        ref: { id: m },
+        data: {
+          ...f.read(m).data,
+          limitations:
+            "Later revision carries the same declared protected derivation",
+        },
+      },
+    ],
+    [m],
+  );
+  const canonicalRows = () =>
+    f.disk.all(
+      "SELECT json FROM records UNION ALL SELECT json FROM revisions UNION ALL SELECT json FROM changes UNION ALL SELECT json FROM sleep_items",
+    );
+  const preserved = canonicalRows();
+  // Reconstruct only the old derived access flags, as in an already progressed
+  // schema-7 store written before this fix. Exact canonical support stays intact.
+  f.disk.run(
+    "UPDATE memory_docs SET restricted=0 WHERE id IN (?,?,?)",
+    m,
+    w,
+    run,
+  );
+  const ro = new DiskStorage(f.home);
+  t.after(() => ro.close());
+  assert.equal(ro.readonly, true);
+  const inspect = (disk: DiskStorage) => {
+    const low = new Core(disk, {
+      ...f.ctx,
+      ...disk.workspace,
+      scopes: [],
+      runtime_id: "low-restored",
+    });
+    for (const id of [e, m, w, run]) {
+      fail(() => low.read(id), "REFERENCE_NOT_FOUND");
+      fail(() => low.browse("history", id), "REFERENCE_NOT_FOUND");
+    }
+    fail(() => low.read(m, 1), "REFERENCE_NOT_FOUND");
+    fail(() => low.operation(req.request_id), "REFERENCE_NOT_FOUND");
+    for (const result of [
+      low.snapshot(),
+      low.browse("changes"),
+      low.browse("operations"),
+      low.search({ query: "SYNTHETIC", match: "all" }),
+      low.diagnostics(),
+    ])
+      for (const hidden of [secret, e, m, w, run, req.request_id])
+        assert.ok(!JSON.stringify(result).includes(hidden));
+    assert.ok(low.read(pub));
+  };
+  inspect(ro);
+  ro.close();
+  inspect(f.disk);
+  assert.deepEqual(canonicalRows(), preserved);
+  const reader = new Core(f.disk, { ...f.ctx, scopes: ["restricted:read"] });
+  f.rebind(reader);
+  const denied = f.request(
+    [
+      {
+        op: "revise_method",
+        ref: { id: m },
+        data: {
+          ...f.read(m).data,
+          instructions: "Unauthorized removal of protected instruction",
+        },
+      },
+    ],
+    [m],
+  );
+  fail(() => f.core.commit(denied), "PERMISSION_DENIED");
+  assert.equal(f.read(m).revision, 3);
+  fail(
+    () =>
+      reader.storagePreview(
+        { action: "archive", targets: [{ id: m, revision: 3 }] },
+        "Archive protected derived Method",
+        "Keep",
+      ),
+    "PERMISSION_DENIED",
+  );
+  fail(
+    () =>
+      reader.recoveryInspect(w, null, {
+        observation: "Synthetic current world",
+      }),
+    "PERMISSION_DENIED",
+  );
+  assert.deepEqual(canonicalRows(), preserved);
+  f.rebind(new Core(f.disk, f.ctx));
+  f.core.rebuildIndex();
+  inspect(f.disk);
+  assert.deepEqual(canonicalRows(), preserved);
+  const admin = new Administration(f.home, f.backups, f.ctx),
+    backup = await admin.backup(f.disk);
+  const preview = admin.restorePreview(
+    backup.backup,
+    "Restore synthetic protected progress",
+    "Keep",
+  );
+  const approval = admin.approvals.present(preview.preview.request_id);
+  admin.approvals.answer(approval.token, true, {
+    source_ref: "synthetic",
+    transport: "native-dialog",
+    channel_identity: "registered-synthetic-controller",
+    stage: "pi-confirm-return",
+  });
+  admin.restore(preview.preview.request_id, f.disk);
+  f.disk.close();
+  const restored = new DiskStorage(f.home);
+  t.after(() => restored.close());
+  inspect(restored);
+  assert.ok(restored.all("SELECT * FROM recovery_barriers").length);
+  assert.equal(
+    (
+      new Core(restored, { ...f.ctx, ...restored.workspace }).read(m)
+        .data as AddressedRow
+    ).data.instructions,
+    secret,
+  );
+});
 const method = (e: string) => ({
   op: "create_record",
   kind: "method",
@@ -496,6 +846,17 @@ test("Sleep disk restricted profiles, inherited restrictions and guessed review 
       ...f.ctx,
       scopes: ["restricted:read"],
       runtime_id: "read-profile",
+    }),
+  );
+  const reviewsBefore = f.disk.all("SELECT * FROM sleep_reviews");
+  fail(() => f.start(), "PERMISSION_DENIED");
+  assert.deepEqual(f.disk.all("SELECT * FROM sleep_reviews"), reviewsBefore);
+  assert.ok(JSON.stringify(f.core.browse("materials")).includes(hidden));
+  f.rebind(
+    new Core(f.disk, {
+      ...f.ctx,
+      policy_revision: "synthetic-expanded-write-profile",
+      runtime_id: "expanded-profile",
     }),
   );
   const newlyPermitted = f.start();

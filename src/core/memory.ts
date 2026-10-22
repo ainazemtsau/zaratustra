@@ -15,6 +15,7 @@ import type {
   StoragePort,
   AddressedRow,
 } from "./contracts.ts";
+import { sleepAccessRefs } from "./sleep.ts";
 
 const hash = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
@@ -207,12 +208,8 @@ export function validateMemory(
   concepts.forEach((_, id) => visit(id));
 }
 
-/** Derived indexes only. Caller owns the short SQLite transaction. */
-export function refreshMemory(
-  storage: StoragePort,
-  rebuild = false,
-  rewrittenIds: readonly string[] = [],
-) {
+/** Shared access projection for stored indexes and old read-only schema-7 indexes. */
+function accessProjection(storage: StoragePort) {
   const experience = !!storage.get(
     "SELECT name FROM sqlite_master WHERE type='view' AND name='addressed_current'",
   );
@@ -232,13 +229,18 @@ export function refreshMemory(
     )
     .map((row) => JSON.parse(row.json) as AddressedRow);
   const versionKey = (r: AddressedRow) => r.id + ":" + r.revision;
+  const sleepRefs = sleepAccessRefs(storage);
   const versionRestrictions = new Map(
     versions.map((r) => [versionKey(r), r.visibility === "restricted"]),
   );
   const versionRefs = new Map(
     versions.map((r) => [
       versionKey(r),
-      addressedRefs(r).map((ref) => {
+      [
+        ...addressedRefs(r),
+        ...(sleepRefs.get(versionKey(r)) ?? []),
+        ...(sleepRefs.get(r.id) ?? []),
+      ].map((ref) => {
         if (ref.revision !== undefined) return ref.id + ":" + ref.revision;
         if (ref.content_version !== undefined) {
           const target = versions.find(
@@ -283,6 +285,23 @@ export function refreshMemory(
       }
     }
   }
+  return {
+    current,
+    byId,
+    versions,
+    versionKey,
+    restrictions,
+    versionRestrictions,
+  };
+}
+
+export function refreshMemory(
+  storage: StoragePort,
+  rebuild = false,
+  rewrittenIds: readonly string[] = [],
+) {
+  const { byId, versions, versionKey, restrictions, versionRestrictions } =
+    accessProjection(storage);
   if (rebuild) {
     storage.exec(
       "DELETE FROM memory_text; DELETE FROM memory_names; DELETE FROM memory_docs;",
@@ -484,12 +503,56 @@ export interface CursorState {
   access: string;
   last: number;
 }
+const accessCaches = new WeakMap<StoragePort, { stamp: string; sql: string }>();
 export class Memory {
   constructor(
     private db: StoragePort,
     private ctx: CallContext,
     private cursors: Map<string, CursorState>,
   ) {}
+  private accessDocsSQL() {
+    // Old schema-7 derived indexes may predate Sleep access edges. Reuse the same
+    // projection without rewriting canonical/history rows, including on read-only
+    // connections. Normal refreshed stores retain the indexed SQL fast path.
+    if (
+      !this.db.get(
+        "SELECT name FROM sqlite_master WHERE name='sleep_reviews'",
+      ) ||
+      !this.db.get("SELECT id FROM sleep_reviews LIMIT 1")
+    )
+      return "memory_docs";
+    const stamp = canonical([
+      this.db.get("SELECT total_changes() AS n"),
+      this.db.get("PRAGMA data_version"),
+      this.db.get("SELECT coalesce(max(seq),0) AS n FROM changes"),
+    ]);
+    const cached = accessCaches.get(this.db);
+    if (cached?.stamp === stamp) return cached.sql;
+    const { versionRestrictions } = accessProjection(this.db);
+    const docs = this.db.all<{
+      id: string;
+      revision: number;
+      restricted: number;
+    }>("SELECT id,revision,restricted FROM memory_docs");
+    let sql = "memory_docs";
+    if (
+      docs.some(
+        (d) =>
+          !d.restricted && !!versionRestrictions.get(d.id + ":" + d.revision),
+      )
+    ) {
+      const keys = JSON.stringify(
+        [...versionRestrictions]
+          .filter(([, restricted]) => restricted)
+          .map(([key]) => key),
+      ).replaceAll("'", "''");
+      // A concurrent writer may have committed newer flags after the projection
+      // read. The fallback can add restrictions, never downgrade the stored ones.
+      sql = `(SELECT docid,id,revision,CASE WHEN restricted=1 OR id || ':' || revision IN (SELECT value FROM json_each('${keys}')) THEN 1 ELSE 0 END AS restricted FROM memory_docs)`;
+    }
+    accessCaches.set(this.db, { stamp, sql });
+    return sql;
+  }
   visibleSequence(through = Number.MAX_SAFE_INTEGER) {
     return this.db.get<{ n: number }>(
       `SELECT count(*) AS n FROM changes t WHERE t.seq<=? AND ${this.technicalSQL("t")}`,
@@ -527,37 +590,47 @@ export class Memory {
   }
   allowed(id: string, revision?: number) {
     const r = this.db.get<{ restricted: number }>(
-      "SELECT d.restricted FROM memory_docs d JOIN addressed_current r ON r.id=d.id WHERE d.id=? AND d.revision=coalesce(?,json_extract(r.json,'$.revision'))",
+      `SELECT d.restricted FROM ${this.accessDocsSQL()} d JOIN addressed_current r ON r.id=d.id WHERE d.id=? AND d.revision=coalesce(?,json_extract(r.json,'$.revision'))`,
       id,
       revision ?? null,
     );
     return !!r && (!r.restricted || !!this.restricted);
   }
+  isRestricted(id: string, revision?: number) {
+    return !!this.db.get<{ n: number }>(
+      `SELECT max(restricted) AS n FROM ${this.accessDocsSQL()} WHERE id=? AND (? IS NULL OR revision=?)`,
+      id,
+      revision ?? null,
+      revision ?? null,
+    )?.n;
+  }
   visibleSQL(alias: string) {
-    return `EXISTS(SELECT 1 FROM memory_docs access JOIN records ar ON ar.id=access.id WHERE access.id=${alias}.id AND access.revision=json_extract(ar.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1))`;
+    return `EXISTS(SELECT 1 FROM ${this.accessDocsSQL()} access JOIN records ar ON ar.id=access.id WHERE access.id=${alias}.id AND access.revision=json_extract(ar.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1))`;
   }
   technicalSQL(alias: string) {
     if (this.restricted) return "1";
-    const denied = `(secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1) OR secret.key IN (SELECT d.id FROM memory_docs d WHERE d.restricted=1)`;
+    const denied = `(secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM ${this.accessDocsSQL()} d WHERE d.restricted=1) OR secret.key IN (SELECT d.id FROM ${this.accessDocsSQL()} d WHERE d.restricted=1)`;
     // Legacy lifecycle Changes can have an empty changed map. Their existing
     // transaction intent still carries exact targets; retain that classification
     // without rewriting historical rows or exposing a protected-only count.
-    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE ${denied}) AND NOT EXISTS(SELECT 1 FROM intents linked,json_tree(linked.json) secret WHERE linked.request_id=json_extract(${alias}.json,'$.transaction_id') AND (${denied}))`;
+    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE ${denied}) AND NOT EXISTS(SELECT 1 FROM intents linked,json_tree(linked.json) secret WHERE linked.request_id IN (json_extract(${alias}.json,'$.request_id'),json_extract(${alias}.json,'$.transaction_id')) AND (${denied}))`;
   }
   technical(value: unknown) {
     if (this.restricted) return true;
-    const transaction =
+    const identifiers =
         value && typeof value === "object"
-          ? (value as JsonObject).transaction_id
-          : undefined,
-      linked =
-        typeof transaction === "string"
-          ? this.db.get<{ json: string }>(
-              "SELECT json FROM intents WHERE request_id=?",
-              transaction,
-            )
-          : undefined;
-    return [value, ...(linked ? [JSON.parse(linked.json)] : [])].every(
+          ? [
+              (value as JsonObject).request_id,
+              (value as JsonObject).transaction_id,
+            ].filter((id): id is string => typeof id === "string")
+          : [],
+      linked = identifiers.flatMap((id) =>
+        this.db.all<{ json: string }>(
+          "SELECT json FROM intents WHERE request_id=?",
+          id,
+        ),
+      );
+    return [value, ...linked.map((row) => JSON.parse(row.json))].every(
       (item) => {
         if (/"visibility"\s*:\s*"restricted"/.test(JSON.stringify(item)))
           return false;
@@ -565,7 +638,7 @@ export class Memory {
           (id) =>
             !this.db.get("SELECT id FROM addressed_current WHERE id=?", id) ||
             !this.db.get(
-              "SELECT id FROM memory_docs WHERE id=? AND restricted=1 LIMIT 1",
+              `SELECT id FROM ${this.accessDocsSQL()} WHERE id=? AND restricted=1 LIMIT 1`,
               id,
             ),
         );
@@ -574,7 +647,7 @@ export class Memory {
   }
   generation() {
     const visible = this.db.all<{ id: string; revision: number }>(
-      "SELECT d.id,d.revision FROM memory_docs d JOIN addressed_current r ON r.id=d.id AND json_extract(r.json,'$.revision')=d.revision WHERE (d.restricted=0 OR ?=1) ORDER BY d.id",
+      `SELECT d.id,d.revision FROM ${this.accessDocsSQL()} d JOIN addressed_current r ON r.id=d.id AND json_extract(r.json,'$.revision')=d.revision WHERE (d.restricted=0 OR ?=1) ORDER BY d.id`,
       this.restricted,
     );
     const technical = ["intents", "claims", "handoffs", "relations"].map(
@@ -1072,7 +1145,7 @@ export class Memory {
     }
     if (p.source_kind) {
       where.push(
-        `(json_extract(${j},'$.data.source_kind')=? OR EXISTS(SELECT 1 FROM json_each(${j},'$.data.evidence_refs') e JOIN records source ON source.id=json_extract(e.value,'$.id') JOIN memory_docs a ON a.id=source.id AND a.revision=json_extract(source.json,'$.revision') WHERE (a.restricted=0 OR ?=1) AND json_extract(source.json,'$.data.source_kind')=?))`,
+        `(json_extract(${j},'$.data.source_kind')=? OR EXISTS(SELECT 1 FROM json_each(${j},'$.data.evidence_refs') e JOIN records source ON source.id=json_extract(e.value,'$.id') JOIN ${this.accessDocsSQL()} a ON a.id=source.id AND a.revision=json_extract(source.json,'$.revision') WHERE (a.restricted=0 OR ?=1) AND json_extract(source.json,'$.data.source_kind')=?))`,
       );
       params.push(p.source_kind, this.restricted, p.source_kind);
     }
@@ -1094,7 +1167,7 @@ export class Memory {
       if (p.descendants)
         for (const id of p.concept_ids)
           for (const c of this.db.all<{ id: string }>(
-            "WITH RECURSIVE c(id) AS (SELECT ? UNION SELECT p.child_id FROM concept_parents p JOIN c ON p.parent_id=c.id JOIN records r ON r.id=p.child_id JOIN memory_docs d ON d.id=r.id AND d.revision=json_extract(r.json,'$.revision') WHERE (d.restricted=0 OR ?=1)) SELECT id FROM c",
+            `WITH RECURSIVE c(id) AS (SELECT ? UNION SELECT p.child_id FROM concept_parents p JOIN c ON p.parent_id=c.id JOIN records r ON r.id=p.child_id JOIN ${this.accessDocsSQL()} d ON d.id=r.id AND d.revision=json_extract(r.json,'$.revision') WHERE (d.restricted=0 OR ?=1)) SELECT id FROM c`,
             id,
             this.restricted,
           ))
@@ -1111,7 +1184,7 @@ export class Memory {
         json: string;
         reasons: string | null;
       }>(
-        `${hits} SELECT d.docid,v.json,${expression ? "(SELECT group_concat(DISTINCT reason) FROM hits WHERE hits.docid=d.docid)" : "NULL"} AS reasons FROM memory_docs d JOIN records r ON r.id=d.id JOIN revisions v ON v.id=d.id AND v.revision=d.revision WHERE ${where.join(" AND ")} ORDER BY d.docid LIMIT ?`,
+        `${hits} SELECT d.docid,v.json,${expression ? "(SELECT group_concat(DISTINCT reason) FROM hits WHERE hits.docid=d.docid)" : "NULL"} AS reasons FROM ${this.accessDocsSQL()} d JOIN records r ON r.id=d.id JOIN revisions v ON v.id=d.id AND v.revision=d.revision WHERE ${where.join(" AND ")} ORDER BY d.docid LIMIT ?`,
         ...params,
         limit + 1,
       );

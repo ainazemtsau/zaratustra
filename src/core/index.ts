@@ -143,10 +143,7 @@ export class Core {
   private previewAccess(before: { id: string }[]) {
     return before.map((r) => ({
       id: r.id,
-      restricted: !!this.storage.get<{ n: number }>(
-        "SELECT max(restricted) AS n FROM memory_docs WHERE id=?",
-        r.id,
-      )?.n,
+      restricted: this.memory.isRestricted(r.id),
     }));
   }
   prepareCommit(
@@ -1300,6 +1297,7 @@ export class Core {
       (id) => this.record(id),
       this.approvals,
       (id, revision) => this.memory.allowed(id, revision),
+      (id) => this.memory.isRestricted(id),
     ).preview(input, consequence, alternatives);
   }
   applyStorage(ref: string) {
@@ -1311,6 +1309,7 @@ export class Core {
       (id) => this.record(id),
       this.approvals,
       (id, revision) => this.memory.allowed(id, revision),
+      (id) => this.memory.isRestricted(id),
     ).apply(ref);
     if (result.action === "tombstone") this.expireSources();
     return this.envelope(this.memory.sanitizeTechnical(result));
@@ -1348,10 +1347,7 @@ export class Core {
   }
   private recoveryWrite(workId: string) {
     const r = this.record(workId),
-      restricted = this.storage.get<{ n: number }>(
-        "SELECT max(restricted) AS n FROM memory_docs WHERE id=?",
-        workId,
-      )?.n;
+      restricted = this.memory.isRestricted(workId);
     requireThat(
       !restricted || this.context.scopes?.includes("restricted:write"),
       "PERMISSION_DENIED",
@@ -1800,10 +1796,7 @@ export class Core {
           "REFERENCE_NOT_FOUND",
           "Requested record/version is unavailable.",
         );
-        const restricted = this.storage.get<{ restricted: number }>(
-          "SELECT max(restricted) AS restricted FROM memory_docs WHERE id=?",
-          recordId,
-        )?.restricted;
+        const restricted = this.memory.isRestricted(recordId);
         if (restricted) restrictedSource = true;
         requireThat(
           !restricted || this.context.scopes?.includes("restricted:write"),
@@ -1933,7 +1926,16 @@ export class Core {
         preview?.payload.exact.assigned_method_versions;
       this.approvals.verify(request.preview_ref, "commit", exact);
     }
+    // Until frozen membership commits, a start capable of reading restricted
+    // inputs has unknown inherited sensitivity. A crash/rollback must not leave
+    // its prepared text public after its supporting rows disappear.
+    const protectedSleepPreparation =
+      request.ops.some((op) => op.op === "start_sleep") &&
+      this.context.scopes?.includes("restricted:read");
     const intent = {
+      visibility: protectedSleepPreparation
+        ? ("restricted" as const)
+        : undefined,
       request_id: request.request_id,
       operation_digest: hash,
       source_refs: Object.values(bindings),
@@ -3281,11 +3283,8 @@ export class Core {
           "PERMISSION_DENIED",
           "New related data is outside the current managed read scope.",
         );
-        const restricted = this.storage.get<{ restricted: number }>(
-          "SELECT restricted FROM memory_docs WHERE id=? AND revision=?",
-          r.id,
-          r.revision,
-        )?.restricted;
+        const restricted = this.memory.isRestricted(r.id, r.revision);
+        restrictedSource ||= restricted;
         requireThat(
           !restricted || this.context.scopes?.includes("restricted:write"),
           "PERMISSION_DENIED",
@@ -3323,6 +3322,8 @@ export class Core {
       );
       intent.status = "committed";
       intent.receipt = receipt;
+      if (protectedSleepPreparation)
+        intent.visibility = restrictedSource ? "restricted" : undefined;
       this.storage.run(
         "UPDATE intents SET json=? WHERE request_id=?",
         JSON.stringify(intent),
