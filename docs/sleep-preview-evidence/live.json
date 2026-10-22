@@ -1,0 +1,123 @@
+{
+  "runtime": "07510ecb20e47bf01e40207b0013083e8b8e32e5",
+  "type": "L; genuine native Pi/model choices",
+  "model": "openai-codex/gpt-6.1-sol",
+  "thinking": "medium",
+  "attempts": [
+    {
+      "name": "native-pi130-high",
+      "host": "1.3.0",
+      "profile": "high",
+      "provider_dispatches": 10,
+      "usage_messages": 10,
+      "qualification": true,
+      "failures": [],
+      "empty_transcript": true,
+      "settled": true,
+      "targeted_ids_supplied": true,
+      "original_preview_rows_unchanged": true
+    },
+    {
+      "name": "native-pi130-low",
+      "host": "1.3.0",
+      "profile": "low",
+      "provider_dispatches": 9,
+      "usage_messages": 9,
+      "qualification": true,
+      "failures": [],
+      "empty_transcript": true,
+      "settled": true,
+      "targeted_ids_supplied": true,
+      "original_preview_rows_unchanged": true
+    },
+    {
+      "name": "native-pi140-high",
+      "host": "1.4.0",
+      "profile": "high",
+      "provider_dispatches": 10,
+      "usage_messages": 10,
+      "qualification": true,
+      "failures": [],
+      "empty_transcript": true,
+      "settled": true,
+      "targeted_ids_supplied": true,
+      "original_preview_rows_unchanged": true
+    },
+    {
+      "name": "native-pi140-low",
+      "host": "1.4.0",
+      "profile": "low",
+      "provider_dispatches": 9,
+      "usage_messages": 9,
+      "qualification": true,
+      "failures": [],
+      "empty_transcript": true,
+      "settled": true,
+      "targeted_ids_supplied": true,
+      "original_preview_rows_unchanged": true
+    }
+  ],
+  "phase": {
+    "attempts": 4,
+    "requests": 38,
+    "input": 1976466,
+    "output": 3328,
+    "cache_read": 1612416,
+    "estimated_usd": 0.9226216000000002,
+    "provider_errors": [],
+    "tool_errors": [
+      {
+        "attempt": "native-pi130-high",
+        "tool": "zara_read",
+        "code": "VALIDATION_ERROR",
+        "expected": false
+      },
+      {
+        "attempt": "native-pi130-low",
+        "tool": "zara_read",
+        "code": "VALIDATION_ERROR",
+        "expected": false
+      },
+      {
+        "attempt": "native-pi130-low",
+        "tool": "zara_read",
+        "code": "REFERENCE_NOT_FOUND",
+        "expected": true
+      },
+      {
+        "attempt": "native-pi130-low",
+        "tool": "zara_read",
+        "code": "REFERENCE_NOT_FOUND",
+        "expected": true
+      },
+      {
+        "attempt": "native-pi140-high",
+        "tool": "zara_read",
+        "code": "VALIDATION_ERROR",
+        "expected": false
+      },
+      {
+        "attempt": "native-pi140-low",
+        "tool": "zara_read",
+        "code": "VALIDATION_ERROR",
+        "expected": false
+      },
+      {
+        "attempt": "native-pi140-low",
+        "tool": "zara_read",
+        "code": "REFERENCE_NOT_FOUND",
+        "expected": true
+      },
+      {
+        "attempt": "native-pi140-low",
+        "tool": "zara_read",
+        "code": "REFERENCE_NOT_FOUND",
+        "expected": true
+      }
+    ]
+  },
+  "scope": "Actual native targeted access tests, not ordinary discovery or model discovery of hidden facts. Low payloads exclude actual source body/identity; high authorized payloads intentionally contain synthetic restricted body after native reads. No hidden body in prompts.",
+  "interpretation": "Low full reads refuse both unknown high-authority previews; high full reads compare actual retained restricted original with exact proposed Work state. Restricted-read-free preview and committed public source readable on each host. Supplied IDs are adversarial targets, not model-discovered hidden facts.",
+  "synthetic_setup": "Actual676 Core/Administration generated original drafts and old7 source bundle mechanically. Restore and disk-test approval callbacks are synthetic, not owner. Native audit episodes made no commits/approvals/replays.",
+  "actual_billing": "unknown; Pi estimate only"
+}

@@ -1,0 +1,57 @@
+{
+  "runtime": "07510ecb20e47bf01e40207b0013083e8b8e32e5",
+  "type": "M; no provider/model dispatch",
+  "delivery": {
+    "command": "npm run deliver, including npm run check",
+    "tests": 161,
+    "passed": 159,
+    "skipped": 2,
+    "failed": 0,
+    "log_sha256": "7d5319426ee93b520a370dfc9962f4d32ee87653e8afa1d0791bb9c5e66f3795",
+    "runtime_instructions_tests_harness_unchanged_through_full_run": true
+  },
+  "focused": {
+    "source": 2,
+    "each_native_installed_host": 2,
+    "old372_pending_root_regressions": 2,
+    "actual_old676_previews_each_host": {
+      "reopen": true,
+      "genuine_second_readonly": true,
+      "rebuild": true,
+      "old7_quarantine_restore": true,
+      "original_payloads_digests_source_bundles_unchanged": true,
+      "old_epoch_presentation_refused": true
+    },
+    "actual_old_unmarked_checkpoint_each_host": {
+      "old_full_read_exposed": true,
+      "new_full_read_refused": true,
+      "old_status": "prepared",
+      "high_original_retained": true,
+      "low_snapshot_sequence_generation_stable": true
+    },
+    "targeted_assertions": [
+      "full operation and approval reads",
+      "low discovery/generation/count/cursor/snapshot/sequence stability",
+      "public committed history and restricted-read-free preview positive",
+      "authorized exact payload and native approval/decline unchanged",
+      "same-runtime exact public preview consumption commits ordinary Work/Run/Sleep",
+      "both start and checkpoint typed preparations",
+      "no domain/receipt commit for unconsumed preview"
+    ]
+  },
+  "root_proof": {
+    "original_script_sha256": "c61ace67d234ff67017646fbc7f23bbfda80c7c4ba7a970fec1853e616689d41",
+    "original_report_sha256": "ca67eff671fcaa36b41bcc8433d4c89d3a4d8be06856b5e4c27aa057c32ce5d0",
+    "actual676_reproduction": "EXPOSED",
+    "post_fix": "REFUTED; all4 actual source hashes matched public07510ec",
+    "protected_record_id_absent_from_proposal": true,
+    "zero_proposed_domain_receipts": true,
+    "original_public_control_note": "High-created public-text preview is now unknown by policy; actual restricted-read-free preview and committed original are positive controls."
+  },
+  "preserved_setup_events": [
+    "Original helper earlier blob-backed retained_excerpt setup failure remains separately attributed",
+    "Two unused low config drafts serialized scopes:null; corrected to [] before any runner/model attempt; draft bytes retained",
+    "Supplemental legacy checkpoint probe initially rejected Windows path separators before allocating a fixture; both logs retained; normalized guard then actual old/new probes passed"
+  ],
+  "policy": "Persisted typed wrappers and trusted authority only; no text matching, row erasure, new schema or retention pin."
+}

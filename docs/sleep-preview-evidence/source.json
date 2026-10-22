@@ -1,0 +1,138 @@
+{
+  "runtime": "07510ecb20e47bf01e40207b0013083e8b8e32e5",
+  "previous_final": "676f438dd960eb60f2c19e8e972afbee00b59f14",
+  "prior_runtime": "f5be04bdcab34c1159613a4e431b959bd8d3d9ea",
+  "old_writer_public_sha": "676f438dd960eb60f2c19e8e972afbee00b59f14",
+  "old_writer_source_package_files_verified": 26,
+  "unchanged_component_files": 28,
+  "changed_runtime_files": ["src/core/index.ts", "src/core/memory.ts"],
+  "typed_wrapper_inventory": {
+    "commit_intent": "payload.ops; trusted current visibility, unknown legacy uncommitted starts/checkpoints fail closed",
+    "commit_preview": "kind preview/action commit/payload.exact.ops; immutable trusted payload.scopes classifies unknown restricted-read authority",
+    "operations": ["start_sleep", "sleep_checkpoint"],
+    "other_draft_actions": [
+      "managed_file",
+      "reconcile",
+      "storage",
+      "restore",
+      "cleanup",
+      "release_backup_pin"
+    ],
+    "other_actions": "No typed Sleep operation list in their exact schemas; existing reference inheritance/authority remains unchanged. No universal text taint claim."
+  },
+  "transfer": {
+    "f5": "Old372 pending after_prepare/after_records remains GREEN in fresh root scripts and full regressions. Prior native full pending L50-54 remains attributed to f5 on actual1.3/1.4. Current fresh native L qualifies exact-preview low/high/permitted reads. No instruction, SDK adapter, storage, Sleep semantics or approval digest/confirmation function changed.",
+    "f280": "Committed Changes/history, exact Method/check grounds and Work/Run progress inheritance remain byte-identical in Sleep/access projection; full disk regressions pass. Prior native privacy history/lost-checkpoint/fresh continuation46-49 remains version/host attributed.",
+    "ef9_2e4": "Grounded correction/use/outcome, late/open problems, failed improvement/revision, scoped refusal/exact confirmation and no-new-ground stories retain original native evidence. Current changes add no semantic planner, approval right or domain correction algorithm.",
+    "schema6": "Actual171 filled bundle/old-writer refusal evidence at continuation-20261022/actual-schema6-bundle-ef9-03/verification.json retained. Storage/Administration unchanged; current full regressions and new actual old7 preview bundle restore apply."
+  },
+  "hosts": {
+    "130": {
+      "installed_sha": "07510ecb20e47bf01e40207b0013083e8b8e32e5",
+      "actual_sdk_version": "1.3.0",
+      "actual_cli_version": "1.3.0",
+      "sdk_sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+      "cli_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "all_selected_source_files_equal": 87,
+      "normal_extensions": 1,
+      "normal_skills": [
+        "zaratustra-work",
+        "zaratustra-memory",
+        "zaratustra-sleep"
+      ],
+      "authority_docs_equal": 3,
+      "production_dependencies_resolve_natively": true,
+      "lock": {
+        "public_sha256": "fe5964d88fb649b9ccb45ee42eb59546a56e02381b7ad7870d0e3f997003cd58",
+        "installed_sha256": "9b403877be812ff3ae365faeea69e0e54fd5f76d088cc519c6e727eed78222d2",
+        "metadata_transformations": [
+          {
+            "path": "/packages/node_modules/@typescript-eslint/parser/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/acorn/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/eslint/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/typescript/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/undici/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/zod/peer",
+            "public": true,
+            "installed": null
+          }
+        ],
+        "versions_and_integrities_unchanged": true
+      }
+    },
+    "140": {
+      "installed_sha": "07510ecb20e47bf01e40207b0013083e8b8e32e5",
+      "actual_sdk_version": "1.4.0",
+      "actual_cli_version": "1.4.0",
+      "sdk_sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+      "cli_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+      "all_selected_source_files_equal": 87,
+      "normal_extensions": 1,
+      "normal_skills": [
+        "zaratustra-work",
+        "zaratustra-memory",
+        "zaratustra-sleep"
+      ],
+      "authority_docs_equal": 3,
+      "production_dependencies_resolve_natively": true,
+      "lock": {
+        "public_sha256": "fe5964d88fb649b9ccb45ee42eb59546a56e02381b7ad7870d0e3f997003cd58",
+        "installed_sha256": "9b403877be812ff3ae365faeea69e0e54fd5f76d088cc519c6e727eed78222d2",
+        "metadata_transformations": [
+          {
+            "path": "/packages/node_modules/@typescript-eslint/parser/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/acorn/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/eslint/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/typescript/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/undici/peer",
+            "public": true,
+            "installed": null
+          },
+          {
+            "path": "/packages/node_modules/zod/peer",
+            "public": true,
+            "installed": null
+          }
+        ],
+        "versions_and_integrities_unchanged": true
+      }
+    }
+  },
+  "final_readback": "External final-public-installed.json after final documentation publication/install verifies exact final SHA and equality with this live-qualified runtime."
+}

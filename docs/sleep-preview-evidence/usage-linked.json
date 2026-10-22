@@ -1,0 +1,63 @@
+{
+  "uncapped": true,
+  "previous_combined": {
+    "attempts": 54,
+    "requests": 588,
+    "input": 34630929,
+    "output": 187833,
+    "cache_read": 25085952,
+    "estimated_usd": 23.4768792
+  },
+  "phase": {
+    "attempts": 4,
+    "requests": 38,
+    "input": 1976466,
+    "output": 3328,
+    "cache_read": 1612416,
+    "estimated_usd": 0.9226216000000002
+  },
+  "combined": {
+    "attempts": 58,
+    "requests": 626,
+    "input": 36607395,
+    "output": 191161,
+    "cache_read": 26698368,
+    "estimated_usd": 24.3995008
+  },
+  "previous_sealed_files": [
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\legacy-pending-continuation-20261022\\usage.json",
+      "sha256": "6cb1b242105c838f0137d0b9a12b6c58bd538f9bef5f91a081a037648b62cdf2",
+      "bytes": 933
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\legacy-pending-continuation-20261022\\ledger-seal.json",
+      "sha256": "b6b6b71d352a9f736f2e7c0eac0262c21e5af1ceb3e2fc067e8c6bffa6f2d548",
+      "bytes": 33003
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\legacy-pending-continuation-20261022\\ledger-seal-02.json",
+      "sha256": "e920ad256df6d6185e2c6e2edd1ccd0f96832c46cee259032861cfdbbf6df1be",
+      "bytes": 34226
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\legacy-pending-continuation-20261022\\final-seal.json",
+      "sha256": "bef19733731bb820144e5017fb8efaf1599dbfebc50994f816d9dacb6d2f7f4a",
+      "bytes": 4344
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\legacy-pending-continuation-20261022\\final-public-installed.json",
+      "sha256": "9cda0e42b80e6d7de1fdd03ba0f71ed8c9514bdb7b0351052d12bf1f134952f4",
+      "bytes": 100974
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\legacy-pending-continuation-20261022\\COMPLETED-HANDBACK.txt",
+      "sha256": "e907f3f9c84253798bd6c2d340a880025375f111899c25e3a6f697dfad81ceb9",
+      "bytes": 3476
+    }
+  ],
+  "all_actual_errors_and_retries_retained": true,
+  "source_cli_cost": "unknown, separately attributed; earlier CLI capacity/transport failures preserved",
+  "actual_billing": "unknown; Pi estimate only",
+  "no_reset_or_double_counting": true
+}
