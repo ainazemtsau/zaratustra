@@ -19,6 +19,11 @@ import { sleepAccessRefs } from "./sleep.ts";
 
 const hash = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
+// Pre-classification writers could leave copied restricted input in a rolled-back
+// start, without any committed review bindings. Its sensitivity is unknown, not
+// public. Use the persisted operation type/status, never the reason or body text.
+const unknownSleepPreparation = (json: string) =>
+  `(coalesce(json_extract(${json},'$.status'),'')<>'committed' AND coalesce(json_extract(${json},'$.visibility'),'') NOT IN ('workspace','restricted') AND EXISTS(SELECT 1 FROM json_each(${json},'$.payload.ops') op WHERE json_extract(op.value,'$.op')='start_sleep'))`;
 export const MemorySchemaSQL = `
  CREATE TABLE memory_meta(seq INTEGER NOT NULL, build INTEGER NOT NULL);
  INSERT INTO memory_meta VALUES(0,1);
@@ -613,7 +618,7 @@ export class Memory {
     // Legacy lifecycle Changes can have an empty changed map. Their existing
     // transaction intent still carries exact targets; retain that classification
     // without rewriting historical rows or exposing a protected-only count.
-    return `NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE ${denied}) AND NOT EXISTS(SELECT 1 FROM intents linked,json_tree(linked.json) secret WHERE linked.request_id IN (json_extract(${alias}.json,'$.request_id'),json_extract(${alias}.json,'$.transaction_id')) AND (${denied}))`;
+    return `NOT ${unknownSleepPreparation(`${alias}.json`)} AND NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE ${denied}) AND NOT EXISTS(SELECT 1 FROM intents linked WHERE linked.request_id IN (json_extract(${alias}.json,'$.request_id'),json_extract(${alias}.json,'$.transaction_id')) AND (${unknownSleepPreparation("linked.json")} OR EXISTS(SELECT 1 FROM json_tree(linked.json) secret WHERE ${denied})))`;
   }
   technical(value: unknown) {
     if (this.restricted) return true;
@@ -632,6 +637,13 @@ export class Memory {
       );
     return [value, ...linked.map((row) => JSON.parse(row.json))].every(
       (item) => {
+        if (
+          this.db.get(
+            `SELECT 1 FROM (SELECT ? AS json) candidate WHERE ${unknownSleepPreparation("candidate.json")}`,
+            JSON.stringify(item ?? null),
+          )
+        )
+          return false;
         if (/"visibility"\s*:\s*"restricted"/.test(JSON.stringify(item)))
           return false;
         return addressedIds(item, true).every(

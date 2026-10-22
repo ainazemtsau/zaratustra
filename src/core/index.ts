@@ -1929,13 +1929,15 @@ export class Core {
     // Until frozen membership commits, a start capable of reading restricted
     // inputs has unknown inherited sensitivity. A crash/rollback must not leave
     // its prepared text public after its supporting rows disappear.
+    const sleepPreparation = request.ops.some((op) => op.op === "start_sleep");
     const protectedSleepPreparation =
-      request.ops.some((op) => op.op === "start_sleep") &&
-      this.context.scopes?.includes("restricted:read");
+      sleepPreparation && this.context.scopes?.includes("restricted:read");
     const intent = {
       visibility: protectedSleepPreparation
         ? ("restricted" as const)
-        : undefined,
+        : sleepPreparation
+          ? ("workspace" as const)
+          : undefined,
       request_id: request.request_id,
       operation_digest: hash,
       source_refs: Object.values(bindings),

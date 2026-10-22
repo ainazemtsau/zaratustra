@@ -289,6 +289,134 @@ test("Sleep access: uncommitted start intents keep protected input classificatio
   }
 });
 
+test("Sleep access: unclassified legacy preparations hide full operations, discovery and generation without changing recovery payloads", (t) => {
+  for (const point of ["after_prepare", "after_records"]) {
+    const f = fixture();
+    t.after(() => f.disk.close());
+    f.evidence("Permitted operation one");
+    f.evidence("Permitted operation two");
+    const secret = "SYNTHETIC-LEGACY-UNCLASSIFIED-" + point,
+      e = protectedEvidence(f, secret),
+      low = new Core(f.disk, { ...f.ctx, scopes: [] }),
+      snapshot = low.snapshot(),
+      operations = low.browse("operations"),
+      changes = low.browse("changes"),
+      seq = low.sequence(),
+      first = low.browse("operations", undefined, 1).data as {
+        next_cursor: string;
+      };
+    const next = low.browse("operations", undefined, 1, first.next_cursor);
+    f.rebind(
+      new Core(f.disk, f.ctx, (p) => {
+        if (p === point)
+          throw Error("Synthetic legacy preparation interruption");
+      }),
+    );
+    const w = work("w");
+    w.data.current_state = String(f.read(e).data.retained_excerpt);
+    const req = f.request([
+      w,
+      {
+        op: "start_run",
+        client_ref: "r",
+        title: "Synthetic pending review",
+        visibility: "workspace",
+        episode_key: point,
+        work_ref: ref("w"),
+        mode: "sleep",
+        continuation_of: null,
+        summary: "Requested review",
+        starting_refs: [],
+      },
+      { op: "start_sleep", work_ref: ref("w"), run_ref: ref("r") },
+    ]);
+    assert.throws(() => f.core.commit(req), /Synthetic legacy preparation/);
+    // Fixture reconstruction only. The external qualification uses immutable
+    // actual 372 writer code and its original unmodified schema-7 bundles.
+    f.disk.run(
+      "UPDATE intents SET json=json_remove(json,'$.visibility') WHERE request_id=?",
+      req.request_id,
+    );
+    const original = f.disk.get<{ json: string }>(
+      "SELECT json FROM intents WHERE request_id=?",
+      req.request_id,
+    )!.json;
+    assert.equal(JSON.parse(original).status, "prepared");
+    assert.equal(f.disk.all("SELECT * FROM sleep_reviews").length, 0);
+    const ro = new DiskStorage(f.home);
+    t.after(() => ro.close());
+    assert.equal(ro.readonly, true);
+    for (const disk of [f.disk, ro]) {
+      const reader = new Core(disk, { ...f.ctx, scopes: [] });
+      fail(() => reader.read(e), "REFERENCE_NOT_FOUND");
+      fail(() => reader.operation(req.request_id), "REFERENCE_NOT_FOUND");
+      fail(
+        () => reader.commit(req),
+        disk.readonly ? "READ_ONLY" : "REFERENCE_NOT_FOUND",
+      );
+      assert.deepEqual(reader.snapshot(), {
+        ...snapshot,
+        write_mode: disk.readonly ? "read-only" : "single-writer",
+      });
+      assert.deepEqual(reader.browse("operations"), operations);
+      assert.deepEqual(reader.browse("changes"), changes);
+      assert.equal(reader.sequence(), seq);
+      assert.ok(
+        JSON.stringify(
+          new Core(disk, f.ctx).operation(req.request_id),
+        ).includes(secret),
+      );
+      assert.equal(
+        disk.get<{ json: string }>(
+          "SELECT json FROM intents WHERE request_id=?",
+          req.request_id,
+        )!.json,
+        original,
+      );
+    }
+    assert.deepEqual(
+      low.browse("operations", undefined, 1, first.next_cursor),
+      next,
+    );
+    ro.close();
+    f.core.rebuildIndex();
+    fail(() => low.operation(req.request_id), "REFERENCE_NOT_FOUND");
+    assert.equal(
+      f.disk.get<{ json: string }>(
+        "SELECT json FROM intents WHERE request_id=?",
+        req.request_id,
+      )!.json,
+      original,
+    );
+  }
+});
+
+test("Sleep access: current permitted-only pending starts remain fully readable after both fault boundaries", (t) => {
+  for (const point of ["after_prepare", "after_records"]) {
+    const f = fixture([]);
+    t.after(() => f.disk.close());
+    f.evidence();
+    f.rebind(
+      new Core(f.disk, f.ctx, (p) => {
+        if (p === point) throw Error("Synthetic permitted start interruption");
+      }),
+    );
+    assert.throws(() => f.start(), /Synthetic permitted start interruption/);
+    const row = f.disk.get<{ request_id: string; json: string }>(
+      "SELECT request_id,json FROM intents WHERE json_extract(json,'$.status')='prepared'",
+    )!;
+    assert.equal(JSON.parse(row.json).visibility, "workspace");
+    assert.ok(
+      JSON.stringify(f.core.browse("operations")).includes(row.request_id),
+    );
+    assert.ok(
+      JSON.stringify(f.core.operation(row.request_id)).includes(
+        "Review requested",
+      ),
+    );
+  }
+});
+
 test("Sleep access: read-only projection cannot downgrade a writer's newly committed restriction", (t) => {
   const f = fixture();
   t.after(() => f.disk.close());

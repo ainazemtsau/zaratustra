@@ -1,0 +1,21 @@
+outcome: Bounded Sleep privacy implementation and synthetic qualification complete as the single implementation writer. All five coordinator categories have explicit dispositions; fifth inherited-sensitivity disclosure fixed on frozen public/native runtime f280459b7f219e1e29076d9205ecfeaa449c3642. Full current M157/155pass/0fail/2inherited skips; genuine native L history/filter/public-positive and no-transcript continuation on actual Pi1.3.0 and separately1.4.0. No independent PASS, full R1/T31 or owner usefulness claimed.
+evidence: docs/SLEEP-PRIVACY.md and docs/sleep-privacy-evidence/; complete raw evidence at C:/projects/zaratustra-v1-sleep-evidence-20261022/privacy-continuation-20261022. Final documentation/public/native SHA and source/resource/dependency/lock readback are in external final-public-installed.json and the final handback. All85 runtime/instruction/test/harness files and three authority docs must equal f280 after documentation-only finalization.
+assumptions: One trusted writer; managed access is not OS isolation. Same SQLite schema7, portable Core, no new permission/ownership platform or production launcher. Actual Node22.19.0/npm11.6.2, package/SDK/CLI1.3.0 and separate current1.4.0, exact openai-codex/gpt-6.1-sol medium, native authentication. Credential contents not exposed/copied/manually altered; native AuthStorage may authenticate/refresh normally.
+cuts: No required privacy case or changed-path qualification waived. Historical full correction/use/negative/shared-confirmation/empty L remains honestly attributed to EF9/2e4 with unchanged-function/public-ground transfer evidence; current privacy L is fresh f280. Two inherited Windows skips; no all-version host, general scalability/reliability, owner TUI/usefulness or independent verdict. No current bounded-candidate blocker.
+cost: Immutable18 attempts/200dispatch/USD7.8475488 + immutable27/319/USD13.1487808 + linked4/39/USD1.713394 =49 attempts/558 observed dispatches,33,130,839 reported input including cache,185,762 output,23,899,776 cache-read; USD22.7097236 native Pi estimate, actual billing unknown. All observed dispatches have usage. Five prior provider and five prior native Core tool errors retained, no new native provider/tool errors. Builder02/03 CLI capacity failures retained separately, Codex monetary cost unavailable. No total budget/cap/reset.
+manual-acceptance: Root arranges the separate fresh physical independent review and eventual main merge; owner judges usefulness and manually updates private ZT. No main merge/push or private ZT/Health/personal-backup/Direction state access. Synthetic preparation and approval are not owner testimony.
+next: solmax
+
+Qualified frozen runtime: f280459b7f219e1e29076d9205ecfeaa449c3642. Final documentation-only SHA cannot embed its own hash; exact final public/native identity is sealed externally after commit.
+
+All five dispositions, actual M/L matrix, limitations, prior failures and evidence paths are in [SLEEP-PRIVACY.md](docs/SLEEP-PRIVACY.md). The earlier372 handback remains [byte-preserved](docs/sleep-followup-RESULT-372db2b.md).
+
+Exact qualified-runtime isolated install (ordinary current Pi, no production wrapper):
+
+```powershell
+Set-Location C:/projects/zaratustra-v1-sleep-evidence-20261022/privacy-continuation-20261022/install-pi140/cwd
+$env:PI_CODING_AGENT_DIR = 'C:/projects/zaratustra-v1-sleep-evidence-20261022/privacy-continuation-20261022/install-pi140/agent'
+pi.cmd install --local --approve git:github.com/ainazemtsau/zaratustra@f280459b7f219e1e29076d9205ecfeaa449c3642
+```
+
+Pi's existing local-package trust gate required `--approve` in these isolated post-model directories; both initial refusals are retained. This is installer configuration authorization, not Sleep confirmation or a production launcher. The final handback and external receipt give the exact final documentation SHA install command; runtime bytes equal this qualified pin. Six normal npm peer-flag removals are recorded separately from public lock bytes.

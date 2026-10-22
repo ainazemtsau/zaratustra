@@ -54,6 +54,11 @@ Prepared starts capable of reading restricted inputs keep unknown sensitivity pr
 crash/rollback; a committed start grounded only in unrestricted inputs clears that temporary
 intent classification. The read-only fallback can add restrictions, never downgrade stored ones.
 Access edges add no retention pins or rights; existing minimal pending/check pins still govern.
+Older unmarked, uncommitted start_sleep intents have unknown sensitivity: low profiles cannot
+discover or read them, including full operation reads and linked technical metadata. Authorized
+recovery retains their exact original payloads. Current permitted-only preparations carry an
+explicit workspace classification; committed permitted-only reviews remain visible. This uses
+persisted operation types, status and trusted access classification, without rewriting old rows.
 
 First review scans retained permitted meaningful history using change sequence. Later review
 scans new Changes, including late Evaluations of old exact results. Independent frozen inputs
