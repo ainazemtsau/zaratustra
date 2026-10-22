@@ -1926,10 +1926,12 @@ export class Core {
         preview?.payload.exact.assigned_method_versions;
       this.approvals.verify(request.preview_ref, "commit", exact);
     }
-    // Until frozen membership commits, a start capable of reading restricted
+    // Until progress commits, a Sleep preparation capable of reading restricted
     // inputs has unknown inherited sensitivity. A crash/rollback must not leave
     // its prepared text public after its supporting rows disappear.
-    const sleepPreparation = request.ops.some((op) => op.op === "start_sleep");
+    const sleepPreparation = request.ops.some(
+      (op) => op.op === "start_sleep" || op.op === "sleep_checkpoint",
+    );
     const protectedSleepPreparation =
       sleepPreparation && this.context.scopes?.includes("restricted:read");
     const intent = {

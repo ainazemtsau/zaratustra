@@ -235,6 +235,201 @@ function protectedEvidence(f: ReturnType<typeof fixture>, text: string) {
   return f.core.commit(req).created.private;
 }
 
+const sleepProposal = (state: string, episode: string) => {
+  const w = work("w");
+  w.data.current_state = state;
+  return [
+    w,
+    {
+      op: "start_run",
+      client_ref: "r",
+      title: "Synthetic Sleep proposal",
+      visibility: "workspace",
+      episode_key: episode,
+      work_ref: ref("w"),
+      mode: "sleep",
+      continuation_of: null,
+      summary: "Finite review requested",
+      starting_refs: [],
+    },
+    { op: "start_sleep", work_ref: ref("w"), run_ref: ref("r") },
+  ];
+};
+
+test("Sleep access: exact commit previews preserve authorized payload and approval while unknown sensitivity hides full reads and discovery", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const e = protectedEvidence(f, "SYNTHETIC-PRIVATE-PREVIEW-683981"),
+    pub = f.evidence("Permitted preview control"),
+    low = new Core(f.disk, { ...f.ctx, scopes: [] }),
+    text = String(f.read(pub).data.retained_excerpt);
+  const source = low.capture(
+    "Synthetic public proposal authority",
+    "rpc",
+    "registered-synthetic-controller",
+  );
+  const publicRequest = f.request(sleepProposal(text, "public-preview"));
+  publicRequest.source_handles = [source.source_handle];
+  const publicPreview = low.prepareCommit(
+    publicRequest,
+    "Public finite review",
+    "Keep current state",
+  );
+  assert.ok(
+    JSON.stringify(low.operation(publicPreview.request_id)).includes(text),
+  );
+  const snapshot = low.snapshot(),
+    sequence = low.sequence(),
+    operations = low.browse("operations"),
+    changes = low.browse("changes"),
+    first = low.browse("operations", undefined, 1).data as {
+      next_cursor: string;
+    };
+  const next = low.browse("operations", undefined, 1, first.next_cursor);
+  const secret = String(f.read(e).data.retained_excerpt),
+    request = f.request(sleepProposal(secret, "unknown-preview"));
+  assert.ok(!JSON.stringify(request).includes(e));
+  const preview = f.core.prepareCommit(
+      request,
+      "Requested review",
+      "Keep current state",
+    ),
+    original = f.disk.get<{ json: string }>(
+      "SELECT json FROM intents WHERE request_id=?",
+      preview.request_id,
+    )!.json;
+  // High authority alone cannot establish that a copied public-looking body is
+  // public; a separately trusted restricted-read-free preparation above can.
+  const highPublic = f.core.prepareCommit(
+    f.request(sleepProposal(text, "high-public-preview")),
+    "Requested review",
+    "Keep",
+  );
+  for (const id of [preview.request_id, highPublic.request_id]) {
+    fail(() => low.operation(id), "REFERENCE_NOT_FOUND");
+    fail(() => low.approvals.read(id), "REFERENCE_NOT_FOUND");
+  }
+  assert.deepEqual(low.snapshot(), snapshot);
+  assert.equal(low.sequence(), sequence);
+  assert.deepEqual(low.browse("operations"), operations);
+  assert.deepEqual(low.browse("changes"), changes);
+  assert.deepEqual(
+    low.browse("operations", undefined, 1, first.next_cursor),
+    next,
+  );
+  assert.equal(f.disk.all("SELECT * FROM sleep_reviews").length, 0);
+  assert.equal(
+    f.disk.all("SELECT * FROM records WHERE kind IN ('work','run')").length,
+    0,
+  );
+  assert.equal(
+    f.disk.get<{ n: number }>(
+      "SELECT count(*) AS n FROM receipts WHERE request_id=?",
+      request.request_id,
+    )!.n,
+    0,
+  );
+  const ro = new DiskStorage(f.home);
+  t.after(() => ro.close());
+  assert.equal(ro.readonly, true);
+  fail(
+    () => new Core(ro, { ...f.ctx, scopes: [] }).operation(preview.request_id),
+    "REFERENCE_NOT_FOUND",
+  );
+  assert.ok(
+    JSON.stringify(new Core(ro, f.ctx).operation(preview.request_id)).includes(
+      secret,
+    ),
+  );
+  assert.equal(
+    f.disk.get<{ json: string }>(
+      "SELECT json FROM intents WHERE request_id=?",
+      preview.request_id,
+    )!.json,
+    original,
+  );
+  ro.close();
+  f.core.rebuildIndex();
+  fail(() => low.operation(preview.request_id), "REFERENCE_NOT_FOUND");
+  // Existing exact native confirmation still applies to the unchanged payload.
+  const presentation = f.core.approvals.present(preview.request_id);
+  assert.equal(presentation.preview.operation_digest, preview.operation_digest);
+  f.core.approvals.answer(presentation.token, false, {
+    source_ref: "synthetic",
+    transport: "native-dialog",
+    channel_identity: "registered-synthetic-controller",
+    stage: "pi-confirm-return",
+  });
+  fail(() => low.operation(preview.request_id), "REFERENCE_NOT_FOUND");
+  assert.deepEqual(
+    f.core.approvals.read(preview.request_id).payload,
+    preview.payload,
+  );
+  grant(low, publicPreview.request_id);
+  const receipt = low.commit({
+    ...publicRequest,
+    preview_ref: publicPreview.request_id,
+  });
+  assert.ok(low.read(receipt.created.r));
+  assert.ok(low.operation(publicRequest.request_id));
+  assert.ok(low.operation(publicPreview.request_id));
+});
+
+test("Sleep access: checkpoint previews and interrupted preparations use the same typed policy as starts", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  f.evidence();
+  const run = f.start(),
+    low = new Core(f.disk, { ...f.ctx, scopes: [] });
+  assert.ok(low.read(run));
+  // This source arrives after frozen membership; no private ID is needed in the
+  // copied proposal for the high-authority preparation to remain sensitive.
+  const e = protectedEvidence(f, "SYNTHETIC-LATE-CHECKPOINT-PREVIEW-61937"),
+    req = f.checkpoint(run);
+  req.reason = String(f.read(e).data.retained_excerpt);
+  assert.ok(!JSON.stringify(req).includes(e));
+  const preview = f.core.prepareCommit(req, "Checkpoint frozen review", "Keep");
+  fail(() => low.operation(preview.request_id), "REFERENCE_NOT_FOUND");
+  assert.ok(
+    JSON.stringify(f.core.operation(preview.request_id)).includes(req.reason),
+  );
+  const fault = new Core(f.disk, f.ctx, (point) => {
+    if (point === "after_prepare")
+      throw Error("Synthetic checkpoint interrupted");
+  });
+  const source = fault.capture(
+    "Synthetic continuation",
+    "rpc",
+    "registered-synthetic-controller",
+  );
+  req.source_handles = [source.source_handle];
+  assert.throws(() => fault.commit(req), /Synthetic checkpoint interrupted/);
+  fail(() => low.operation(req.request_id), "REFERENCE_NOT_FOUND");
+  const publicFixture = fixture([]);
+  t.after(() => publicFixture.disk.close());
+  publicFixture.evidence();
+  const publicRun = publicFixture.start(),
+    publicCheckpoint = publicFixture.checkpoint(publicRun),
+    publicPreview = publicFixture.core.prepareCommit(
+      publicCheckpoint,
+      "Permitted checkpoint",
+      "Keep",
+    );
+  assert.ok(publicFixture.core.operation(publicPreview.request_id));
+  publicFixture.rebind(
+    new Core(publicFixture.disk, publicFixture.ctx, (point) => {
+      if (point === "after_prepare")
+        throw Error("Synthetic public checkpoint interruption");
+    }),
+  );
+  const pending = publicFixture.checkpoint(publicRun);
+  assert.throws(
+    () => publicFixture.core.commit(pending),
+    /Synthetic public checkpoint interruption/,
+  );
+  assert.ok(publicFixture.core.operation(pending.request_id));
+});
+
 test("Sleep access: uncommitted start intents keep protected input classification after prepare and transaction rollback", (t) => {
   for (const point of ["after_prepare", "after_records"]) {
     const f = fixture();

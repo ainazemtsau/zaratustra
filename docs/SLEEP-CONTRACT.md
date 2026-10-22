@@ -59,6 +59,14 @@ discover or read them, including full operation reads and linked technical metad
 recovery retains their exact original payloads. Current permitted-only preparations carry an
 explicit workspace classification; committed permitted-only reviews remain visible. This uses
 persisted operation types, status and trusted access classification, without rewriting old rows.
+The same rule covers typed start/checkpoint commit intents and exact commit previews.
+Preview authority already persists trusted scopes. A Sleep preview with restricted-read
+authority, or missing authority, has unknown precommit sensitivity and is unavailable to low
+profiles through discovery and full reads, throughout its approval status lifecycle. This
+includes high-authority previews whose copied text happens to be public: text alone cannot
+prove its sensitivity. A preview created without restricted-read authority remains visible
+subject to existing inherited-reference filtering. Exact payloads/digests/approval semantics
+and committed permitted-only history remain intact; no canonical rewrite or new pin is needed.
 
 First review scans retained permitted meaningful history using change sequence. Later review
 scans new Changes, including late Evaluations of old exact results. Independent frozen inputs

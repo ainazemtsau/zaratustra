@@ -19,11 +19,14 @@ import { sleepAccessRefs } from "./sleep.ts";
 
 const hash = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
-// Pre-classification writers could leave copied restricted input in a rolled-back
-// start, without any committed review bindings. Its sensitivity is unknown, not
-// public. Use the persisted operation type/status, never the reason or body text.
+const sleepOperations = (json: string, path: string) =>
+  `EXISTS(SELECT 1 FROM json_each(${json},'${path}') op WHERE json_extract(op.value,'$.op') IN ('start_sleep','sleep_checkpoint'))`;
+// Both persisted preparation forms can contain copied input before review
+// bindings commit. Preview scopes are trusted authority, not caller-selected
+// sensitivity: restricted-read or absent authority leaves sensitivity unknown.
+// Keep the exact payload/digest intact, including after approval status changes.
 const unknownSleepPreparation = (json: string) =>
-  `(coalesce(json_extract(${json},'$.status'),'')<>'committed' AND coalesce(json_extract(${json},'$.visibility'),'') NOT IN ('workspace','restricted') AND EXISTS(SELECT 1 FROM json_each(${json},'$.payload.ops') op WHERE json_extract(op.value,'$.op')='start_sleep'))`;
+  `((coalesce(json_extract(${json},'$.status'),'')<>'committed' AND coalesce(json_extract(${json},'$.visibility'),'') NOT IN ('workspace','restricted') AND ${sleepOperations(json, "$.payload.ops")}) OR (coalesce(json_extract(${json},'$.kind'),'')='preview' AND coalesce(json_extract(${json},'$.payload.action'),'')='commit' AND ${sleepOperations(json, "$.payload.exact.ops")} AND (coalesce(json_type(${json},'$.payload.scopes'),'')<>'array' OR EXISTS(SELECT 1 FROM json_each(${json},'$.payload.scopes') scope WHERE scope.value='restricted:read'))))`;
 export const MemorySchemaSQL = `
  CREATE TABLE memory_meta(seq INTEGER NOT NULL, build INTEGER NOT NULL);
  INSERT INTO memory_meta VALUES(0,1);
