@@ -1,0 +1,48 @@
+{
+  "runtime": "f5be04bdcab34c1159613a4e431b959bd8d3d9ea",
+  "kind": "M, no model/provider dispatch",
+  "full": {
+    "command": "npm run deliver (includes npm run check)",
+    "tests": 159,
+    "passed": 157,
+    "skipped": 2,
+    "failed": 0,
+    "log_sha256": "660aedbba518eb0dc038c0d149c1b9a03ac50c99ee65ae4201eef4d6b3270b23",
+    "harness_note": "Only new harness containment/no-reuse assertions changed during the full test stage; final harness was separately formatted/linted and executed from both frozen native installs. Runtime, instructions and disk tests stayed unchanged throughout."
+  },
+  "focused": {
+    "source_new_groups": 2,
+    "installed_new_groups_each_host": 2,
+    "actual_old_writer_faults_each_installed_host": [
+      "after_prepare",
+      "after_records"
+    ],
+    "stored_status_both": "prepared",
+    "genuine_second_readonly": true,
+    "reopen": true,
+    "index_rebuild": true,
+    "actual_old7_bundle_quarantine_restore": true,
+    "source_bundle_and_original_intent_payload_unchanged": true,
+    "authorized_full_operation_positive": true,
+    "current_public_pending_full_operation_positive": true,
+    "committed_public_history_positive": true,
+    "hidden_only_snapshot_sequence_generation_and_cursor_stable": true
+  },
+  "retained_failures": [
+    "51cadd6 actual old-writer full-operation REDs at both hooks",
+    "focused01/02: read-only replay error and snapshot write_mode fixture expectations corrected",
+    "mechanical01: committed import intent does not contain source body; assertion corrected to committed status",
+    "mechanical02: read-only replay must report READ_ONLY before intent lookup",
+    "mechanical03: read-only snapshot legitimately reports read-only write mode",
+    "mechanical04: source without Work has no Work reconciliation barrier; final fixture adds ordinary retained Work before pending review",
+    "verify-live01: verifier used record_id; actual native zara_read argument is id. Raw calls independently inspected; verifier corrected without model rerun"
+  ],
+  "original_root_distinctions": {
+    "log01": "invalid hook setup error",
+    "log02": "shortened cards only, not privacy qualification",
+    "logs03_04": "actual after_prepare full disclosure",
+    "log05": "actual after_records full disclosure",
+    "log06": "25 current f280 source files checked against public; same full disclosure"
+  },
+  "minimality": "Two runtime files only; existing typed intent/access predicate. No schema/table, text censor, new permission platform or retention pin."
+}

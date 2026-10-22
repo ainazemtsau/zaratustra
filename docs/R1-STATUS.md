@@ -1,4 +1,4 @@
-Current Sleep privacy qualification: see [SLEEP-PRIVACY.md](SLEEP-PRIVACY.md). Frozen runtime f280459; current M157/155pass/2inherited skips and fresh L on actual Pi1.3/1.4. All five coordinator categories addressed. Full R1/T31, owner usefulness and fresh physical independent review remain open. Historical rows below retain their original artifact attribution.
+Current Sleep qualification: [SLEEP-LEGACY-PENDING.md](SLEEP-LEGACY-PENDING.md), runtimef5be04b. Remaining old unmarked pending-intent full disclosure fixed after reproducing51cadd6; M159/157pass/2inherited skips and affected full native audits on actualPi1.3/1.4. Prior f280 privacy and earlier semantic L retain artifact attribution. Separate fresh physical independent review/fullR1/T31/owner usefulness remain open. Historical rows below are unchanged.
 
 # Full R1/R2 disposition
 

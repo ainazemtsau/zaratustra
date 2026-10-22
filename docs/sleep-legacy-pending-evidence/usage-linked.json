@@ -1,0 +1,57 @@
+{
+  "uncapped": true,
+  "preceding_combined": {
+    "estimated_usd": 22.7097236,
+    "output": 185762,
+    "requests": 558,
+    "cache_read": 23899776,
+    "input": 33130839,
+    "attempts": 49
+  },
+  "phase": {
+    "attempts": 5,
+    "requests": 30,
+    "input": 1500090,
+    "output": 2071,
+    "cache_read": 1186176,
+    "estimated_usd": 0.7671555999999999
+  },
+  "combined": {
+    "attempts": 54,
+    "requests": 588,
+    "input": 34630929,
+    "output": 187833,
+    "cache_read": 25085952,
+    "estimated_usd": 23.4768792
+  },
+  "prior_sealed_files": [
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\usage.json",
+      "sha256": "9485558975bc2c3471b2f6a7fe1b9eee1ed5d5177a831e1cbdc1d2ebd0bd1e41",
+      "bytes": 1027
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\ledger-seal.json",
+      "sha256": "b040b209ee5fed71073e69b0d2a8e095bab826d1e3558b4b3b5f1037a621e3d5",
+      "bytes": 8407
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\final-seal.json",
+      "sha256": "7dab692b3375da549ddfd6fda8049e5312444394380bdce7e28bcf6bb45e87bb",
+      "bytes": 3174
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\COMPLETED-HANDBACK.txt",
+      "sha256": "039d1d86cc609a7fdbb5e524eef3f15d976e03e1260ab01adef5af3d78ee4b47",
+      "bytes": 1235
+    },
+    {
+      "path": "C:\\projects\\zaratustra-v1-sleep-evidence-20261022\\privacy-continuation-20261022\\final-public-installed.json",
+      "sha256": "3f7ea91b98cbb1159cb86b454d29a6a18ba0bae8e200d651c0435f07efa9f2eb",
+      "bytes": 94040
+    }
+  ],
+  "actual_billing": "unknown; native Pi reported estimate",
+  "source_cli_cost": "unknown, separate from Pi; previous capacity/transport events retained",
+  "no_reset": true
+}
