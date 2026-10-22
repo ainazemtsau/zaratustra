@@ -61,6 +61,12 @@ type Op = Extract<
 const key = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
 const refid = (v: unknown) => (v as { id?: string } | null)?.id;
+// Prospective refs are compared only during preflight; Core resolves real IDs before storage.
+const scopeid = (v: unknown) =>
+  refid(v) ??
+  ((v as { client_ref?: string } | null)?.client_ref
+    ? "staged-activity:" + (v as { client_ref: string }).client_ref
+    : undefined);
 
 /** A repeated unresolved deferral inherits exact grounds, including pre-fix rows. */
 function inherited(db: StoragePort, item: Item) {
@@ -278,7 +284,7 @@ export class Sleep {
     read: (ref: unknown) => Pick<AddressedRow, "kind" | "data"> = (p) =>
       this.address(refid(p)!, (p as { revision?: number }).revision),
   ): boolean {
-    if (r.kind === "work") return refid(r.data.activity_id) === scope;
+    if (r.kind === "work") return scopeid(r.data.activity_id) === scope;
     if (r.kind === "run") {
       const w = r.data.work_ref;
       return !!w && this.local(read(w), scope, read);
@@ -347,34 +353,6 @@ export class Sleep {
         );
   }
   needsApproval(request: CommitRequest) {
-    const op = request.ops.find(
-      (o): o is Extract<Op, { op: "sleep_checkpoint" }> =>
-        o.op === "sleep_checkpoint",
-    );
-    let reviews: Review[];
-    if (op && "id" in op.run_ref) reviews = [this.review(op.run_ref.id)];
-    else {
-      reviews = this.db
-        .all<Review>(
-          "SELECT * FROM sleep_reviews WHERE profile=? AND epoch=? AND status='active'",
-          this.profile,
-          this.ctx.epoch,
-        )
-        .filter((r) => this.allowed(r.id) && this.allowed(r.work_id));
-      const focus = this.db.get<{ json: string }>(
-        "SELECT json FROM focus WHERE session_id=?",
-        this.ctx.session_id,
-      );
-      const work = focus && refid(JSON.parse(focus.json).work_ref);
-      // Existing explicit Work focus selects ordinary work outside a review. It grants
-      // no access or local ownership, and cannot change a checkpoint's fixed scope.
-      if (
-        work &&
-        this.allowed(work) &&
-        !this.db.get("SELECT id FROM sleep_reviews WHERE work_id=?", work)
-      )
-        return false;
-    }
     const read = (p: unknown): Pick<AddressedRow, "kind" | "data"> => {
       const ref = p as { id?: string; revision?: number; client_ref?: string };
       if (ref.client_ref) {
@@ -421,6 +399,56 @@ export class Sleep {
         ? { ...row, data: update.data }
         : row;
     };
+    const op = request.ops.find(
+      (o): o is Extract<Op, { op: "sleep_checkpoint" }> =>
+        o.op === "sleep_checkpoint",
+    );
+    const start = request.ops.find(
+      (o): o is Extract<Op, { op: "start_sleep" }> => o.op === "start_sleep",
+    );
+    let reviews: Pick<Review, "status" | "scope">[];
+    if (op && "id" in op.run_ref) reviews = [this.review(op.run_ref.id)];
+    else if (start) {
+      if ("id" in start.work_ref)
+        requireThat(
+          this.allowed(start.work_ref.id),
+          "REFERENCE_NOT_FOUND",
+          "Sleep binding Work is unavailable.",
+        );
+      // apply(start_sleep) binds the final current Work, never its optional historical selector.
+      const work = read(
+        "id" in start.work_ref ? { id: start.work_ref.id } : start.work_ref,
+      );
+      requireThat(
+        work.kind === "work",
+        "REFERENCE_TYPE_MISMATCH",
+        "Sleep binds ordinary Work.",
+      );
+      reviews = [
+        { status: "active", scope: scopeid(work.data.activity_id) ?? "global" },
+      ];
+    } else {
+      reviews = this.db
+        .all<Review>(
+          "SELECT * FROM sleep_reviews WHERE profile=? AND epoch=? AND status='active'",
+          this.profile,
+          this.ctx.epoch,
+        )
+        .filter((r) => this.allowed(r.id) && this.allowed(r.work_id));
+      const focus = this.db.get<{ json: string }>(
+        "SELECT json FROM focus WHERE session_id=?",
+        this.ctx.session_id,
+      );
+      const work = focus && refid(JSON.parse(focus.json).work_ref);
+      // Existing explicit Work focus selects ordinary work outside a review. It grants
+      // no access or local ownership, and cannot change a checkpoint's fixed scope.
+      if (
+        work &&
+        this.allowed(work) &&
+        !this.db.get("SELECT id FROM sleep_reviews WHERE work_id=?", work)
+      )
+        return false;
+    }
     return reviews.some(
       (r) =>
         r.status === "active" &&
@@ -428,14 +456,19 @@ export class Sleep {
         request.ops.some((o) => {
           const local = (p: unknown) => this.local(read(p), r.scope, read);
           if (
-            ["sleep_checkpoint", "set_focus", "import_evidence"].includes(o.op)
+            [
+              "start_sleep",
+              "sleep_checkpoint",
+              "set_focus",
+              "import_evidence",
+            ].includes(o.op)
           )
             return false;
           if ("ref" in o) return !local(o.ref);
           if (o.op === "create_record")
             return (
               !["work", "run"].includes(o.kind) ||
-              (o.kind === "work" && refid(o.data.activity_id) !== r.scope)
+              (o.kind === "work" && scopeid(o.data.activity_id) !== r.scope)
             );
           if (o.op === "record_result")
             return ![o.work_ref, o.run_ref].filter(Boolean).every(local);

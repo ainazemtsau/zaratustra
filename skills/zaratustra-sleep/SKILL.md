@@ -35,6 +35,8 @@ omitting a checkpoint grants no shared-write authority. For explicitly requested
 ordinary work while a review is pending, use existing set_focus with a non-review Work in a
 separate commit. Focus grants no permissions or ownership and never overrides a checkpoint's
 fixed scope. Abort an active review before moving its Work to a different Activity.
+The same scope guard applies to every operation in the start_sleep commit, including shared
+changes proposed alongside a newly staged Work/Activity; starting a review grants no bypass.
 
 Read zara_sleep_batch with run_id for ten stable routing cards and exact source refs. Read
 selected bodies, original goals/results, exact Method versions, Evaluations, grounds and

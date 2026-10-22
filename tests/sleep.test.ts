@@ -1251,3 +1251,94 @@ test("Sleep disk coordinator repeated deferrals retain sole exact historical gro
     ).request_id,
   );
 });
+
+test("Sleep disk Activity start guards its whole atomic request, including staged Activity and historical Work selectors", (t) => {
+  for (const variant of ["existing", "staged", "historical"]) {
+    const f = fixture();
+    t.after(() => f.disk.close());
+    const a = f.commit([activity("a")]).created.a,
+      e = f.evidence(),
+      m = f.commit([method(e)]).created.m;
+    const ops: unknown[] = [];
+    let binding: { id: string; revision?: number } | { client_ref: string };
+    const guards = [m];
+    if (variant === "historical") {
+      const w = f.commit([work("old", null)]).created.old;
+      const move = f.request(
+        [
+          {
+            op: "update_record",
+            ref: { id: w },
+            plan_change_reason:
+              "Synthetic explicit binding established before review",
+            data: { ...f.read(w).data, activity_id: { id: a } },
+          },
+        ],
+        [w],
+      );
+      const p = f.core.prepareCommit(
+        move,
+        "Bind existing synthetic review Work to Activity A",
+        "Keep global Work",
+      );
+      grant(f.core, p.request_id);
+      f.core.commit({ ...move, preview_ref: p.request_id });
+      assert.equal(f.read(w).revision, 2);
+      binding = { id: w, revision: 1 };
+      guards.push(w);
+    } else {
+      const w = work("w", a);
+      if (variant === "staged") {
+        ops.push(activity("new_activity"));
+        (w.data as JsonObject).activity_id = ref("new_activity");
+      }
+      ops.push(w);
+      binding = ref("w");
+    }
+    ops.push(
+      {
+        op: "start_run",
+        client_ref: "r",
+        title: "Synthetic atomic scoped start",
+        visibility: "workspace",
+        episode_key: "atomic-" + variant,
+        work_ref: "id" in binding ? { id: binding.id } : binding,
+        mode: "sleep",
+        continuation_of: null,
+        summary: "Explicit finite review",
+        starting_refs: [],
+      },
+      { op: "start_sleep", work_ref: binding, run_ref: ref("r") },
+      {
+        op: "revise_method",
+        ref: { id: m },
+        data: {
+          ...f.read(m).data,
+          instructions:
+            "Preserve the exact source criterion in the candidate procedure",
+        },
+      },
+      signal(e, { id: m, revision: 2 }),
+    );
+    const request = f.request(ops, guards);
+    fail(() => f.core.commit(request), "APPROVAL_REQUIRED");
+    assert.equal(f.read(m).revision, 1);
+    assert.equal(f.disk.all("SELECT * FROM sleep_reviews").length, 0);
+    const p = f.core.prepareCommit(
+      request,
+      "Start this Activity review and make the exact shared candidate correction",
+      "Start separately or defer shared correction",
+    );
+    grant(f.core, p.request_id);
+    const receipt = f.core.commit({ ...request, preview_ref: p.request_id });
+    assert.equal(f.read(m).data.content_version, 2);
+    const row = f.disk.get<{ scope: string }>(
+      "SELECT scope FROM sleep_reviews WHERE id=?",
+      receipt.created.r,
+    )!;
+    assert.equal(
+      row.scope,
+      variant === "staged" ? receipt.created.new_activity : a,
+    );
+  }
+});

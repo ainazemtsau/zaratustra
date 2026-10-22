@@ -31,6 +31,10 @@ An active binding move is refused even with an approved proposal; abort before m
 All supplied/staged operational ownership anchors must be local, otherwise exact native
 approval applies. Repeated unresolved deferrals retain their inherited exact grounds until
 explicit retirement, including retained pre-fix ancestry; no new schema or commit engine.
+The start commit has the same scoped-write guard before its active row exists. Its scope
+uses the final current/staged Work binding, including a staged Activity; an optional old
+Work revision cannot select a historical permission scope. Every operation in that atomic
+request remains subject to the existing native approval policy.
 
 The smallest new supporting representation is three normalized tables in the SAME SQLite:
 sleep_reviews (binding, immutable profile/scope/epoch, input high-watermark, status and prepared
