@@ -21,17 +21,26 @@ are historical, rather than current-target L. Prior genuine Pi 1.4 results remai
 to identical runtime/working instructions/production dependencies, with exact original
 source and host attribution. This metadata/qualification-host amendment makes no new L claim.
 
-Validation is in progress on the first published toolchain candidate. Run `npm ci` then
-one `npm run deliver`, which includes format, lint, types, boundaries, build and disk tests.
-Fresh native package discovery/default startup are M with zero provider dispatches.
+The published/installed toolchain candidate is `7c3861727befe7f18df855afb4c658abaa88d49e`.
+`npm ci` and one `npm run deliver` passed against development Pi 1.4.0: 161 tests,
+159 passed, two inherited Windows skips, zero failures. Deliver includes format, lint,
+types, boundaries, build and disk tests; no second full check was run. File-symlink permission
+and case-sensitive filename checks are the two skips. No compatibility correction was needed.
+Fresh native package discovery/default startup passed as M with zero provider dispatches.
+All 29 runtime/working-instruction files and all 21 compiled JavaScript artifacts match
+the preceding qualified runtime. Actual development and global SDK/CLI versions are 1.4.0;
+their code hashes match. Native production dependencies resolve inside the isolated package.
 Current evidence is isolated at `C:/projects/zaratustra-v1-sleep-pi14-evidence-20261022`;
-final public/install identities and normal native peer-lock transformations will be read back
-there. Final report supplies the exact final SHA; an install into a new synthetic project is:
+final documentation public/install identities are read back in `final-readback.json` there.
+Normal native npm installation removes seven measured `peer: true` flags and reorders package
+keys; lockfile bytes differ, while versions/integrities/dependency declarations are unchanged.
+Public allowlisted evidence is in [sleep-pi14-evidence/](sleep-pi14-evidence/source.json).
+The final handback supplies the final documentation SHA; the validated toolchain install is:
 
 ```powershell
 Set-Location 'C:/projects/zaratustra-v1-sleep-pi14-evidence-20261022/install/cwd'
 $env:PI_CODING_AGENT_DIR = 'C:/projects/zaratustra-v1-sleep-pi14-evidence-20261022/install/agent'
-pi.cmd install --local --approve git:github.com/ainazemtsau/zaratustra@<published-sha>
+pi.cmd install --local --approve git:github.com/ainazemtsau/zaratustra@7c3861727befe7f18df855afb4c658abaa88d49e
 ```
 
 Native `--approve` authorizes isolated local package configuration, not Sleep actions.
@@ -40,11 +49,18 @@ refresh normally; credential contents are not exposed, copied or manually altere
 
 | Qualification        | Attribution                                                                                                                                                                                  |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| New M                | Clean dependency install passed; full deliver and fresh native readback pending                                                                                                              |
+| New M                | Clean install, full deliver159pass/2skip/0fail, actual1.4 native resources/default startup, source/build/dependency equality passed                                                          |
 | Reused L             | Actual Pi 1.4 only; preview low/high full-operation audits on runtime07510ec, earlier semantic/continuation/scoped stories retain their original pins in SLEEP-PREVIEW.md and linked reports |
 | New L                | None required for unchanged production behavior; zero new model calls                                                                                                                        |
 | Usage                | Linked prior 58 attempts/626 dispatches/USD24.3995008 Pi estimate; no reset or double count; billing/CLI cost unknown                                                                        |
 | Remaining acceptance | Root's separate fresh physical independent review, full R1/T31 and owner usefulness remain separate                                                                                          |
+
+Two audit helpers initially failed on assumptions (eight Pi packages rather than seven;
+requiring native zod peer metadata to stay byte-identical). Corrected helpers passed; their
+drafts, failures and other authoring/read setup errors remain in external task-events/logs.
+These are M preparation errors, not native model attempts. The full development dependency
+audit reports nine high advisories; the native production install reports zero. No unrelated
+audit fix or blanket dependency upgrade was attempted.
 
 All five known coordinator categories retain their prior mechanical dispositions: scope
 recovery; mixed ownership; immutable binding/abort; repeated deferral grounds; inherited

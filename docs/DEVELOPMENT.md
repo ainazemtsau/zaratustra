@@ -13,7 +13,7 @@ private ZT manually. No private workspace access is authorized.
 One extension/Core, three native entry skills, ordinary conversation; portable Core and
 same SQLite, schema 6 to 7 verified backup/receipt/manifest repair, E3 quarantine restore
 and external epoch barriers. No SQL transaction spans model/human/provider/file waits.
-No dependency, planner, second model, daemon, launcher or runtime Git action is added.
+No production dependency, planner, second model, daemon, launcher or runtime Git action is added.
 Trusted cwd/.local startup and owner Git policies remain intact. Sleep grants no new rights.
 
 Default scope is all permitted memory; Activity coverage is independent and shared Knowledge/

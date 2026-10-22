@@ -1,0 +1,39 @@
+{
+  "uncapped": true,
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "thinking": "medium",
+  "attempts": 0,
+  "requests": 0,
+  "input": 0,
+  "output": 0,
+  "cache_read": 0,
+  "estimated_usd": 0,
+  "errors": [],
+  "preceding": {
+    "path": "C:/projects/zaratustra-v1-sleep-evidence-20261022/preview-continuation-20261022/ledger-seal.json",
+    "sha256": "5e91fc22317126bd52d670264d92ba67d57d6e582c6d00c92b6ba569eb69d6e0",
+    "combined": {
+      "attempts": 58,
+      "requests": 626,
+      "input": 36607395,
+      "output": 191161,
+      "cache_read": 26698368,
+      "estimated_usd": 24.3995008
+    }
+  },
+  "combined": {
+    "attempts": 58,
+    "requests": 626,
+    "input": 36607395,
+    "output": 191161,
+    "cache_read": 26698368,
+    "estimated_usd": 24.3995008
+  },
+  "notes": [
+    "No native model calls in metadata-only Pi1.4 host alignment; native resource/startup checks are M.",
+    "Every previous attempt/failure remains linked, including historical Pi1.3 and early out-of-profile1.4.",
+    "Zero incremental Pi estimate does not mean zero total cost. Billing and Codex CLI monetary cost unknown.",
+    "Coordinator independent reviewer accounting is separate and not added to this writer ledger."
+  ]
+}

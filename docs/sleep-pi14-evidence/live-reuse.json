@@ -1,0 +1,38 @@
+{
+  "type": "L; historical genuine Pi1.4 evidence transferred by exact unchanged product/runtime/instructions/production dependencies and identical host SDK/CLI",
+  "runtime": "07510ecb20e47bf01e40207b0013083e8b8e32e5",
+  "attempts": [
+    {
+      "name": "native-pi140-high",
+      "host": "1.4.0",
+      "profile": "high",
+      "provider_dispatches": 10,
+      "usage_messages": 10,
+      "qualification": true,
+      "failures": [],
+      "empty_transcript": true,
+      "settled": true,
+      "targeted_ids_supplied": true,
+      "original_preview_rows_unchanged": true
+    },
+    {
+      "name": "native-pi140-low",
+      "host": "1.4.0",
+      "profile": "low",
+      "provider_dispatches": 9,
+      "usage_messages": 9,
+      "qualification": true,
+      "failures": [],
+      "empty_transcript": true,
+      "settled": true,
+      "targeted_ids_supplied": true,
+      "original_preview_rows_unchanged": true
+    }
+  ],
+  "earlier_stories": "See SLEEP-PREVIEW.md linked exact source/host-attributed semantic, continuation, scoped-confirmation reports; no new model calls in this host amendment",
+  "pi13": "All earlier1.3 evidence remains immutable historical; no new1.3 execution or current-target claim",
+  "transfer_basis": "All29 runtime/working-instruction files and all22 production lock entries unchanged from d9b/runtime075;21 compiled artifacts equal; actual global1.4 SDK/CLI hashes unchanged. Current host-only runner changes qualification selection/label, not product behavior.",
+  "new_L_attempts": 0,
+  "all_five_categories": "Retain completed mechanical dispositions: durable scope recovery; mixed ownership; immutable binding/abort; inherited repeated-deferral grounds; inherited sensitivity including progressed state, legacy pending intents, and typed previews. No new privacy or feature change.",
+  "independent_review": "Root coordinates separate fresh physical independent reviewer; no writer-assigned independent PASS"
+}

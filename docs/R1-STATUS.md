@@ -1,4 +1,4 @@
-Current Sleep host amendment: [SLEEP-PI14.md](SLEEP-PI14.md). The owner now requires Pi 1.4 only; the development SDK is pinned to 1.4.0. Production runtime remains bytewise equal to d9b6551/runtime07510ec. Previous Pi 1.3 results are historical; genuine Pi 1.4 observations retain exact source/host attribution. New toolchain validation is in progress. Separate fresh independent review/fullR1/T31/owner usefulness remain open. Historical rows below are unchanged.
+Current Sleep host amendment: [SLEEP-PI14.md](SLEEP-PI14.md), toolchain7c38617. The owner now requires Pi 1.4 only; the development SDK is pinned to 1.4.0. Full deliver161/159pass/2inherited Windows skips/0fail and fresh native resource/default-startup M pass. Production runtime remains bytewise equal to d9b6551/runtime07510ec. Previous Pi 1.3 results are historical; genuine Pi 1.4 observations retain exact source/host attribution through measured equality. Zero new L calls. Separate fresh independent review/fullR1/T31/owner usefulness remain open. Historical rows below are unchanged.
 
 # Full R1/R2 disposition
 

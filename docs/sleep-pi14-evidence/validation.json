@@ -1,0 +1,480 @@
+{
+  "type": "M; no provider dispatch",
+  "toolchain_candidate_sha": "7c3861727befe7f18df855afb4c658abaa88d49e",
+  "development_host_pin": "1.4.0",
+  "actual_native_host": {
+    "package": "1.4.0",
+    "sdk": "1.4.0",
+    "cli": "1.4.0",
+    "node": "v22.19.0",
+    "npm": "11.6.2",
+    "platform": "win32",
+    "arch": "x64",
+    "sdk_sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+    "cli_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+    "sdk_cli_bytewise_equal_previous_actual_140_L": true
+  },
+  "development_loaded_identity": {
+    "actual_development_package": "1.4.0",
+    "actual_loaded_sdk": "1.4.0",
+    "actual_cli": "1.4.0",
+    "sdk_sha256": "4569157e6038be9840fa514db4b00a27fd0be9e3622cc7b49a281de6c027d7ff",
+    "cli_sha256": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+    "sdk_cli_equal_unchanged_global_140": true,
+    "node": "v22.19.0",
+    "provider_dispatches": 0,
+    "kind": "M; package/SDK/CLI identity only"
+  },
+  "clean_install": {
+    "command": "npm ci",
+    "exit_code": 0,
+    "log_sha256": "d30909fc935ff59ce8e2f8da4a30136f2853f59df3d7cde0dcafb8668e5ceb4b",
+    "scoped_lock": {
+      "command": "npm install --save-dev --save-exact @earendil-works/pi-coding-agent@1.4.0 --ignore-scripts",
+      "initial_generated_changes": [
+        "",
+        "node_modules/@aws-sdk/core",
+        "node_modules/@aws-sdk/credential-provider-env",
+        "node_modules/@aws-sdk/credential-provider-http",
+        "node_modules/@aws-sdk/credential-provider-ini",
+        "node_modules/@aws-sdk/credential-provider-login",
+        "node_modules/@aws-sdk/credential-provider-node",
+        "node_modules/@aws-sdk/credential-provider-process",
+        "node_modules/@aws-sdk/credential-provider-sso",
+        "node_modules/@aws-sdk/credential-provider-sso/node_modules/@aws-sdk/token-providers",
+        "node_modules/@aws-sdk/credential-provider-web-identity",
+        "node_modules/@aws-sdk/eventstream-handler-node",
+        "node_modules/@aws-sdk/middleware-eventstream",
+        "node_modules/@aws-sdk/middleware-websocket",
+        "node_modules/@aws-sdk/nested-clients",
+        "node_modules/@aws-sdk/signature-v4-multi-region",
+        "node_modules/@aws-sdk/types",
+        "node_modules/@earendil-works/pi-agent-core",
+        "node_modules/@earendil-works/pi-ai",
+        "node_modules/@earendil-works/pi-codemode",
+        "node_modules/@earendil-works/pi-coding-agent",
+        "node_modules/@earendil-works/pi-mcp",
+        "node_modules/@earendil-works/pi-telemetry",
+        "node_modules/@earendil-works/pi-tui",
+        "node_modules/@smithy/core",
+        "node_modules/@smithy/signature-v4",
+        "node_modules/marked",
+        "node_modules/marked-cjk-friendly",
+        "node_modules/ws"
+      ],
+      "retained_scoped_changes": [
+        {
+          "path": "node_modules/@earendil-works/pi-agent-core",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/@earendil-works/pi-ai",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/@earendil-works/pi-codemode",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/@earendil-works/pi-coding-agent",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/@earendil-works/pi-mcp",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/@earendil-works/pi-telemetry",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/@earendil-works/pi-tui",
+          "before": "1.3.0",
+          "after": "1.4.0",
+          "metadata_only": false
+        },
+        {
+          "path": "node_modules/marked",
+          "before": "18.0.11",
+          "after": "18.0.11",
+          "metadata_only": true
+        },
+        {
+          "path": "node_modules/marked-cjk-friendly",
+          "before": null,
+          "after": "0.1.2",
+          "metadata_only": false
+        }
+      ],
+      "excluded_unnecessary_changes": [
+        "node_modules/@aws-sdk/core",
+        "node_modules/@aws-sdk/credential-provider-env",
+        "node_modules/@aws-sdk/credential-provider-http",
+        "node_modules/@aws-sdk/credential-provider-ini",
+        "node_modules/@aws-sdk/credential-provider-login",
+        "node_modules/@aws-sdk/credential-provider-node",
+        "node_modules/@aws-sdk/credential-provider-process",
+        "node_modules/@aws-sdk/credential-provider-sso",
+        "node_modules/@aws-sdk/credential-provider-sso/node_modules/@aws-sdk/token-providers",
+        "node_modules/@aws-sdk/credential-provider-web-identity",
+        "node_modules/@aws-sdk/eventstream-handler-node",
+        "node_modules/@aws-sdk/middleware-eventstream",
+        "node_modules/@aws-sdk/middleware-websocket",
+        "node_modules/@aws-sdk/nested-clients",
+        "node_modules/@aws-sdk/signature-v4-multi-region",
+        "node_modules/@aws-sdk/types",
+        "node_modules/@smithy/core",
+        "node_modules/@smithy/signature-v4",
+        "node_modules/ws"
+      ],
+      "reason": "npm refreshed AWS/Smithy ranges although the Pi 1.4 declarations retain their previous constraints. Restore those already locked development entries; retain only the exact Pi family, its new marked-cjk-friendly dependency and marked peer metadata.",
+      "production_entries": 22,
+      "production_entries_bytewise_equal": true,
+      "scoped_lock_sha256": "623b0ee0d3bd811ff7be5eb5c835d6dac88a021a6f15fe7de3ae2a75e7ae7b7a"
+    }
+  },
+  "full_deliver": {
+    "command": "npm run deliver",
+    "runs": 1,
+    "exit_code": 0,
+    "counts": {
+      "tests": 161,
+      "pass": 159,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 2,
+      "todo": 0
+    },
+    "log_sha256": "8453b6416abe6a86e4b1c4caa17669b3c6e49ce2b45bf719ee40f2201d8d98bf",
+    "note": "Includes check: format/lint/types/boundaries/build/disk tests, plus RESULT validator; no second full check"
+  },
+  "fresh_native_M": {
+    "resources": {
+      "errors": [],
+      "extensions": [
+        {
+          "path": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts",
+          "tools": [
+            "zara_backup",
+            "zara_backups",
+            "zara_backup_verify",
+            "zara_restore_preview",
+            "zara_restore",
+            "zara_storage_preview",
+            "zara_storage_apply",
+            "zara_cleanup_preview",
+            "zara_cleanup",
+            "zara_backup_pin_release_preview",
+            "zara_backup_pin_release",
+            "zara_recovery_inspect",
+            "zara_reconcile_preview",
+            "zara_reconcile",
+            "zara_preview",
+            "zara_confirm",
+            "zara_file_preview",
+            "zara_file_inspect",
+            "zara_skill_export_preview",
+            "zara_skill_inspect",
+            "zara_skill_import_preview",
+            "zara_map",
+            "zara_browse",
+            "zara_search",
+            "zara_read",
+            "zara_import",
+            "zara_claim",
+            "zara_commit",
+            "zara_sleep_batch",
+            "zara_doctor"
+          ]
+        }
+      ],
+      "skills": ["zaratustra-work", "zaratustra-memory", "zaratustra-sleep"]
+    },
+    "default_startup": {
+      "cwd": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd",
+      "expectedPackage": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra",
+      "extensions": [
+        "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\src\\extension\\index.ts"
+      ],
+      "skills": [
+        {
+          "name": "zaratustra-work",
+          "description": "Continue durable work; discover and apply versioned textual Methods, retain Runs, separate assessments and open problems.",
+          "filePath": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md",
+          "baseDir": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work",
+          "sourceInfo": {
+            "path": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-work\\SKILL.md",
+            "source": "git:github.com/ainazemtsau/zaratustra@7c3861727befe7f18df855afb4c658abaa88d49e",
+            "scope": "project",
+            "origin": "package",
+            "baseDir": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra"
+          },
+          "disableModelInvocation": false
+        },
+        {
+          "name": "zaratustra-memory",
+          "description": "Discover shared resources and constraints across activities, search English memory, read grounds and correct facts/identities with history.",
+          "filePath": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md",
+          "baseDir": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory",
+          "sourceInfo": {
+            "path": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-memory\\SKILL.md",
+            "source": "git:github.com/ainazemtsau/zaratustra@7c3861727befe7f18df855afb4c658abaa88d49e",
+            "scope": "project",
+            "origin": "package",
+            "baseDir": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra"
+          },
+          "disableModelInvocation": false
+        },
+        {
+          "name": "zaratustra-sleep",
+          "description": "Review accumulated workspace experience or an explicitly requested Activity, retain durable coverage, make grounded small corrections and leave real verification open.",
+          "filePath": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-sleep\\SKILL.md",
+          "baseDir": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-sleep",
+          "sourceInfo": {
+            "path": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra\\skills\\zaratustra-sleep\\SKILL.md",
+            "source": "git:github.com/ainazemtsau/zaratustra@7c3861727befe7f18df855afb4c658abaa88d49e",
+            "scope": "project",
+            "origin": "package",
+            "baseDir": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.pi\\git\\github.com\\ainazemtsau\\zaratustra"
+          },
+          "disableModelInvocation": false
+        }
+      ],
+      "action": "inspect",
+      "snapshot": {
+        "available": true,
+        "workspace_id": "4b8170cf-7f4a-4498-b719-237fdb9997ca",
+        "active_epoch": "76e7d0c9-c6ac-4a12-9fa9-0b5add2a2acf",
+        "snapshot_seq": 0,
+        "generation": "e34e7c8ac07f696188d34ccf5d66a090c5eacdbb9c5f679ec2d4dabca01ea4ee",
+        "focus": null,
+        "records": [],
+        "context_current": [],
+        "open_signals": [],
+        "operations_selector": {
+          "view": "operations"
+        },
+        "restore_compatibility": "Every restored potentially effectful Work/step requires named reconciliation, including absent receipts. Inspect current output before repeat.",
+        "recovery_required": [],
+        "recovery_required_has_more": false,
+        "recovery_selector": {
+          "view": "work"
+        },
+        "open_signals_has_more": false,
+        "open_signals_selector": {
+          "view": "signals"
+        },
+        "must_read": [],
+        "has_more": false,
+        "warnings": [
+          "Shared memory is not loaded: use catalog/search and read selected claims plus conditions. Historical tool messages may be stale."
+        ],
+        "write_mode": "single-writer",
+        "data_only": true,
+        "byte_budget": 12288,
+        "incomplete": false,
+        "captured_sources": [],
+        "provider_model": "openai-codex/gpt-6.1-sol",
+        "recipient_authority": "startup-selected-Pi-recipient",
+        "managed_output_root": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.local\\output",
+        "workspace_paths": {
+          "profile": "project-local",
+          "memory": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.local\\memory",
+          "imports": [
+            "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.local\\imports"
+          ],
+          "output": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.local\\output",
+          "backups": "C:\\projects\\zaratustra-v1-sleep-pi14-evidence-20261022\\install\\cwd\\.local\\backups"
+        },
+        "capability_manifest": {
+          "covered": [
+            "exact preview-bound Core changes",
+            "native write/edit inside designated existing-parent output root",
+            "text-only Method SKILL.md export"
+          ],
+          "limits": [
+            "64000 UTF-8 bytes",
+            "one trusted writer; no concurrent outside writers",
+            "no OS CAS or author attribution",
+            "no shell deduplication",
+            "no automatic routing gate",
+            "restore loses post-snapshot DB history; external effects remain"
+          ]
+        }
+      },
+      "calls": [],
+      "notices": [],
+      "node": "v22.19.0",
+      "pi": "1.4.0",
+      "provider_dispatches": 0,
+      "mechanical_only": true,
+      "contextTypes": ["zaratustra.snapshot.v1"],
+      "storage_files_while_open": [],
+      "storage_files_after_close": [
+        "active.json",
+        "materials",
+        "staging",
+        "workspace.json",
+        "zara.sqlite"
+      ]
+    },
+    "provider_dispatches": 0
+  },
+  "compiled_build_equality": {
+    "basis": "Previous07510ec build; native Pi loads identical TypeScript via host JIT instead of dist",
+    "files": [
+      {
+        "path": "dist/core/approval.js",
+        "sha256": "a55491eb62248c5fdd5c20df226d49be978f064f3ad8eb4f9ba3eb84d5a874d2",
+        "current_sha256": "a55491eb62248c5fdd5c20df226d49be978f064f3ad8eb4f9ba3eb84d5a874d2",
+        "equal": true
+      },
+      {
+        "path": "dist/core/contracts.js",
+        "sha256": "f3cb8abd72a88f4fa80623048a83c024270294635de04f8ce7c93783eb7e9df0",
+        "current_sha256": "f3cb8abd72a88f4fa80623048a83c024270294635de04f8ce7c93783eb7e9df0",
+        "equal": true
+      },
+      {
+        "path": "dist/core/effects.js",
+        "sha256": "c701ae81913d72c81a88d8fbd2afc86c314eea59f6488a612d5213f3b69e5849",
+        "current_sha256": "c701ae81913d72c81a88d8fbd2afc86c314eea59f6488a612d5213f3b69e5849",
+        "equal": true
+      },
+      {
+        "path": "dist/core/experience.js",
+        "sha256": "ac3e5366b18b598b715a69b6b0520c959bc24f8f87dd9ac6d19cafc848c1be92",
+        "current_sha256": "ac3e5366b18b598b715a69b6b0520c959bc24f8f87dd9ac6d19cafc848c1be92",
+        "equal": true
+      },
+      {
+        "path": "dist/core/index.js",
+        "sha256": "71f6099c781e51b7f4c991667da644f34a90d8585106a3ff981fa41a21d02666",
+        "current_sha256": "71f6099c781e51b7f4c991667da644f34a90d8585106a3ff981fa41a21d02666",
+        "equal": true
+      },
+      {
+        "path": "dist/core/lifecycle.js",
+        "sha256": "afdf5893188fde9166faaa83fe0f1d65768a69d3d2f9026bffb885c11ba97cb0",
+        "current_sha256": "afdf5893188fde9166faaa83fe0f1d65768a69d3d2f9026bffb885c11ba97cb0",
+        "equal": true
+      },
+      {
+        "path": "dist/core/memory.js",
+        "sha256": "ec8f1ca481952fedcb01ee5cdd7a5c1272ca8dcb4def61ebca60dcc81be75cd9",
+        "current_sha256": "ec8f1ca481952fedcb01ee5cdd7a5c1272ca8dcb4def61ebca60dcc81be75cd9",
+        "equal": true
+      },
+      {
+        "path": "dist/core/sleep.js",
+        "sha256": "0045ae139bfdd688b7c0365f7b10fd18d259bf908feb3b1b964bafe7396da3c9",
+        "current_sha256": "0045ae139bfdd688b7c0365f7b10fd18d259bf908feb3b1b964bafe7396da3c9",
+        "equal": true
+      },
+      {
+        "path": "dist/core/work.js",
+        "sha256": "30c7d6379e2081bf69c01c26fd2b79887f2c6a6e4e64bc67f7deb8ecce8a1ec0",
+        "current_sha256": "30c7d6379e2081bf69c01c26fd2b79887f2c6a6e4e64bc67f7deb8ecce8a1ec0",
+        "equal": true
+      },
+      {
+        "path": "dist/extension/administration.js",
+        "sha256": "1da1a2a6271dd1c4b9daffc5b17a6fd6ae369e04d54a9a678437f2e2edbc7d63",
+        "current_sha256": "1da1a2a6271dd1c4b9daffc5b17a6fd6ae369e04d54a9a678437f2e2edbc7d63",
+        "equal": true
+      },
+      {
+        "path": "dist/extension/authority.js",
+        "sha256": "999db281e3ba73dc749e1dfce1f0becff9925319cb64b7e2c251010683ee3ef8",
+        "current_sha256": "999db281e3ba73dc749e1dfce1f0becff9925319cb64b7e2c251010683ee3ef8",
+        "equal": true
+      },
+      {
+        "path": "dist/extension/index.js",
+        "sha256": "a97b8d4c777ae57a4940a91cffb6d635eb12ba8e84764f6d6a0c8f5928296957",
+        "current_sha256": "a97b8d4c777ae57a4940a91cffb6d635eb12ba8e84764f6d6a0c8f5928296957",
+        "equal": true
+      },
+      {
+        "path": "dist/extension/managed.js",
+        "sha256": "c1033c615ce3b02d93aa4b64d43ef7594defd3b4913ebcbc661c1a53b1d8f65c",
+        "current_sha256": "c1033c615ce3b02d93aa4b64d43ef7594defd3b4913ebcbc661c1a53b1d8f65c",
+        "equal": true
+      },
+      {
+        "path": "dist/extension/preview.js",
+        "sha256": "20dc8a4fa1c75f6d63070d845368b1b4e5a81c0831c5a78bd07c16ac2562f5da",
+        "current_sha256": "20dc8a4fa1c75f6d63070d845368b1b4e5a81c0831c5a78bd07c16ac2562f5da",
+        "equal": true
+      },
+      {
+        "path": "dist/extension/workspace.js",
+        "sha256": "7193aa9da545c62a8930d3a8b53ec372a1ee152cdd10de36c11c0da0536eec25",
+        "current_sha256": "7193aa9da545c62a8930d3a8b53ec372a1ee152cdd10de36c11c0da0536eec25",
+        "equal": true
+      },
+      {
+        "path": "dist/storage/administration.js",
+        "sha256": "938748d8bea50dbe3da3d9a07ce63bd3ee5e211ebc488c7aad24a520171cf705",
+        "current_sha256": "938748d8bea50dbe3da3d9a07ce63bd3ee5e211ebc488c7aad24a520171cf705",
+        "equal": true
+      },
+      {
+        "path": "dist/storage/control.js",
+        "sha256": "2abe26f0ad10183e029a40d47a174c916e036d4f1baa5f8175138d7a4af5195d",
+        "current_sha256": "2abe26f0ad10183e029a40d47a174c916e036d4f1baa5f8175138d7a4af5195d",
+        "equal": true
+      },
+      {
+        "path": "dist/storage/extract.js",
+        "sha256": "4b2ae7282b11a424d00ec68643ed17c18796486b0901b6f676169230d249341f",
+        "current_sha256": "4b2ae7282b11a424d00ec68643ed17c18796486b0901b6f676169230d249341f",
+        "equal": true
+      },
+      {
+        "path": "dist/storage/index.js",
+        "sha256": "7ec7fa50b62489fedc0742cf91463c4505380f0dfa83db337c1bf7074a37e287",
+        "current_sha256": "7ec7fa50b62489fedc0742cf91463c4505380f0dfa83db337c1bf7074a37e287",
+        "equal": true
+      },
+      {
+        "path": "dist/storage/indexes.js",
+        "sha256": "239695bafe1c627e816920b84d987111fd51057a9deebf91d040d95151cc92d7",
+        "current_sha256": "239695bafe1c627e816920b84d987111fd51057a9deebf91d040d95151cc92d7",
+        "equal": true
+      },
+      {
+        "path": "dist/storage/output.js",
+        "sha256": "be9090939f9610eb299dd006dc9c1cd2fea58d7ad0700ef9ec9b5b43c84d1685",
+        "current_sha256": "be9090939f9610eb299dd006dc9c1cd2fea58d7ad0700ef9ec9b5b43c84d1685",
+        "equal": true
+      }
+    ],
+    "all_equal": true
+  },
+  "lock_serialization": {
+    "public_native_bytewise_equal": false,
+    "package_key_order_equal": false,
+    "public_last_package": "node_modules/marked-cjk-friendly",
+    "native_last_package": "node_modules/zod",
+    "structural_difference": "Seven measured peer:true removals; no version/integrity/dependency differences; native npm also reserializes package key order."
+  },
+  "mechanical_audit_setup_errors": "Retained scope-lock-01 and candidate-readback-01 failures concern audit assumptions, not product failures; corrected helpers pass. Full logs and task-events.jsonl outside package.",
+  "limits": [
+    "Two inherited Windows platform skips if reported above",
+    "npm ci full dependency audit reports nine high advisories; native production install reports zero; no unrelated audit fix was attempted",
+    "No independent PASS/full R1/T31/owner usefulness or all-version qualification"
+  ]
+}
