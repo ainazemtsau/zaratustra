@@ -13,7 +13,8 @@ provider switch, extra AGENTS file or second executor is needed.
 
 First call zara_sleep_batch with no arguments to discover an interrupted review. Resume its
 exact prepared batch and its existing running episode; reading old cases is not another
-Method invocation or success. A fresh process needs no previous transcript. Discover lost
+Method invocation or success. Core rejects invoke_method on Sleep Runs; subsequent suitable
+ordinary work records actual applications in its own Run. A fresh process needs no previous transcript. Discover lost
 replies through operations/Changes/receipts and actual targets. Never guess a replacement
 commit from a similar title. An identical request replay returns its receipt; a changed
 payload needs a new request ID after re-reading.

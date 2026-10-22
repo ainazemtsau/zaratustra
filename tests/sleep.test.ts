@@ -721,6 +721,25 @@ test("Sleep disk observing check remains independent; review results and evaluat
     s = f.commit([signal(e, { id: m })]).created.s,
     run = f.start();
   f.finish(run);
+  const bundle = f.core.methodBundle(m).data;
+  fail(
+    () =>
+      f.commit([
+        {
+          op: "invoke_method",
+          client_ref: "fake",
+          run_ref: { id: run },
+          invocation_key: "review-is-not-application",
+          method_ref: bundle.root_ref,
+          selected_versions: bundle.selected_versions,
+          input_refs: [{ id: e }],
+          context_refs: [],
+          bindings: {},
+          parent_invocation_ref: null,
+        },
+      ]),
+    "INVALID_TRANSITION",
+  );
   const summary = f.commit([
     {
       op: "record_result",
@@ -810,4 +829,46 @@ test("Sleep disk missing/corrupt stores preserve failure state rather than creat
     assert.ok(run);
     t.after(() => f.disk.close());
   }
+});
+
+test("Sleep disk Activity reads mixed-scope Signals as context without treating shared subjects as local write ownership", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const a = f.commit([
+    {
+      op: "create_record",
+      kind: "activity",
+      client_ref: "a",
+      title: "Mixed-scope synthetic Activity",
+      visibility: "workspace",
+      data: { purpose: "Review bound local work", status: "active" },
+    },
+  ]).created.a;
+  const e = f.evidence(),
+    m = f.commit([method(e)]).created.m,
+    w = f.commit([work("w", a)]).created.w;
+  const s = f.commit([
+    { ...signal(e, { id: w }), subject_refs: [{ id: w }, { id: m }] },
+  ]).created.s;
+  const run = f.start(a);
+  assert.ok(f.batch(run).cards.some((c) => c.ref.id === s));
+  const req = f.request(
+    [
+      {
+        op: "review_signal",
+        client_ref: "review",
+        ref: { id: s },
+        problem_state: "open",
+        assessment: "Mixed ownership needs confirmation",
+        evidence_refs: [{ id: e }],
+        applied_change_ref: null,
+        next_check: "New exact approval",
+        grounds: null,
+        dismissal_reason: null,
+      },
+    ],
+    [s],
+  );
+  fail(() => f.core.commit(req), "APPROVAL_REQUIRED");
+  assert.equal(f.read(s).revision, 1);
 });

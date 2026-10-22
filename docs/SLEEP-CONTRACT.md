@@ -44,6 +44,8 @@ Signal-review/environment rows, operational rows tied to review Work/Run, and Ch
 They are excluded from independent experience. Substantive resulting corrections remain
 addressable; later suitable real Work/Evaluations and unresolved check Signals remain inputs.
 No reason-prose parsing, keyword causal classification, translator or reranker is used.
+Sleep Runs cannot invoke studied Methods as applications. Activity selection includes mixed
+Signals through explicit local Work/Run anchors; mixed relevance grants no local write ownership.
 
 The model inspects original goals/results, exact applied versions, grounds and current
 conditions, and separates observations from hypotheses. considered can stay open/unknown;

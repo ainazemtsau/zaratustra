@@ -277,6 +277,74 @@ try {
       excludedIdentifier: "Q-72",
     };
     writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
+  } else if (mode === "feedback") {
+    const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
+    const rows = disk
+      .all(
+        "SELECT json FROM experience_rows WHERE kind='invocation' ORDER BY rowid",
+      )
+      .map((r) => JSON.parse(r.json));
+    const invocation = rows.findLast(
+      (r) =>
+        r.data.method_ref.id === fixture.method &&
+        r.data.reported_application?.applied &&
+        core.read(r.data.run_ref.id).data.data.work_ref?.id ===
+          fixture.next.work,
+    );
+    assert.ok(
+      invocation,
+      "Required real subsequent case must actually report the exact selected Method application",
+    );
+    const outputRef = invocation.data.output_refs.at(-1),
+      output = core.read(outputRef.id, outputRef.revision).data;
+    const text = output.data.retained_excerpt;
+    assert.equal(typeof text, "string");
+    const lines = text.split(/\r?\n/).filter((l) => l.trim()).length;
+    const feedback = evidence(
+      "Synthetic late usability feedback",
+      `SYNTHETIC REPORTED ASSESSMENT, not actual owner testimony. This refers to the real model-produced addressed packet output, with ${lines} nonempty retained lines. The synthetic downstream reader reports the expanded audit-first presentation was cumbersome and the improvement unhelpful for a small packet. Preserve any separately correct total and source traceability. Suggested narrower condition: compact operational answer first, with the detailed inclusion/exclusion audit available separately when needed. This is a reported usability judgment, not proof of the cause or a general failure of source checking.`,
+    );
+    const result = commit([
+      {
+        op: "record_evaluation",
+        client_ref: "e",
+        target_ref: outputRef,
+        run_ref: invocation.data.run_ref,
+        assessment: "unhelpful",
+        dimension: "usefulness",
+        dimension_name: "Synthetic downstream usability of improved procedure",
+        basis: "reported_feedback",
+        evidence_refs: [{ id: feedback }],
+        event_time: null,
+        supersedes_evaluation_ref: null,
+        explanation:
+          "Late synthetic usability feedback on an actual subsequent application; technical correctness and causal hypothesis remain separate.",
+      },
+      {
+        op: "open_signal",
+        client_ref: "s",
+        kind: "possible_regression",
+        subject_refs: [invocation.data.method_ref, invocation.data.run_ref],
+        evidence_refs: [{ id: feedback }, outputRef],
+        description:
+          "Late reported usability concern about an improved procedure; cause is not established",
+        next_check:
+          "Review exact feedback and conditions; check any compatible revision in another suitable real case",
+        visibility: "workspace",
+      },
+    ]);
+    fixture.negative = {
+      feedback,
+      evaluation: result.created.e,
+      signal: result.created.s,
+      invocation: invocation.id,
+      method_ref: invocation.data.method_ref,
+      output_ref: outputRef,
+      actual_nonempty_lines: lines,
+      authority:
+        "synthetic reported usability; not owner or technical causal proof",
+    };
+    writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
   } else if (mode === "scoped") {
     const fixture = JSON.parse(readFileSync(fixturePath, "utf8"));
     const a = commit([

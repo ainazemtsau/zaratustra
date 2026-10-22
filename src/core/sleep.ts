@@ -234,7 +234,14 @@ export class Sleep {
     if (r.kind === "work") return refid(r.data.activity_id) === scope;
     if (r.kind === "run") {
       const w = refid(r.data.work_ref);
-      return !!w && this.local(read(w), scope, read);
+      return (
+        !!w &&
+        this.local(
+          read(w, (r.data.work_ref as { revision?: number }).revision),
+          scope,
+          read,
+        )
+      );
     }
     if (["invocation", "evaluation"].includes(r.kind)) {
       const run = refid(r.data.run_ref),
@@ -271,6 +278,19 @@ export class Sleep {
     }
     // Origin, classification, focus and natural language never establish local ownership.
     return false;
+  }
+  private relevant(r: AddressedRow, scope: string) {
+    if (this.local(r, scope) || ["knowledge", "method"].includes(r.kind))
+      return true;
+    const refs =
+      r.kind === "signal"
+        ? (r.data.subject_refs as { id: string; revision?: number }[])
+        : ([r.data.run_ref, r.data.work_ref].filter(Boolean) as {
+            id: string;
+            revision?: number;
+          }[]);
+    // Mixed records can be relevant context; relevance never establishes write ownership.
+    return refs.some((p) => this.local(this.address(p.id, p.revision), scope));
   }
   needsApproval(request: CommitRequest, activeReview?: string) {
     const op = request.ops.find(
@@ -486,12 +506,7 @@ export class Sleep {
           !this.allowed(r.id)
         )
           return;
-        if (
-          scope !== "global" &&
-          !this.local(r, scope) &&
-          !["knowledge", "method"].includes(r.kind)
-        )
-          return;
+        if (scope !== "global" && !this.relevant(r, scope)) return;
         seen.add(identity);
         const item: Item = {
           ref,

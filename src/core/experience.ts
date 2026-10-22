@@ -333,6 +333,11 @@ export class ExperienceTransaction {
       const prior = op.continuation_of
         ? this.get(op.continuation_of, "run")
         : null;
+      requireThat(
+        !prior || (prior.data.mode === "sleep") === (op.mode === "sleep"),
+        "INVALID_TRANSITION",
+        "Sleep continuation retains its review case; ordinary work must not turn review bookkeeping into an application case.",
+      );
       const environment = this.ctx.environment ?? {
         package: null,
         bootstrap: null,
@@ -434,6 +439,11 @@ export class ExperienceTransaction {
     if (op.op === "invoke_method") {
       const run = this.run(op.run_ref),
         selected = methodClosure(op.method_ref, this.get, op.selected_versions);
+      requireThat(
+        run.data.mode !== "sleep",
+        "INVALID_TRANSITION",
+        "Sleep reviews inspect Methods and prior cases; record actual applications in subsequent suitable ordinary work.",
+      );
       const root = this.get(op.method_ref, "method");
       requireThat(
         this.get({ id: root.id }, "method").data.state !== "deprecated",
