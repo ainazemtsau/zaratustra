@@ -67,9 +67,14 @@ const piVersion = JSON.parse(
     "utf8",
   ),
 ).version;
-if (piVersion !== "1.3.0")
+const expectedPi = config.qualificationHost ?? "1.3.0";
+if (
+  !["1.3.0", "1.4.0"].includes(expectedPi) ||
+  piVersion !== expectedPi ||
+  sdk.VERSION !== piVersion
+)
   throw new Error(
-    `Required qualification host is Pi 1.3.0; actual ${piVersion}. No provider call was dispatched.`,
+    `Required attributed qualification host is Pi ${expectedPi}; actual package ${piVersion}, SDK ${sdk.VERSION}. No provider call was dispatched.`,
   );
 const log = (name, value) =>
   appendFileSync(join(output, name + ".jsonl"), JSON.stringify(value) + "\n");
@@ -91,6 +96,11 @@ if (!auth)
   );
 log("identity", {
   pi: piVersion,
+  sdk_version: sdk.VERSION,
+  qualification_profile:
+    expectedPi === "1.3.0"
+      ? "pinned baseline"
+      : "separate current-host compatibility",
   pid: process.pid,
   os_cwd: process.cwd(),
   sdk_cwd: cwd,

@@ -62,6 +62,38 @@ const key = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
 const refid = (v: unknown) => (v as { id?: string } | null)?.id;
 
+/** A repeated unresolved deferral inherits exact grounds, including pre-fix rows. */
+function inherited(db: StoragePort, item: Item) {
+  const evidence = new Map(item.evidence_refs.map((p) => [canonical(p), p])),
+    changes = new Map(item.change_refs.map((p) => [canonical(p), p])),
+    seen = new Set<string>();
+  let prior = item.prior_item_id,
+    check = item.check_signal_ref;
+  while (prior) {
+    requireThat(
+      !seen.has(prior),
+      "STORE_UNAVAILABLE",
+      "Cyclic deferred ancestry.",
+    );
+    seen.add(prior);
+    const row = db.get<{ json: string }>(
+      "SELECT json FROM sleep_items WHERE id=?",
+      prior,
+    );
+    requireThat(row, "STORE_UNAVAILABLE", "Deferred grounds are missing.");
+    const p = SleepItem.parse(JSON.parse(row.json));
+    for (const ref of p.evidence_refs) evidence.set(canonical(ref), ref);
+    for (const ref of p.change_refs) changes.set(canonical(ref), ref);
+    check ??= p.check_signal_ref;
+    prior = p.prior_item_id;
+  }
+  return {
+    evidence_refs: [...evidence.values()],
+    change_refs: [...changes.values()],
+    check_signal_ref: check,
+  };
+}
+
 /** No independent commit path: mutations are called only inside Core.commit's transaction. */
 export class Sleep {
   constructor(
@@ -97,7 +129,8 @@ export class Sleep {
     );
     const work = this.address(r.work_id);
     requireThat(
-      (refid(work.data.activity_id) ?? "global") === r.scope,
+      r.status !== "active" ||
+        (refid(work.data.activity_id) ?? "global") === r.scope,
       "REVISION_CONFLICT",
       "Review Work scope changed; abort and explicitly request a new review.",
     );
@@ -217,9 +250,17 @@ export class Sleep {
       id,
     );
     requireThat(row, "STORE_UNAVAILABLE", "Deferred anchor is missing.");
-    const p = SleepItem.parse(JSON.parse(row.json));
+    const p = SleepItem.parse(JSON.parse(row.json)),
+      grounds = inherited(this.db, p);
     requireThat(
-      this.allowed(p.ref.id, p.ref.revision),
+      [
+        p.ref,
+        ...grounds.evidence_refs,
+        ...grounds.change_refs,
+        ...(grounds.check_signal_ref ? [grounds.check_signal_ref] : []),
+      ].every(
+        (ref) => this.allowed(ref.id, ref.revision) && this.allowed(ref.id),
+      ),
       "REFERENCE_NOT_FOUND",
       "Deferred material unavailable.",
     );
@@ -228,24 +269,23 @@ export class Sleep {
       reason: p.reason,
       continuation: p.continuation,
       next_check: p.next_check,
+      ...grounds,
     };
   }
-  private local(r: AddressedRow, scope: string, read = this.address): boolean {
+  private local(
+    r: Pick<AddressedRow, "kind" | "data">,
+    scope: string,
+    read: (ref: unknown) => Pick<AddressedRow, "kind" | "data"> = (p) =>
+      this.address(refid(p)!, (p as { revision?: number }).revision),
+  ): boolean {
     if (r.kind === "work") return refid(r.data.activity_id) === scope;
     if (r.kind === "run") {
-      const w = refid(r.data.work_ref);
-      return (
-        !!w &&
-        this.local(
-          read(w, (r.data.work_ref as { revision?: number }).revision),
-          scope,
-          read,
-        )
-      );
+      const w = r.data.work_ref;
+      return !!w && this.local(read(w), scope, read);
     }
     if (["invocation", "evaluation"].includes(r.kind)) {
-      const run = refid(r.data.run_ref),
-        target = refid(r.data.target_ref);
+      const run = r.data.run_ref,
+        target = r.data.target_ref;
       return (
         !!run &&
         this.local(read(run), scope, read) &&
@@ -258,18 +298,18 @@ export class Sleep {
         refs.length > 0 &&
         refs.every(
           (p) =>
-            ["work", "run"].includes(read(p.id).kind) &&
-            this.local(read(p.id), scope, read),
+            ["work", "run"].includes(read(p).kind) &&
+            this.local(read(p), scope, read),
         )
       );
     }
     if (r.kind === "signal_review") {
-      const s = refid(r.data.signal_ref);
+      const s = r.data.signal_ref;
       return !!s && this.local(read(s), scope, read);
     }
     if (r.kind === "evidence") {
-      const w = refid(r.data.work_ref),
-        run = refid(r.data.run_ref);
+      const w = r.data.work_ref,
+        run = r.data.run_ref;
       return (
         !!(w || run) &&
         (!w || this.local(read(w), scope, read)) &&
@@ -292,41 +332,120 @@ export class Sleep {
     // Mixed records can be relevant context; relevance never establishes write ownership.
     return refs.some((p) => this.local(this.address(p.id, p.revision), scope));
   }
-  needsApproval(request: CommitRequest, activeReview?: string) {
+  /** An active binding cannot be moved, even by an approved ordinary update. Abort first. */
+  assertBindings(changed: AddressedRow[]) {
+    for (const row of changed.filter((r) => r.kind === "work"))
+      for (const review of this.db.all<Review>(
+        "SELECT * FROM sleep_reviews WHERE work_id=? AND epoch=? AND status='active'",
+        row.id,
+        this.ctx.epoch,
+      ))
+        requireThat(
+          (refid(row.data.activity_id) ?? "global") === review.scope,
+          "INVALID_TRANSITION",
+          "Active Sleep scope is immutable. Abort the review before moving its Work.",
+        );
+  }
+  needsApproval(request: CommitRequest) {
     const op = request.ops.find(
       (o): o is Extract<Op, { op: "sleep_checkpoint" }> =>
         o.op === "sleep_checkpoint",
     );
-    if ((!op || !("id" in op.run_ref)) && !activeReview) return false;
-    const r = this.review(
-      op && "id" in op.run_ref ? op.run_ref.id : activeReview!,
-    );
-    if (r.status !== "active") return false;
-    if (r.scope === "global") return false;
-    return request.ops.some((o) => {
-      if (["sleep_checkpoint", "set_focus", "import_evidence"].includes(o.op))
+    let reviews: Review[];
+    if (op && "id" in op.run_ref) reviews = [this.review(op.run_ref.id)];
+    else {
+      reviews = this.db
+        .all<Review>(
+          "SELECT * FROM sleep_reviews WHERE profile=? AND epoch=? AND status='active'",
+          this.profile,
+          this.ctx.epoch,
+        )
+        .filter((r) => this.allowed(r.id) && this.allowed(r.work_id));
+      const focus = this.db.get<{ json: string }>(
+        "SELECT json FROM focus WHERE session_id=?",
+        this.ctx.session_id,
+      );
+      const work = focus && refid(JSON.parse(focus.json).work_ref);
+      // Existing explicit Work focus selects ordinary work outside a review. It grants
+      // no access or local ownership, and cannot change a checkpoint's fixed scope.
+      if (
+        work &&
+        this.allowed(work) &&
+        !this.db.get("SELECT id FROM sleep_reviews WHERE work_id=?", work)
+      )
         return false;
-      if ("ref" in o) return !this.local(this.address(o.ref.id), r.scope);
-      if (o.op === "create_record")
-        return (
-          !["work", "run"].includes(o.kind) ||
-          (o.kind === "work" && refid(o.data.activity_id) !== r.scope)
+    }
+    const read = (p: unknown): Pick<AddressedRow, "kind" | "data"> => {
+      const ref = p as { id?: string; revision?: number; client_ref?: string };
+      if (ref.client_ref) {
+        const staged = request.ops.find(
+          (o) => "client_ref" in o && o.client_ref === ref.client_ref,
         );
-      if (o.op === "record_result")
-        return ![o.work_ref, o.run_ref].some(
-          (p) => p && "id" in p && this.local(this.address(p.id), r.scope),
+        requireThat(
+          staged,
+          "REFERENCE_NOT_FOUND",
+          "Staged ownership anchor is missing.",
         );
-      if (o.op === "record_evaluation")
-        return !(
-          "id" in o.target_ref &&
-          this.local(this.address(o.target_ref.id), r.scope)
-        );
-      if (o.op === "open_signal")
-        return !o.subject_refs.every(
-          (p) => "id" in p && this.local(this.address(p.id), r.scope),
-        );
-      return true;
-    });
+        if (staged.op === "create_record")
+          return { kind: staged.kind, data: staged.data };
+        if (staged.op === "start_run")
+          return { kind: "run", data: { work_ref: staged.work_ref } };
+        if (staged.op === "record_result")
+          return {
+            kind: "evidence",
+            data: {
+              work_ref: staged.work_ref ?? null,
+              run_ref: staged.run_ref ?? null,
+            },
+          };
+        if (staged.op === "record_evaluation")
+          return {
+            kind: "evaluation",
+            data: {
+              target_ref: staged.target_ref,
+              run_ref: staged.run_ref ?? null,
+            },
+          };
+        if (staged.op === "open_signal")
+          return {
+            kind: "signal",
+            data: { subject_refs: staged.subject_refs },
+          };
+        return { kind: "knowledge", data: {} }; // Unknown ownership stays shared.
+      }
+      const row = this.address(ref.id!, ref.revision);
+      const update = request.ops.find(
+        (o) => o.op === "update_record" && o.ref.id === row.id,
+      );
+      return update?.op === "update_record"
+        ? { ...row, data: update.data }
+        : row;
+    };
+    return reviews.some(
+      (r) =>
+        r.status === "active" &&
+        r.scope !== "global" &&
+        request.ops.some((o) => {
+          const local = (p: unknown) => this.local(read(p), r.scope, read);
+          if (
+            ["sleep_checkpoint", "set_focus", "import_evidence"].includes(o.op)
+          )
+            return false;
+          if ("ref" in o) return !local(o.ref);
+          if (o.op === "create_record")
+            return (
+              !["work", "run"].includes(o.kind) ||
+              (o.kind === "work" && refid(o.data.activity_id) !== r.scope)
+            );
+          if (o.op === "record_result")
+            return ![o.work_ref, o.run_ref].filter(Boolean).every(local);
+          if (o.op === "record_evaluation")
+            return ![o.target_ref, o.run_ref].filter(Boolean).every(local);
+          if (o.op === "start_run") return !local({ client_ref: o.client_ref });
+          if (o.op === "open_signal") return !o.subject_refs.every(local);
+          return true;
+        }),
+    );
   }
   private technical(r: AddressedRow, seen = new Set<string>()): boolean {
     if (seen.has(r.id)) return false;
@@ -425,6 +544,14 @@ export class Sleep {
       };
       guard(work);
       guard(run);
+      this.db.run(
+        "INSERT OR REPLACE INTO focus(session_id,json) VALUES(?,?)",
+        this.ctx.session_id,
+        JSON.stringify({
+          activity_ref: scope === "global" ? null : { id: scope },
+          work_ref: { id: work.id },
+        }),
+      );
       const active = this.db.get<Review>(
         "SELECT id FROM sleep_reviews WHERE profile=? AND scope=? AND epoch=? AND status='active'",
         this.profile,
@@ -522,6 +649,7 @@ export class Sleep {
           next_check: null,
           check_signal_ref: null,
         };
+        if (prior_item_id) Object.assign(item, inherited(this.db, item));
         this.db.run(
           "INSERT INTO sleep_items VALUES(?,?,?,?,?)",
           "sleep-item-" + randomUUID(),
@@ -650,8 +778,17 @@ export class Sleep {
         return exactRef(r);
       };
       const changes = d.change_refs.map(pin),
-        evidence = d.evidence_refs.map(pin);
-      const check = d.check_signal_ref ? pin(d.check_signal_ref) : null;
+        prior = d.disposition === "deferred" ? inherited(this.db, item) : null,
+        evidence = [
+          ...new Map(
+            [
+              ...d.evidence_refs.map(pin),
+              ...(prior?.evidence_refs.map(pin) ?? []),
+            ].map((p) => [canonical(p), p]),
+          ).values(),
+        ];
+      const checkRef = d.check_signal_ref ?? prior?.check_signal_ref;
+      const check = checkRef ? pin(checkRef) : null;
       if (check)
         requireThat(
           read(check.id).kind === "signal" &&
@@ -682,7 +819,14 @@ export class Sleep {
           ...d,
           item_id: undefined,
           evidence_refs: evidence,
-          change_refs: changes,
+          change_refs: [
+            ...new Map(
+              [...changes, ...(prior?.change_refs.map(pin) ?? [])].map((p) => [
+                canonical(p),
+                p,
+              ]),
+            ).values(),
+          ],
           check_signal_ref: check,
         }),
         member.id,
@@ -777,7 +921,16 @@ export function sleepGrounds(db: StoragePort) {
           )
         )
           return [];
-        return [item.ref, ...item.evidence_refs, ...item.change_refs];
+        const grounds =
+          item.disposition === "deferred" || item.disposition === null
+            ? inherited(db, item)
+            : item;
+        return [
+          item.ref,
+          ...grounds.evidence_refs,
+          ...grounds.change_refs,
+          ...(grounds.check_signal_ref ? [grounds.check_signal_ref] : []),
+        ];
       }),
   ];
 }
@@ -812,6 +965,7 @@ export function validateSleep(
     if (active)
       requireThat(
         work.storage !== "tombstone" &&
+          (refid(work.data.activity_id) ?? "global") === r.scope &&
           episode.data.mode === "sleep" &&
           refid(episode.data.work_ref) === r.work_id &&
           episode.data.case_id === run.data.case_id,

@@ -20,10 +20,16 @@ Default scope is all permitted memory; Activity coverage is independent and shar
 Methods require exact confirmation. Frozen initial inputs make a review finite; arrivals wait
 for the next explicitly requested cycle. No total USD/token/attempt/dispatch/case/time/
 continuation budgets. Ten routing cards per batch and normal per-call validation remain.
-Keep all actual usage/errors in one new uncapped ledger under
-C:/projects/zaratustra-v1-sleep-evidence-20261022, without resetting prior attempts.
+Keep all actual usage/errors under C:/projects/zaratustra-v1-sleep-evidence-20261022.
+The first handback ledger/export stays immutable. Coordinator continuation uses a linked
+continuation ledger/seal and combined cumulative totals, without resetting or erasing usage.
 Synthetic L uses openai-codex/gpt-6.1-sol medium with native auth. Mechanical fixture preparation,
 synthetic native approvals and real model choices are reported separately.
+
+The baseline pin remains Pi 1.3.0. Separately attribute compatibility checks on the current
+global Pi 1.4.0 without modifying that installation or broadening the baseline to all versions.
+Read actual loaded SDK/CLI package identities. Native auth may authenticate/refresh normally;
+credential contents are never exposed, copied or manually altered by the executor.
 
 Run npm run check and npm run deliver. Freeze and publicly install outside checkout before L.
 Retain failures. Final docs may add commits only with runtime/instruction/test equality to

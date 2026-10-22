@@ -255,6 +255,14 @@ const signal = (e: string, target: unknown) => ({
   next_check: "Next suitable real case",
   visibility: "workspace",
 });
+const activity = (client_ref: string) => ({
+  op: "create_record",
+  kind: "activity",
+  client_ref,
+  title: "Synthetic Activity " + client_ref,
+  visibility: "workspace",
+  data: { purpose: "Synthetic scope qualification", status: "active" },
+});
 function grant(core: Core, ref: string) {
   const p = core.approvals.present(ref);
   core.approvals.answer(p.token, true, {
@@ -871,4 +879,375 @@ test("Sleep disk Activity reads mixed-scope Signals as context without treating 
   );
   fail(() => f.core.commit(req), "APPROVAL_REQUIRED");
   assert.equal(f.read(s).revision, 1);
+});
+
+test("Sleep disk coordinator scope recovery survives list-only fresh process, lost start reply and receipt replay; ordinary Work focus is explicit", (t) => {
+  for (const lostReply of [false, true]) {
+    const f = fixture(),
+      a = f.commit([activity("a")]).created.a;
+    const e = f.evidence(),
+      m = f.commit([method(e)]).created.m;
+    const ordinary = f.commit([work("ordinary")]).created.ordinary;
+    const request = f.request([
+      work("w", a),
+      {
+        op: "start_run",
+        client_ref: "r",
+        title: "Synthetic recovered scoped review",
+        visibility: "workspace",
+        episode_key: "recovery",
+        work_ref: ref("w"),
+        mode: "sleep",
+        continuation_of: null,
+        summary: "Finite scoped review",
+        starting_refs: [],
+      },
+      { op: "start_sleep", work_ref: ref("w"), run_ref: ref("r") },
+    ]);
+    if (lostReply) {
+      f.rebind(
+        new Core(f.disk, f.ctx, (point) => {
+          if (point === "after_commit")
+            throw Error("Synthetic lost start reply");
+        }),
+      );
+      request.source_handles = f.request([]).source_handles;
+      assert.throws(() => f.core.commit(request), /Synthetic lost start reply/);
+      fail(
+        () =>
+          f.commit(
+            [
+              {
+                op: "revise_method",
+                ref: { id: m },
+                data: {
+                  ...f.read(m).data,
+                  instructions:
+                    "No activation after lost reply may grant rights",
+                },
+              },
+            ],
+            [m],
+          ),
+        "APPROVAL_REQUIRED",
+      );
+    } else f.core.commit(request);
+    const receipt = JSON.parse(
+      f.disk.get<{ json: string }>(
+        "SELECT json FROM receipts WHERE request_id=?",
+        request.request_id,
+      )!.json,
+    );
+    f.disk.close();
+    const reopened = new DiskStorage(f.home);
+    t.after(() => reopened.close());
+    f.rebind(
+      new Core(reopened, {
+        ...f.ctx,
+        session_id: "fresh-synthetic-process",
+        runtime_id: "fresh",
+      }),
+    );
+    if (lostReply) assert.deepEqual(f.core.commit(request), receipt);
+    else {
+      const listed = f.core.sleepBatch() as {
+        reviews: { run_ref: { id: string } }[];
+      };
+      assert.equal(listed.reviews[0].run_ref.id, receipt.created.r);
+    }
+    const revision = f.request(
+      [
+        {
+          op: "revise_method",
+          ref: { id: m },
+          data: {
+            ...f.read(m).data,
+            instructions: "Grounded candidate with exact source check",
+          },
+        },
+      ],
+      [m],
+    );
+    fail(() => f.core.commit(revision), "APPROVAL_REQUIRED");
+    assert.equal(f.read(m).revision, 1);
+    f.commit([
+      { op: "set_focus", activity_ref: null, work_ref: { id: ordinary } },
+    ]);
+    assert.equal(f.core.commit(revision).committed, true);
+    assert.equal(f.read(m).data.content_version, 2);
+    // A checkpoint always uses its immutable scope, even with ordinary Work focus.
+    const checkpoint = f.checkpoint(receipt.created.r, [
+      {
+        op: "revise_method",
+        ref: { id: m },
+        data: {
+          ...f.read(m).data,
+          instructions: "A scoped shared change still needs exact approval",
+        },
+      },
+    ]);
+    fail(() => f.core.commit(checkpoint), "APPROVAL_REQUIRED");
+  }
+});
+
+test("Sleep disk coordinator mixed operational anchors require exact approval for either foreign direction and staged references", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const acts = f.commit([activity("a"), activity("b")]).created;
+  const e = f.evidence();
+  const ids = f.commit([
+    work("wa", acts.a),
+    work("wb", acts.b),
+    ...(["a", "b"] as const).map((c) => ({
+      op: "start_run",
+      client_ref: "r" + c,
+      title: "Synthetic ordinary " + c,
+      visibility: "workspace",
+      episode_key: "mixed-" + c,
+      work_ref: ref("w" + c),
+      mode: "work",
+      continuation_of: null,
+      summary: "Synthetic existing case",
+      starting_refs: [],
+    })),
+  ]).created;
+  const run = f.start(acts.a),
+    before = f.batch(run).batch_id;
+  const claims = [ids.wa, ids.wb].map(
+    (id) =>
+      (
+        f.core.claim({
+          action: "acquire",
+          work_id: id,
+          expected_revision: f.read(id).revision,
+          reason: "Synthetic mixed-anchor qualification",
+        }).data as { token: string }
+      ).token,
+  );
+  for (const kind of ["evaluation", "result"])
+    for (const reverse of [false, true]) {
+      const w = reverse ? ids.wb : ids.wa,
+        r = reverse ? ids.ra : ids.rb;
+      const op =
+        kind === "evaluation"
+          ? { ...evaluation(w, 1, e), run_ref: { id: r } }
+          : {
+              op: "record_result",
+              client_ref: "mixed",
+              work_ref: { id: w },
+              run_ref: { id: r },
+              title: "Synthetic mixed result",
+              content: "Both ownership anchors must be checked",
+              source_language: "en",
+            };
+      const request = { ...f.request([op], [w, r]), claim_tokens: claims };
+      fail(() => f.core.commit(request), "APPROVAL_REQUIRED");
+      const preview = f.core.prepareCommit(
+        request,
+        "Retain the exact synthetic mixed observation",
+        "Do not record it",
+      );
+      grant(f.core, preview.request_id);
+      assert.equal(
+        f.core.commit({ ...request, preview_ref: preview.request_id })
+          .committed,
+        true,
+      );
+      assert.equal(f.batch(run).batch_id, before);
+    }
+  const staged = f.request(
+    [
+      work("local", acts.a),
+      {
+        ...evaluation(ids.wa, 1, e),
+        target_ref: ref("local"),
+        run_ref: { id: ids.rb },
+      },
+    ],
+    [ids.rb],
+  );
+  fail(() => f.core.commit(staged), "APPROVAL_REQUIRED");
+  // Staged local ownership is recognized; it does not force confirmation by default.
+  const local = f.request(
+    [
+      work("local", acts.a),
+      {
+        ...evaluation(ids.wa, 1, e),
+        target_ref: ref("local"),
+        run_ref: { id: ids.ra },
+      },
+    ],
+    [ids.ra],
+  );
+  assert.equal(f.core.commit(local).committed, true);
+});
+
+test("Sleep disk coordinator immutable active binding refuses approved moves and still permits explicit abort then move", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const acts = f.commit([activity("a"), activity("b")]).created;
+  const e = f.evidence();
+  f.commit([method(e)]);
+  const run = f.start(acts.a),
+    before = f.batch(run),
+    w = (f.read(run).data.work_ref as { id: string }).id;
+  const request = f.request(
+    [
+      {
+        op: "update_record",
+        ref: { id: w },
+        plan_change_reason: "Synthetic exact proposal to move binding",
+        data: { ...f.read(w).data, activity_id: { id: acts.b } },
+      },
+    ],
+    [w],
+  );
+  const preview = f.core.prepareCommit(
+    request,
+    "Move synthetic review Work A to B",
+    "Keep fixed binding",
+  );
+  grant(f.core, preview.request_id);
+  fail(
+    () => f.core.commit({ ...request, preview_ref: preview.request_id }),
+    "INVALID_TRANSITION",
+  );
+  assert.equal((f.read(w).data.activity_id as { id: string }).id, acts.a);
+  assert.equal(f.batch(run).batch_id, before.batch_id);
+  const abort = f.checkpoint(run);
+  (abort.ops.at(-1) as { abort?: boolean }).abort = true;
+  assert.equal(f.core.commit(abort).committed, true);
+  assert.equal(f.batch(run).status, "aborted");
+  const after = f.request(request.ops, [w]),
+    next = f.core.prepareCommit(
+      after,
+      "Move Work only after explicit abort",
+      "Keep original Activity",
+    );
+  grant(f.core, next.request_id);
+  assert.equal(
+    f.core.commit({ ...after, preview_ref: next.request_id }).committed,
+    true,
+  );
+  assert.equal(f.batch(run).status, "aborted");
+});
+
+test("Sleep disk scoped standalone Knowledge replacements ignore origin and focus labels; exact approvals bind payload", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const a = f.commit([activity("a")]).created.a,
+    e = f.evidence();
+  const replacement = {
+    op: "create_record",
+    client_ref: "k",
+    kind: "knowledge",
+    title: "Synthetic grounded observation",
+    visibility: "workspace",
+    origin_activity_id: { id: a },
+    data: {
+      knowledge_kind: "observation",
+      statement: "The synthetic source needs a separate operational check",
+      state: "current",
+      basis: "observed_result",
+      evidence_refs: [{ id: e, revision: 1 }],
+      conditions: "Synthetic source exercise",
+    },
+  };
+  const k = f.commit([replacement]).created.k,
+    run = f.start(a);
+  f.commit([
+    {
+      op: "set_focus",
+      activity_ref: { id: a },
+      work_ref: f.read(run).data.work_ref,
+    },
+  ]);
+  fail(
+    () => f.commit([{ ...replacement, client_ref: "replacement" }]),
+    "APPROVAL_REQUIRED",
+  );
+  const update = f.request(
+    [
+      {
+        op: "update_record",
+        ref: { id: k },
+        origin_activity_id: { id: a },
+        data: {
+          ...f.read(k).data,
+          statement: "A revised shared observation still needs confirmation",
+        },
+      },
+    ],
+    [k],
+  );
+  fail(() => f.core.commit(update), "APPROVAL_REQUIRED");
+  const p = f.core.prepareCommit(
+    update,
+    "Revise exactly this shared observation",
+    "Leave shared memory unchanged",
+  );
+  grant(f.core, p.request_id);
+  const changed = structuredClone(update);
+  (changed.ops[0] as { data: JsonObject }).data.statement =
+    "Another payload must not reuse approval";
+  assert.throws(() => f.core.commit({ ...changed, preview_ref: p.request_id }));
+  assert.equal(f.read(k).revision, 1);
+  assert.equal(
+    f.core.commit({ ...update, preview_ref: p.request_id }).committed,
+    true,
+  );
+});
+
+test("Sleep disk coordinator repeated deferrals retain sole exact historical grounds until explicit retirement", (t) => {
+  const f = fixture();
+  t.after(() => f.disk.close());
+  const e = f.evidence(),
+    mo = method(e);
+  mo.data.context_requirements = [];
+  const m = f.commit([mo]).created.m;
+  const defer = (run: string, first = false) => {
+    const b = f.batch(run),
+      request = f.checkpoint(run),
+      i = b.cards.findIndex((c) => c.ref.id === m);
+    assert.ok(i >= 0);
+    const d = (request.ops.at(-1) as { dispositions: JsonObject[] })
+      .dispositions[i];
+    Object.assign(d, {
+      disposition: "deferred",
+      reason: "Same unresolved addressed condition",
+      continuation: "Continue exact Method from exact retained source",
+      next_check: "A new real source revision",
+      evidence_refs: first ? [{ id: e, revision: 1 }] : [],
+    });
+    f.core.commit(request);
+    f.finish(run);
+  };
+  defer(f.start(), true);
+  for (let n = 0; n < 2; n++) {
+    const run = f.start(),
+      card = f.batch(run).cards.find((c) => c.ref.id === m)!;
+    assert.deepEqual(
+      (card.prior_disposition as { evidence_refs: unknown[] }).evidence_refs,
+      [{ id: e, revision: 1 }],
+    );
+    defer(run);
+    fail(
+      () =>
+        f.core.storagePreview(
+          { action: "tombstone", targets: [{ id: e, revision: 1 }] },
+          "Remove sole grounds",
+          "Keep retained source",
+        ),
+      "DEPENDENCY_UNSATISFIED",
+    );
+  }
+  const final = f.start();
+  f.finish(final);
+  assert.ok(
+    f.core.storagePreview(
+      { action: "tombstone", targets: [{ id: e, revision: 1 }] },
+      "Explicitly retired deferred condition; remove source",
+      "Keep source",
+    ).request_id,
+  );
 });

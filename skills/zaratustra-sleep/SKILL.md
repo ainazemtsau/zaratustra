@@ -29,6 +29,13 @@ Use a meaningful unique episode_key. start_sleep freezes retained eligible histo
 first batch. A different access profile or restored epoch needs an explicitly requested
 new review; an old profile's cursor must never hide newly accessible old material.
 
+Starting Sleep sets the existing Work focus to its bound review Work atomically. Active
+Activity protection survives a fresh process, list-only discovery and lost commit replies;
+omitting a checkpoint grants no shared-write authority. For explicitly requested independent
+ordinary work while a review is pending, use existing set_focus with a non-review Work in a
+separate commit. Focus grants no permissions or ownership and never overrides a checkpoint's
+fixed scope. Abort an active review before moving its Work to a different Activity.
+
 Read zara_sleep_batch with run_id for ten stable routing cards and exact source refs. Read
 selected bodies, original goals/results, exact Method versions, Evaluations, grounds and
 current conditions via existing zara_read/addressed ranges. Cards are routing data. No
@@ -59,6 +66,11 @@ Evidence, exact change_refs from the SAME checkpoint, expected benefit, limits/r
 risk and later real check trigger. Open/review an ordinary Signal in that checkpoint and
 reference it as check_signal_ref. Small grounded global Knowledge/textual Method corrections
 use existing rights. Exact Method content versions remain distinct from technical revisions.
+
+Repeated deferrals inherit the exact required Evidence/change/check grounds. Read the prior
+disposition's addressed refs; an empty evidence_refs array does not discard inherited grounds.
+Keep unresolved conditions deferred until they can be explicitly retired or replaced by a
+supported disposition. Merely changing a condition's wording does not release its sources.
 
 In Activity mode only explicitly bound Work/Run and their unambiguously local operational
 records may change automatically. Knowledge and Methods remain SHARED even when their

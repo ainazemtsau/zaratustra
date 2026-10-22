@@ -21,6 +21,17 @@ indexes. Scope cannot change under an active review. Profile identity includes w
 principal, sorted rights, write capability and policy revision. Coverage also keys scope and
 epoch: Activity/global and different permission profiles never advance each other.
 
+The coordinator follow-up reproduces scope recovery, mixed operational anchors, immutable
+binding/abort and inherited deferral grounds against the finished candidate. Protection
+derives from durable active rows for the current trusted profile/epoch, including list-only
+fresh processes and receipt replay. start_sleep atomically focuses its review Work. Existing
+set_focus on an explicitly selected non-review Work permits independent ordinary work;
+neither focus nor origin grants local ownership or overrides an exact checkpoint scope.
+An active binding move is refused even with an approved proposal; abort before moving it.
+All supplied/staged operational ownership anchors must be local, otherwise exact native
+approval applies. Repeated unresolved deferrals retain their inherited exact grounds until
+explicit retirement, including retained pre-fix ancestry; no new schema or commit engine.
+
 The smallest new supporting representation is three normalized tables in the SAME SQLite:
 sleep_reviews (binding, immutable profile/scope/epoch, input high-watermark, status and prepared
 batch), sleep_items (frozen exact membership, disposition and addressed deferred/check grounds),

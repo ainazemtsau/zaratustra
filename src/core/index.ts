@@ -82,7 +82,6 @@ export const mergedAliases = (from: RecordRow, to: RecordRow) => [
   ]),
 ];
 export class Core {
-  private activeSleepReview?: string;
   private sources = new Map<string, Source>();
   private _approvals?: Approvals;
   get approvals() {
@@ -447,7 +446,7 @@ export class Core {
     return this.effects.observe(request, observation, call);
   }
   private requiresApproval(request: ReturnType<typeof CommitSchema.parse>) {
-    if (this.sleep.needsApproval(request, this.activeSleepReview)) return true;
+    if (this.sleep.needsApproval(request)) return true;
     const catalogUpdates = request.ops.filter(
       (op) =>
         op.op === "update_record" &&
@@ -570,10 +569,7 @@ export class Core {
   sleepBatch(runId?: string, cursor?: string) {
     this.authorize();
     this.memory.barrier();
-    const result = this.sleep.batch(runId, cursor);
-    if (runId && "status" in result && result.status === "active")
-      this.activeSleepReview = runId;
-    return result;
+    return this.sleep.batch(runId, cursor);
   }
   constructor(
     public storage: StoragePort,
@@ -3175,6 +3171,7 @@ export class Core {
       const sleepOps = request.ops.filter(
         (op) => op.op === "start_sleep" || op.op === "sleep_checkpoint",
       );
+      this.sleep.assertBindings([...changed.values()]);
       requireThat(
         sleepOps.length <= 1,
         "VALIDATION_ERROR",
@@ -3348,17 +3345,6 @@ export class Core {
       this.fault?.("before_commit");
       this.storage.exec("COMMIT");
       this.fault?.("after_commit");
-      if (sleepOps.length) {
-        const sleepOp = resolve(sleepOps[0]) as (typeof sleepOps)[number];
-        if ("id" in sleepOp.run_ref) {
-          const review = this.storage.get<{ id: string }>(
-            "SELECT id FROM sleep_reviews WHERE (id=? OR episode_id=?) AND status='active'",
-            sleepOp.run_ref.id,
-            sleepOp.run_ref.id,
-          );
-          this.activeSleepReview = review?.id;
-        }
-      }
       return this.memory.sanitizeTechnical(receipt);
     } catch (error) {
       try {
