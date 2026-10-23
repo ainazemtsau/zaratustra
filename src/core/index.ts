@@ -1,3 +1,19 @@
+import {
+  managedDocument,
+  DocumentMetadata,
+  validateDocument,
+} from "./documents.ts";
+export {
+  DocumentBinding,
+  DocumentMetadata,
+  DocumentPath,
+  documentKey,
+  documentText,
+  documentData,
+  validateDocument,
+  managedDocument,
+} from "./documents.ts";
+export type { DocumentPlan } from "./documents.ts";
 import { Lifecycle } from "./lifecycle.ts";
 import { Sleep } from "./sleep.ts";
 export { SleepSchemaSQL, validateSleep, sleepGrounds } from "./sleep.ts";
@@ -82,6 +98,7 @@ export const mergedAliases = (from: RecordRow, to: RecordRow) => [
   ]),
 ];
 export class Core {
+  private documentFinalization: string | null = null;
   private sources = new Map<string, Source>();
   private _approvals?: Approvals;
   get approvals() {
@@ -370,6 +387,100 @@ export class Core {
         "Textual export must bind exact canonical Method content and native final bytes.",
       );
     }
+    if (e.document) {
+      const d = e.document;
+      requireThat(
+        d.visibility !== "restricted" ||
+          (this.context.scopes?.includes("restricted:read") &&
+            this.context.scopes?.includes("restricted:write")),
+        "PERMISSION_DENIED",
+        "Restricted document creation requires trusted read/write scopes.",
+      );
+      const collision = this.storage
+        .all<{ json: string }>(
+          "SELECT json FROM records WHERE kind='entity' AND json_extract(json,'$.data.document') IS NOT NULL",
+        )
+        .map(unpack)
+        .some(
+          (r) =>
+            r.id !== d.ref?.id &&
+            r.storage !== "tombstone" &&
+            ((r.data.document as JsonObject).key === d.key ||
+              ((r.data.document as JsonObject).state !== "removed" &&
+                String((r.data.document as JsonObject).path).toLowerCase() ===
+                  d.path.toLowerCase())),
+        );
+      requireThat(
+        !collision,
+        "REVISION_CONFLICT",
+        "Document identity or path is already registered.",
+      );
+      requireThat(
+        !e.method_export && e.tool === "write",
+        "VALIDATION_ERROR",
+        "Document writes bind one exact native write.",
+      );
+      const refs = [d.ref, d.activity_ref, d.format_ref, ...d.links].filter(
+        Boolean,
+      ) as { id: string; revision: number }[];
+      for (const ref of refs) {
+        const row = this.record(ref.id, ref.revision);
+        requireThat(
+          !this.memory.isRestricted(row.id) ||
+            this.context.scopes?.includes("restricted:write"),
+          "PERMISSION_DENIED",
+          "Protected document premises require write scope.",
+        );
+        if (!deps.some((g) => g.id === row.id))
+          deps.push({ id: row.id, revision: this.record(row.id).revision });
+      }
+      for (const link of d.links)
+        managedDocument(this.record(link.id, link.revision));
+      if (d.ref) {
+        const row = this.record(d.ref.id),
+          old = managedDocument(row);
+        requireThat(
+          row.revision === d.ref.revision &&
+            old.key === d.key &&
+            row.visibility === d.visibility,
+          "REVISION_CONFLICT",
+          "Document revision/identity/access cannot change through a file edit.",
+        );
+        requireThat(
+          d.previous_path === old.path &&
+            d.previous_hash ===
+              this.record(old.head_ref.id, old.head_ref.revision).data
+                .content_hash,
+          "REVISION_CONFLICT",
+          "Document previous path/version differs from its registry.",
+        );
+      } else
+        requireThat(
+          d.previous_path === null && d.previous_hash === null,
+          "VALIDATION_ERROR",
+          "New documents have no previous target.",
+        );
+      if (d.state === "removed" && d.ref) {
+        this.assertDocumentRemovable(d.ref.id);
+      }
+      let format: string | undefined;
+      if (d.format_ref && d.state !== "removed") {
+        const row = this.record(d.format_ref.id, d.format_ref.revision);
+        requireThat(
+          row.kind === "evidence" && row.data.availability === "retained",
+          "SOURCE_MISSING",
+          "Format must be exact retained Evidence.",
+        );
+        format = row.data.blob_ref
+          ? this.storage.readMaterial(String(row.data.blob_ref))
+          : String(row.data.retained_excerpt);
+      }
+      validateDocument(e.final_text, d.key, format);
+      e.material_guards = deps.map((g) => ({
+        ref: { id: g.id },
+        expected_revision: g.revision,
+      }));
+    }
     if (e.retry_of) {
       const prior = this.effects.read(e.retry_of);
       requireThat(
@@ -385,6 +496,27 @@ export class Core {
       consequence,
       alternatives,
       seconds,
+    );
+  }
+  private assertDocumentRemovable(documentId: string) {
+    const dependencies = this.storage
+      .all<{ json: string }>("SELECT json FROM addressed_current")
+      .map(unpack)
+      .filter((r) => r.id !== documentId && r.storage !== "tombstone");
+    requireThat(
+      !dependencies.some(
+        (r) =>
+          ((r.kind === "work" &&
+            !["done", "cancelled"].includes(String(r.data.status))) ||
+            (r.kind === "entity" &&
+              !!r.data.document &&
+              (r.data.document as JsonObject).state === "active") ||
+            (String(r.kind) === "signal" &&
+              ["open", "observing"].includes(String(r.data.problem_state)))) &&
+          addressedRefs(r.data).some((ref) => ref.id === documentId),
+      ),
+      "DEPENDENCY_PINNED",
+      "A live document, open Work or problem still references this document. Archive it or resolve dependencies first.",
     );
   }
   interruptFiles(reason: string, previousRuntime = false) {
@@ -428,6 +560,8 @@ export class Core {
     this.authorize(true);
     if (effect.work_ref)
       this.assertReconciled(effect.work_ref.id, effect.step_id);
+    if (effect.document?.state === "removed" && effect.document.ref)
+      this.assertDocumentRemovable(effect.document.ref.id);
     return this.effects.dispatch(effect, preview, call);
   }
   inspectFile(request: string) {
@@ -442,7 +576,106 @@ export class Core {
     this.authorize(true);
     return this.effects.observe(request, observation, call);
   }
+  pendingDocuments(keys: string[]) {
+    this.authorize();
+    return this.storage
+      .all<{ json: string }>(
+        "SELECT json FROM intents WHERE json_extract(json,'$.kind')='managed_file' AND json_extract(json,'$.payload.document') IS NOT NULL",
+      )
+      .map((r) => JSON.parse(r.json))
+      .filter(
+        (e) =>
+          keys.includes(e.payload.document.key) &&
+          !e.document_superseded_by &&
+          this.memory.technical(e) &&
+          !this.storage.get(
+            "SELECT request_id FROM receipts WHERE request_id=?",
+            e.request_id + ":document",
+          ),
+      )
+      .map((e) => ({ request_id: e.request_id, status: e.status }));
+  }
+  documentRegistration(requestId: string) {
+    this.authorize();
+    this.effects.read(requestId);
+    const row = this.storage.get<{ json: string }>(
+      "SELECT json FROM receipts WHERE request_id=?",
+      requestId + ":document",
+    );
+    return row ? JSON.parse(row.json) : null;
+  }
+  finalizeDocument(
+    requestId: string,
+    material: {
+      text: string;
+      blob_ref: string;
+      byte_length: number;
+      locator: string;
+      pending_key?: string;
+    },
+  ) {
+    this.authorize(true);
+    const e = this.effects.read(requestId),
+      d = e.payload.document;
+    requireThat(
+      d &&
+        e.epoch === this.context.epoch &&
+        e.status === "confirmed" &&
+        material.blob_ref === e.payload.final_hash,
+      "UNKNOWN_EFFECT",
+      "Inspect a current confirmed document operation before registration.",
+    );
+    if (e.payload.work_ref)
+      this.assertReconciled(e.payload.work_ref.id, e.payload.step_id);
+    requireThat(
+      !e.document_superseded_by,
+      "APPROVAL_STALE",
+      "Superseded document attempts cannot register another current version.",
+    );
+    const registrationId = requestId + ":document";
+    if (
+      this.storage.get(
+        "SELECT request_id FROM receipts WHERE request_id=?",
+        registrationId,
+      )
+    )
+      return this.documentRegistration(requestId);
+    const source = this.capture(
+      material.text,
+      "file",
+      null,
+      material,
+      undefined,
+      "document-observation:" + requestId,
+    );
+    const guards = [...(e.payload.material_guards ?? [])];
+    if (d.ref && !guards.some((g) => g.ref.id === d.ref!.id))
+      guards.push({ ref: { id: d.ref.id }, expected_revision: d.ref.revision });
+    if (d.state === "removed" && d.ref) this.assertDocumentRemovable(d.ref.id);
+    this.documentFinalization = requestId;
+    try {
+      return this.commit({
+        request_id: registrationId,
+        reason: "Register verified working document version",
+        source_handles: [source.source_handle],
+        guards,
+        ops: [
+          {
+            op: "commit_document",
+            client_ref: "document",
+            source_handle: source.source_handle,
+            effect_request_id: requestId,
+          },
+        ],
+      });
+    } finally {
+      this.documentFinalization = null;
+    }
+  }
   private requiresApproval(request: ReturnType<typeof CommitSchema.parse>) {
+    // These rows only finalize an already exactly approved, observed file operation.
+    if (request.ops.length === 1 && request.ops[0].op === "commit_document")
+      return false;
     if (this.sleep.needsApproval(request)) return true;
     const catalogUpdates = request.ops.filter(
       (op) =>
@@ -620,6 +853,7 @@ export class Core {
       extraction?: Source["extraction"];
     },
     observation?: Source["observation"],
+    stableSourceRef?: string,
   ) {
     this.authorize();
     requireThat(
@@ -632,7 +866,7 @@ export class Core {
       workspace_id: this.context.workspace_id,
       epoch: this.context.epoch,
       handle: id("source"),
-      source_ref: id("observed"),
+      source_ref: stableSourceRef ?? id("observed"),
       text,
       content_hash: material?.blob_ref ?? digest(text),
       transport,
@@ -801,6 +1035,9 @@ export class Core {
         "handoffs",
         "claims",
         "resources",
+        "documents",
+        "documents_archive",
+        "documents_removed",
         "people",
         "topics",
         "entities",
@@ -1781,9 +2018,31 @@ export class Core {
     this.authorize(true);
     this.memory.barrier();
     const request = CommitSchema.parse(input);
+    const documentOp = request.ops.find((op) => op.op === "commit_document");
+    if (documentOp)
+      requireThat(
+        request.ops.length === 1 &&
+          this.documentFinalization === documentOp.effect_request_id,
+        "PERMISSION_DENIED",
+        "Document registration requires trusted fresh file finalization.",
+      );
     let restrictedSource = request.ops.some(
       (op) => "visibility" in op && op.visibility === "restricted",
     );
+    if (documentOp) {
+      const effect = this.effects.read(documentOp.effect_request_id),
+        d = effect.payload.document;
+      requireThat(d, "VALIDATION_ERROR", "Expected document binding.");
+      restrictedSource ||=
+        d.visibility === "restricted" ||
+        [
+          d.ref,
+          d.activity_ref,
+          d.format_ref,
+          ...d.links,
+          effect.payload.work_ref,
+        ].some((ref) => ref && this.memory.isRestricted(ref.id));
+    }
     for (const recordId of addressedIds(request)) {
       if (
         this.storage.get(
@@ -1879,7 +2138,7 @@ export class Core {
       .map((h) => bindings[h])
       .sort();
     canonicalInput.ops = request.ops.map((op) =>
-      op.op === "import_evidence"
+      op.op === "import_evidence" || op.op === "commit_document"
         ? { ...op, source_handle: bindings[op.source_handle] ?? null }
         : op,
     );
@@ -2104,26 +2363,30 @@ export class Core {
             "Duplicate client_ref.",
           );
           created[op.client_ref] = id(
-            op.op === "prepare_handoff"
-              ? "handoff"
-              : op.op === "put_relation"
-                ? "relation"
-                : op.op === "import_evidence" ||
-                    op.op === "receive_handoff" ||
-                    op.op === "record_result"
-                  ? "evidence"
-                  : op.op === "create_record"
-                    ? op.kind
-                    : op.op === "start_run"
-                      ? "run"
-                      : op.op === "invoke_method"
-                        ? "invocation"
-                        : op.op === "record_evaluation"
-                          ? "evaluation"
-                          : op.op === "open_signal"
-                            ? "signal"
-                            : "signal_review",
+            op.op === "commit_document"
+              ? "entity"
+              : op.op === "prepare_handoff"
+                ? "handoff"
+                : op.op === "put_relation"
+                  ? "relation"
+                  : op.op === "import_evidence" ||
+                      op.op === "receive_handoff" ||
+                      op.op === "record_result"
+                    ? "evidence"
+                    : op.op === "create_record"
+                      ? op.kind
+                      : op.op === "start_run"
+                        ? "run"
+                        : op.op === "invoke_method"
+                          ? "invocation"
+                          : op.op === "record_evaluation"
+                            ? "evaluation"
+                            : op.op === "open_signal"
+                              ? "signal"
+                              : "signal_review",
           );
+          if (op.op === "commit_document")
+            created[op.client_ref + "_source"] = id("evidence");
           if (
             op.op === "import_evidence" &&
             this.sources.get(op.source_handle)?.extraction?.text_blob_ref
@@ -2279,6 +2542,12 @@ export class Core {
           continue;
         }
         if (op.op === "merge_identity") {
+          requireThat(
+            !this.record(op.from_ref.id).data.document &&
+              !this.record(op.to_ref.id).data.document,
+            "VALIDATION_ERROR",
+            "Document identities are stable; use document lifecycle operations.",
+          );
           const from = guardedStaged(op.from_ref.id),
             to = guardedStaged(op.to_ref.id);
           requireThat(
@@ -2340,6 +2609,160 @@ export class Core {
             row.concept_ids = (c.concept_ids ??
               row.concept_ids) as RecordRow["concept_ids"];
           }
+          continue;
+        }
+        if (op.op === "commit_document") {
+          requireThat(
+            this.documentFinalization === op.effect_request_id &&
+              request.ops.length === 1,
+            "PERMISSION_DENIED",
+            "Document registration is an internal freshly observed finalization, not a direct model mutation.",
+          );
+          const effect = this.effects.read(op.effect_request_id),
+            d = effect.payload.document;
+          const source = this.sources.get(op.source_handle);
+          requireThat(
+            effect.epoch === this.context.epoch &&
+              effect.status === "confirmed" &&
+              d &&
+              source?.blob_ref &&
+              source.locator === effect.payload.target &&
+              source.blob_ref === effect.payload.final_hash &&
+              request.source_handles.includes(op.source_handle),
+            "UNKNOWN_EFFECT",
+            "Document registration requires exact current-epoch confirmed file bytes and declared captured source.",
+          );
+          const current = d.ref ? guarded(d.ref.id) : null;
+          if (current)
+            requireThat(
+              current.revision === d.ref!.revision &&
+                managedDocument(current).key === d.key,
+              "REVISION_CONFLICT",
+              "Document identity or revision changed.",
+            );
+          const duplicates = this.storage
+            .all<{ json: string }>(
+              "SELECT json FROM records WHERE kind='entity' AND json_extract(json,'$.data.document') IS NOT NULL",
+            )
+            .map(unpack)
+            .filter((r) => r.id !== current?.id && r.storage !== "tombstone");
+          requireThat(
+            !duplicates.some(
+              (r) =>
+                r.data.document &&
+                ((r.data.document as JsonObject).key === d.key ||
+                  ((r.data.document as JsonObject).state !== "removed" &&
+                    String(
+                      (r.data.document as JsonObject).path,
+                    ).toLowerCase() === d.path.toLowerCase())),
+            ),
+            "REVISION_CONFLICT",
+            "A document identity or active path is already registered.",
+          );
+          if (d.activity_ref) get(d.activity_ref, "activity");
+          for (const link of d.links) get(link);
+          let schemaText: string | undefined;
+          if (d.format_ref) {
+            const format = get(d.format_ref, "evidence");
+            requireThat(
+              format.data.availability === "retained",
+              "SOURCE_MISSING",
+              "Pinned document format must be retained.",
+            );
+            schemaText = format.data.blob_ref
+              ? this.storage.readMaterial(String(format.data.blob_ref))
+              : String(format.data.retained_excerpt);
+          }
+          validateDocument(
+            source.text,
+            d.key,
+            d.state === "removed" ? undefined : schemaText,
+          );
+          const evidenceId = created[op.client_ref + "_source"],
+            recordId = current?.id ?? created[op.client_ref];
+          created[op.client_ref] = recordId;
+          const snapshot: RecordRow = {
+            id: evidenceId,
+            kind: "evidence",
+            title: d.title + " — document version",
+            body: null,
+            revision: 1,
+            created_at: now,
+            updated_at: now,
+            storage: "live",
+            visibility: restrictedSource ? "restricted" : d.visibility,
+            concept_ids: [],
+            origin_activity_id: d.activity_ref
+              ? { id: d.activity_ref.id }
+              : null,
+            data: {
+              source_kind: "imported_file",
+              source_locator: source.locator,
+              captured_at: source.captured_at,
+              content_hash: source.blob_ref,
+              blob_ref: source.blob_ref,
+              retained_excerpt: null,
+              availability: "retained",
+              source_language: d.source_language,
+              work_ref: effect.payload.work_ref,
+              document_context_refs: [d.format_ref, ...d.links].filter(Boolean),
+              provenance: {
+                transport: "validated-document-file",
+                operation_id: effect.request_id,
+                writer_attribution: "unknown",
+              },
+            },
+          };
+          changed.set(evidenceId, snapshot);
+          before[evidenceId] = null;
+          if (effect.payload.retry_of) {
+            const prior = this.effects.read(effect.payload.retry_of);
+            requireThat(
+              prior.payload.document?.key === d.key,
+              "IDEMPOTENCY_CONFLICT",
+              "A linked document retry must preserve its identity.",
+            );
+            this.storage.run(
+              "UPDATE intents SET json=json_set(json,'$.document_superseded_by',?) WHERE request_id=?",
+              effect.request_id,
+              prior.request_id,
+            );
+          }
+          const metadata = DocumentMetadata.parse({
+            key: d.key,
+            path: d.path,
+            document_type: d.document_type,
+            state: d.state,
+            format_ref: d.format_ref,
+            links: d.links,
+            head_ref: { id: evidenceId, revision: 1 },
+            operation_id: effect.request_id,
+          });
+          // Binding-only fields are deliberately absent from the canonical registry metadata.
+          const registry: RecordRow = {
+            id: recordId,
+            kind: "entity",
+            title: d.title,
+            body: null,
+            revision: current ? current.revision + 1 : 1,
+            created_at: current?.created_at ?? now,
+            updated_at: now,
+            storage: "live",
+            visibility: d.visibility,
+            concept_ids: current?.concept_ids ?? [],
+            origin_activity_id: d.activity_ref
+              ? { id: d.activity_ref.id }
+              : null,
+            data: {
+              entity_kind: "resource",
+              aliases: current?.data.aliases ?? [],
+              disambiguation: "Managed working document",
+              status: "active",
+              document: metadata,
+            },
+          };
+          before[recordId] = current?.revision ?? null;
+          changed.set(recordId, registry);
           continue;
         }
         if (op.op === "put_relation") {
@@ -2530,6 +2953,11 @@ export class Core {
           );
           const current = this.record(op.ref.id);
           requireThat(
+            !current.data.document && !(op.data as JsonObject).document,
+            "VALIDATION_ERROR",
+            "Managed document resources change only through their observed document operation.",
+          );
+          requireThat(
             current.kind !== "evidence",
             "VALIDATION_ERROR",
             "Original Evidence is immutable.",
@@ -2601,6 +3029,12 @@ export class Core {
             op.op !== "create_record"
           )
             throw new CoreError("VALIDATION_ERROR", "Unsupported operation.");
+          if (op.op === "create_record")
+            requireThat(
+              !(op.data as JsonObject).document,
+              "VALIDATION_ERROR",
+              "Register documents through an observed document operation.",
+            );
           if (
             op.op === "create_record" &&
             ["concept", "entity", "activity"].includes(op.kind)

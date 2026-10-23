@@ -1,3 +1,4 @@
+import { managedDocument } from "./documents.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -134,7 +135,19 @@ export function validateMemory(
       concepts.set(r.id, parents);
     }
     if (["concept", "entity", "activity"].includes(r.kind)) {
-      if (r.kind === "entity") EntityData.parse(r.data);
+      if (r.kind === "entity") {
+        EntityData.parse(r.data);
+        if (r.data.document) {
+          const d = managedDocument(r);
+          requireThat(
+            get(d.head_ref, "evidence").data.availability === "retained",
+            "SOURCE_MISSING",
+            "Document version must be retained.",
+          );
+          if (d.format_ref) get(d.format_ref, "evidence");
+          for (const link of d.links) get(link);
+        }
+      }
       requireThat(
         (r.data.status === "merged") === !!r.data.redirect_to,
         "VALIDATION_ERROR",
@@ -961,6 +974,19 @@ export class Memory {
         );
         params.push(recordId, recordId);
       }
+    } else if (
+      ["documents", "documents_archive", "documents_removed"].includes(view)
+    ) {
+      where.push(
+        "r.kind='entity' AND json_extract(r.json,'$.data.document.state')=?",
+      );
+      params.push(
+        view === "documents"
+          ? "active"
+          : view === "documents_archive"
+            ? "archived"
+            : "removed",
+      );
     } else if (view === "resources")
       where.push(
         "r.kind='entity' AND json_extract(r.json,'$.data.entity_kind') IN ('resource','device','item','place')",

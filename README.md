@@ -1,6 +1,6 @@
 # Zaratustra — durable work, memory and textual Methods
 
-A development Pi package with one extension, English bootstrap and three small skills.
+A development Pi package with one extension, English bootstrap and four small skills.
 Through conversation, the model saves Activity/Work, exact original Evidence and
 English Knowledge; a fresh process can discover the continuation from disk.
 Nested Work and addressed steps preserve dependencies, partial waits, results and lifecycle
@@ -84,5 +84,11 @@ in Activity-only reviews. Initial inputs are frozen; new arrivals wait for anoth
 request. There are no total resource budgets and no self-starting next review. An edit is not
 proven improvement. See [current Sleep contract](docs/SLEEP-CONTRACT.md).
 Full F/R1/T31, independent Sleep review, owner usefulness and Codex remain separate.
+
+Managed documents add a fourth skill: `zaratustra-documents`. Optional working Markdown
+lives under `activities/`; SQLite keeps registry, exact retained versions and links.
+Create/update/lifecycle uses native Pi writes plus existing approvals and recovery.
+External edits are inspected; publication remains explicit. See [document contract](docs/DOCUMENTS.md).
+The owner requested focused mechanical verification only; no live model qualification is claimed.
 
 END_OF_FILE: README.md

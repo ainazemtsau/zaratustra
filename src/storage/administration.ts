@@ -80,7 +80,7 @@ const component = z.strictObject({
 });
 const Manifest = z.strictObject({
   format: z.literal("zaratustra.bundle.v1"),
-  schema: z.union([z.literal(6), z.literal(7)]),
+  schema: z.union([z.literal(6), z.literal(7), z.literal(8)]),
   workspace_id: z.string(),
   captured_epoch: z.string(),
   captured_seq: z.number().int().nonnegative(),
@@ -134,7 +134,7 @@ function dbRows(db: DatabaseSync) {
   return Object.fromEntries(
     [
       ...tables,
-      ...(db.prepare("PRAGMA user_version").get()!.user_version === 7
+      ...(Number(db.prepare("PRAGMA user_version").get()!.user_version) >= 7
         ? sleepTables
         : []),
     ].map((t) => [t, db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all()]),
@@ -167,7 +167,7 @@ function validate(
   allowDerivedIndexRepair = false,
 ) {
   requireThat(
-    [6, 7].includes(
+    [6, 7, 8].includes(
       Number(db.prepare("PRAGMA user_version").get()!.user_version),
     ),
     "STORE_UNAVAILABLE",
@@ -354,7 +354,7 @@ function validate(
       );
     else get(ref);
   });
-  if (s.workspace.schema_version === 7) validateSleep(s, get);
+  if (s.workspace.schema_version >= 7) validateSleep(s, get);
   if (materials)
     for (const h of blobs(db)) {
       const p = safePath(home, join(home, "materials", h));
@@ -604,7 +604,7 @@ export class Administration {
         ];
         manifest = {
           format: "zaratustra.bundle.v1",
-          schema: s.workspace.schema_version as 6 | 7,
+          schema: s.workspace.schema_version as 6 | 7 | 8,
           workspace_id: s.workspace.workspace_id,
           captured_epoch: s.workspace.epoch,
           captured_seq: Number(

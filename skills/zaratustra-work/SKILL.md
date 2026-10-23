@@ -228,3 +228,6 @@ extension/Core. Discover prepared batches with zara_sleep_batch; commit start_sl
 sleep_checkpoint through zara_commit. Reviews are finite by frozen initial input, with no total
 resource budget and no automatic new cycle. Review/bookkeeping is not a Method application or
 independent success. Activity origin does not make shared Knowledge/Methods locally writable.
+
+For independently reusable Activity files, read zaratustra-documents. Keep small results in Core;
+use managed document operations for persistent working files and pinned external views.

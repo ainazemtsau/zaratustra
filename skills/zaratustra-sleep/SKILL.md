@@ -103,3 +103,7 @@ Preserve minimal exact grounds pinned for pending batches/deferred work/checks. 
 retains old progress but invalidates continuation in a new epoch: explicitly create a new
 review over restored retained history. Sleep never clears E3 reconciliation/unknown effects.
 Report actual committed coverage, remaining addressed deferrals and limitations through chat.
+
+Managed working documents are resource Entities with exact head_ref Evidence snapshots. Read
+these exact versions and declared links before proposing corrections; use zaratustra-documents
+for changes. File registration/hash/index maintenance is not independent experience.

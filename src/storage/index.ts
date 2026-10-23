@@ -1,3 +1,4 @@
+export { DocumentFiles } from "./documents.ts";
 import {
   activeLocation,
   readControl,
@@ -148,7 +149,7 @@ export class DiskStorage implements StoragePort {
         this.workspace = {
           workspace_id: randomUUID(),
           epoch: randomUUID(),
-          schema_version: 7,
+          schema_version: 8,
         };
         this.db.exec(`BEGIN IMMEDIATE;
           CREATE TABLE meta(json TEXT NOT NULL);
@@ -168,7 +169,7 @@ export class DiskStorage implements StoragePort {
           ${ApprovalSchemaSQL}
           ${LifecycleSchemaSQL}
           ${SleepSchemaSQL}
-          PRAGMA user_version=7;`);
+          PRAGMA user_version=8;`);
         this.db
           .prepare("INSERT INTO meta(json) VALUES(?)")
           .run(JSON.stringify(this.workspace));
@@ -182,6 +183,25 @@ export class DiskStorage implements StoragePort {
         const version = this.get<{ user_version: number }>(
           "PRAGMA user_version",
         )?.user_version;
+        if (
+          version === 8 &&
+          this.workspace.schema_version === 7 &&
+          !this.readonly
+        ) {
+          const receipt = this.get<{ json: string }>(
+            "SELECT json FROM migrations WHERE version=8",
+          );
+          const migration = receipt ? JSON.parse(receipt.json) : null;
+          requireThat(
+            migration &&
+              migration.before === JSON.stringify(this.workspace) &&
+              migration.after === meta?.json,
+            "STORE_UNAVAILABLE",
+            "Unrecognized interrupted document migration; preserve store.",
+          );
+          this.replaceManifest(meta!.json);
+          this.workspace = JSON.parse(meta!.json);
+        }
         if (
           version === 7 &&
           this.workspace.schema_version === 6 &&
@@ -307,7 +327,8 @@ export class DiskStorage implements StoragePort {
               this.workspace.schema_version === 4 ||
               this.workspace.schema_version === 5 ||
               this.workspace.schema_version === 6 ||
-              this.workspace.schema_version === 7) &&
+              this.workspace.schema_version === 7 ||
+              this.workspace.schema_version === 8) &&
             version === this.workspace.schema_version,
           "STORE_UNAVAILABLE",
           "Unknown schema or workspace identity mismatch; no replacement store will be created.",
@@ -325,6 +346,7 @@ export class DiskStorage implements StoragePort {
       if (this.workspace.schema_version === 4) this.migrateMemory(5);
       if (this.workspace.schema_version === 5) this.migrateMemory(6);
       if (this.workspace.schema_version === 6) this.migrateMemory(7);
+      if (this.workspace.schema_version === 7) this.migrateMemory(8);
       const control = readControl(this.controlHome);
       if (control)
         requireThat(
@@ -464,7 +486,9 @@ export class DiskStorage implements StoragePort {
             ? "approval"
             : target === 6
               ? "lifecycle"
-              : "sleep";
+              : target === 7
+                ? "sleep"
+                : "documents";
     this.migrationFault?.(faultPrefix + "_after_backup");
     const after = JSON.stringify({ ...this.workspace, schema_version: target });
     this.exec("BEGIN IMMEDIATE");
@@ -478,7 +502,9 @@ export class DiskStorage implements StoragePort {
               ? ApprovalSchemaSQL
               : target === 6
                 ? LifecycleSchemaSQL
-                : SleepSchemaSQL,
+                : target === 7
+                  ? SleepSchemaSQL
+                  : "SELECT 1;",
       );
       refreshMemory(this, true);
       this.run(

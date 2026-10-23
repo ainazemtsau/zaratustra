@@ -1,3 +1,4 @@
+import { registerDocuments } from "./documents.ts";
 import { registerAdministration } from "./administration.ts";
 import { workspacePaths } from "./workspace.ts";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
@@ -73,6 +74,9 @@ const productInputs = [
   "src/core/effects.ts",
   "src/core/lifecycle.ts",
   "src/core/sleep.ts",
+  "src/core/documents.ts",
+  "src/storage/documents.ts",
+  "src/extension/documents.ts",
   "src/storage/administration.ts",
   "src/storage/control.ts",
   "src/extension/administration.ts",
@@ -89,6 +93,7 @@ const productInputs = [
   "skills/zaratustra-work/SKILL.md",
   "skills/zaratustra-memory/SKILL.md",
   "skills/zaratustra-sleep/SKILL.md",
+  "skills/zaratustra-documents/SKILL.md",
 ];
 const resourceHashes = Object.fromEntries(
   productInputs.map((path) => [
@@ -119,6 +124,7 @@ export default function extension(pi: ExtensionAPI) {
     return context;
   };
   const inFlightNative = new Set<string>();
+  let activeDocumentActions = 0;
   let activeImports = 0,
     nativeDialogs = 0;
   let outputBoundary: OutputBoundary | undefined;
@@ -335,7 +341,12 @@ export default function extension(pi: ExtensionAPI) {
               resource_hashes: resourceHashes,
             },
             bootstrap: { sha256: resourceHashes["instructions/bootstrap.md"] },
-            skills: ["zaratustra-work", "zaratustra-memory"].map((name) => ({
+            skills: [
+              "zaratustra-work",
+              "zaratustra-memory",
+              "zaratustra-sleep",
+              "zaratustra-documents",
+            ].map((name) => ({
               name,
               sha256: resourceHashes[`skills/${name}/SKILL.md`],
             })),
@@ -619,6 +630,27 @@ export default function extension(pi: ExtensionAPI) {
       },
     });
   }
+  registerDocuments(register, {
+    core: get,
+    begin: () => {
+      requireThat(
+        activeDocumentActions === 0,
+        "WORK_IN_USE",
+        "Let the current document operation settle before another.",
+      );
+      activeDocumentActions++;
+      return () => {
+        activeDocumentActions--;
+      };
+    },
+    disk: () => {
+      requireThat(disk, "STORE_UNAVAILABLE", "Document storage unavailable.");
+      return disk;
+    },
+    clearReady: (requestId) => {
+      if (readyFile?.effect.request_id === requestId) readyFile = undefined;
+    },
+  });
   registerAdministration(register, {
     core: get,
     admin: () => {
@@ -633,7 +665,10 @@ export default function extension(pi: ExtensionAPI) {
     output: () => outputBoundary,
     restoreReady: () =>
       requireThat(
-        inFlightNative.size === 0 && activeImports === 0 && nativeDialogs === 0,
+        inFlightNative.size === 0 &&
+          activeImports === 0 &&
+          activeDocumentActions === 0 &&
+          nativeDialogs === 0,
         "WORK_IN_USE",
         "A native action, import or native decision is still in flight; let it settle before restore. Historical unknown attempts from a dead process do not create this busy state.",
       ),
@@ -722,6 +757,16 @@ export default function extension(pi: ExtensionAPI) {
         channel_identity: authority.channel_identity,
         stage: "pi-confirm-return",
       });
+      if (
+        yes &&
+        shown.preview.payload.action === "managed_file" &&
+        shown.preview.payload.exact.document
+      )
+        return {
+          ...answer,
+          next_tool: "zara_document_apply",
+          preview_ref: shown.preview.request_id,
+        };
       if (yes && shown.preview.payload.action === "managed_file")
         readyFile = {
           effect: fileFromPreview(shown.preview.payload.exact),

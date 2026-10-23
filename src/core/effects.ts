@@ -1,3 +1,4 @@
+import { DocumentBinding } from "./documents.ts";
 import { z } from "zod";
 import { createHash, randomUUID } from "node:crypto";
 import { canonical, requireThat, text, MethodData } from "./contracts.ts";
@@ -23,6 +24,7 @@ export const NativeArguments = z.union([
   }),
 ]);
 export const FileEffectSchema = z.strictObject({
+  document: DocumentBinding.optional(),
   request_id: text,
   tool: z.enum(["write", "edit"]),
   arguments: NativeArguments,
@@ -79,6 +81,7 @@ export const FileEffectSchema = z.strictObject({
 export type FileEffect = z.infer<typeof FileEffectSchema>;
 export interface EffectRow {
   payload_not_retained?: boolean;
+  document_superseded_by?: string;
   request_id: string;
   kind: "managed_file";
   status: string;
@@ -147,7 +150,7 @@ export class Effects {
     try {
       const unresolved = this.db
         .all<{ json: string }>(
-          "SELECT json FROM intents WHERE json_extract(json,'$.kind')='managed_file' AND json_extract(json,'$.status') IN ('requested','unknown')",
+          "SELECT json FROM intents WHERE json_extract(json,'$.kind')='managed_file' AND json_extract(json,'$.status') IN ('requested','unknown') AND json_extract(json,'$.document_superseded_by') IS NULL",
         )
         .map((r) => JSON.parse(r.json) as EffectRow)
         .filter(

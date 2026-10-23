@@ -1,62 +1,31 @@
-# Zaratustra development — current Sleep assignment
+# Zaratustra — managed Activity documents
 
-Read the complete docs/specification-v1.1.html, docs/DEVELOPMENT.md and
-docs/SLEEP-CONTRACT.md. The owner-authorized 2026-10-22 Sleep assignment supersedes
-E3-only scope, obsolete branch restrictions and budgets. Exact approved predecessor:
-171415b48061e8f1a0da5b0653bb087931ca41fc. Historical instructions are retained in
-docs/sleep-predecessor-AGENTS-171415b.md and its DEVELOPMENT companion. Preserve all
-prior E1/E2/E3 evidence and failed attempts. Full R1/T31, independent review and owner
-usefulness remain separate; the single implementation writer claims none of them.
+Current owner assignment, 23 October 2026: implement the agreed general document process.
+Pi 1.4 only. Base fa6a38e9856c712d6b677419c14830f8f1fad364. Read docs/DOCUMENTS.md.
+The owner explicitly requests only quick necessary mechanical checks, types/lint/build.
+Do not run npm run check/deliver/full scale suites or live model/RPC conversations for
+this task. No model API calls or synthetic Activity-quality demonstrations. Real Activity
+usefulness is the owner's trial. Preserve existing evidence and failed checks honestly.
+Earlier Sleep assignment is retained in docs/documents-predecessor-\*-fa6a38e.md; its
+scope, mandatory long/live qualification and branch rules do not control this new task.
 
-Commands (Node 22.19.0, npm 11.6.2, Pi 1.4.0):
+One implementation writer. A focused read-only helper review is authorized by the
+requesting-code-review skill. No private ZT/Health data, credentials, Direction OS live
+state or archive access. Keep global Node/Pi unchanged. Public source edits stay here;
+mechanical tests use isolated temp directories, not real personal data.
 
-Owner amendment, 2026-10-22: «если что работаем только на pi 1.4».
-Development and current qualification use Pi 1.4 only; no further Pi 1.3 executions.
-Prior Pi 1.3 observations retain their historical attribution. Keep global Pi unchanged.
+Keep Core Pi-independent, SQLite behind StoragePort, one trusted writer and existing
+access/approval/restore barriers. Native Pi owns text writing. Reuse Changes, Evidence,
+Entity resources, material blobs, intents and receipts. No per-Activity SQL tables,
+new editor/runtime/model/planner/background daemon, runtime Git or owner ignore edits.
+Files are canonical contents; Core holds registry, immutable observed versions and links.
+Schemas are standard bounded JSON Schema, not a custom language. Original sources stay
+original; working instructions stay English and conversation uses the owner's language.
 
-- npm ci installs pinned development dependencies.
-- npm run check checks format, ESLint, types, boundaries, build and disk tests.
-- npx tsx --test tests/sleep.test.ts runs focused Sleep disk/fault tests.
-- npm run deliver includes check and validates RESULT fields; run it once for final validation.
-
-One executor; no chats/subagents. Root arranges fresh physical independent review.
-Own the complete bounded Sleep implementation, same-store schema/backup integration,
-instructions, tests, new synthetic qualification/evidence, docs, commits and publication
-ONLY on codex/zaratustra-sleep. Use git push -u origin codex/zaratustra-sleep explicitly;
-never force-push, merge main or mutate main/foreign refs/tags. Preserve unexpected
-concurrent edits and report them before touching their files. No runtime Git operations
-or edits to owner exclusions, attributes or .gitignore.
-
-All product writes stay in this checkout and visibly isolated synthetic/output paths.
-Never access C:/projects/ZT, real Health/personal repositories, backups or credentials.
-Never read Direction-OS archive/\*\* or modify Direction OS/live state. Native Pi may use
-its existing auth normally; never read, print or copy credentials into model context,
-test config or Git. Publish only allowlisted synthetic evidence; preserve unsuccessful
-attempts outside source/package storage.
-
-Pi/model own understanding, planning, language and context selection. No keyword planner,
-second LLM or executor. Core is Pi-independent; cross-module imports use public index.ts.
-SQLite stays behind StoragePort. Original bytes/quotes stay original; English translations/
-paraphrases are derived. State, versions, Changes, progress and receipts commit atomically.
-No SQL transaction spans model/human/provider/external-tool waits. One trusted writer;
-managed access is not OS isolation or arbitrary-command deduplication.
-
-One extension and three English entry skills; ordinary chat and trusted cwd/.local defaults.
-Sleep grants no rights. Activity origin/focus/classification/prose never make shared
-Knowledge/Methods local; their Activity-review changes require exact native confirmation.
-Existing approval policy governs goals/acceptance/priorities, identity/bulk, archive/deletion
-and external actions. No total USD/token/attempt/dispatch/case/time/continuation budgets.
-Ten routing cards per technical batch and existing per-call validation/pagination remain,
-without limiting total review/test work. Frozen initial input makes each review finite;
-no self-started next cycle or bookkeeping recursion. Keep complete uncapped usage/errors.
-
-Live synthetic qualification uses exactly openai-codex/gpt-6.1-sol, medium, native Pi auth,
-normal package discovery and a frozen public installed SHA outside checkout/package storage.
-Unavailable required exact model/native capability is a concrete blocker; no substitute or
-mock L. Preserve all actual errors/retries. Root RESULT.md includes outcome/evidence/
-assumptions/cuts/cost/manual-acceptance/next, exact published/installed SHAs, actual M/L,
-evidence locations, source equality/readback, blockers/limits, uncapped usage and isolated
-install command. next: solmax. No Direction close or successor tasks. Root handles review
-and eventual main merge; the owner manually updates private ZT.
+Run focused tests/documents.test.ts plus selected fast regressions, tsc, ESLint,
+format checks and build. Do not claim independent live PASS, full R1/T31 or owner
+usefulness. Publish the checked source normally; no force push or foreign-ref changes.
+The owner updates private ZT manually. Hand back exact commit, quick checks, remaining
+limits, zero model calls and one pinned install command.
 
 END_OF_FILE: AGENTS.md

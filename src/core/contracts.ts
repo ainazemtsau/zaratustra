@@ -182,6 +182,7 @@ export const ConceptData = z.strictObject({
   boundary_notes: text.optional(),
 });
 export const EntityData = z.strictObject({
+  document: z.record(z.string(), z.unknown()).optional(),
   entity_kind: z.enum([
     "person",
     "device",
@@ -527,6 +528,12 @@ export const CommitSchema = z.strictObject({
     .array(
       z.union([
         create,
+        z.strictObject({
+          op: z.literal("commit_document"),
+          client_ref: text,
+          source_handle: text,
+          effect_request_id: text,
+        }),
         ...ExperienceOps,
         ...SleepOps,
         z.strictObject({

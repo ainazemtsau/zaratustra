@@ -1,6 +1,6 @@
 {
   "name": "zaratustra",
-  "version": "0.4.0-dev.1",
+  "version": "0.5.0-dev.1",
   "private": true,
   "type": "module",
   "description": "Durable Work and addressed materials for Pi; full R1 remains in development",
@@ -16,7 +16,8 @@
     "skills": [
       "skills/zaratustra-work",
       "skills/zaratustra-memory",
-      "skills/zaratustra-sleep"
+      "skills/zaratustra-sleep",
+      "skills/zaratustra-documents"
     ]
   },
   "peerDependencies": {
@@ -24,6 +25,7 @@
     "typebox": "*"
   },
   "dependencies": {
+    "ajv": "8.20.0",
     "htmlparser2": "12.0.0",
     "pdfjs-dist": "6.4.299",
     "yauzl": "3.4.0",

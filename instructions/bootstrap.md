@@ -159,3 +159,8 @@ or prove that no data was previously transmitted. Zaratustra never selects a mod
 Full retained-version body deletion also requires fixed full-read/write administrative
 setup before dependency analysis: the complete reverse graph/technical-copy coverage
 cannot be exposed or modified by a lower-scope observer. Archive/retain remain per-record.
+
+Use zaratustra-documents when work needs durable Markdown files or an external GitHub view.
+Discover existing documents; use document previews/confirmation/apply for managed changes.
+Files hold content; Core keeps registry, exact sources, history and links. Small tasks need no folder.
+External changes require inspection; never silently overwrite drift. Publication is explicit, not automatic Git.
