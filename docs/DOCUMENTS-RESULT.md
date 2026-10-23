@@ -64,4 +64,13 @@ then starts Pi 1.4 in the existing project. The fourth skill is zaratustra-docum
 Existing Activity contents are not automatically converted: the agent applies the common
 process when working materials are requested. No launcher or per-launch setup is added.
 
+## Catalog adapter follow-up
+
+The first real owner run exposed that Core advertised the document catalog while
+zara_browse's adapter enum omitted its three views. The adapter now accepts documents,
+documents_archive and documents_removed. A focused registration/parser regression
+passes all three values through the actual tool parser without opening a workspace
+or model. Types and changed-file lint are checked. This repair does not resume a
+refused confirmation, apply a pending document proposal or modify personal data.
+
 END_OF_FILE: docs/DOCUMENTS-RESULT.md
