@@ -1,4 +1,11 @@
-# Current assignment: concurrent workspace
+# Development and maintenance
+
+Incremental fixes follow [RELEASING.md](RELEASING.md). Current approval-UI maintenance
+preserves immutable proposals and the actual native confirmation boundary; see
+[release notes](../CHANGELOG.md). The earlier concurrency delivery below remains its
+historical qualification scope, not a requirement to repeat heavy runs for every fix.
+
+## Concurrent workspace delivery
 
 Read ../AGENTS.md and CONCURRENCY.md. Owner approved local multi-session coordination
 on 26 October 2026. The later owner amendment stops 100-process qualification: accepted

@@ -43,7 +43,7 @@ import {
   sameNative,
   nativeTarget,
 } from "./managed.ts";
-import { renderApproval } from "./preview.ts";
+import { confirmApproval } from "./confirmation.ts";
 import { dialogAuthority } from "./authority.ts";
 
 export const SNAPSHOT_TYPE = "zaratustra.snapshot.v1";
@@ -88,6 +88,7 @@ const productInputs = [
   "src/storage/output.ts",
   "src/extension/managed.ts",
   "src/extension/preview.ts",
+  "src/extension/confirmation.ts",
   "src/extension/authority.ts",
   "src/extension/workspace.ts",
   "src/storage/index.ts",
@@ -1047,10 +1048,7 @@ export default function extension(pi: ExtensionAPI) {
       const { approvals, shown, authority } = prepared;
       let yes = false;
       try {
-        yes = await ctx.ui.confirm(
-          "Confirm these exact changes?",
-          renderApproval(shown.preview.payload),
-        );
+        yes = await confirmApproval(ctx, shown.preview.payload);
       } catch {
         await withOperation("settle", () =>
           approvals.revoke(shown.preview.request_id),

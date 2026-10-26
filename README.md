@@ -82,7 +82,9 @@ project package configuration/resources while `.local` memory remains. Native
 package filters `extensions:[]` and `skills:[]` disable both resources.
 
 Developer commands: `npm ci`, `npm run check`, `npm run deliver`. See `AGENTS.md`
-and `docs/DEVELOPMENT.md`. Source tests use synthetic directories outside checkout.
+and `docs/DEVELOPMENT.md`. Incremental maintenance releases follow
+[the release workflow](docs/RELEASING.md); [release notes](CHANGELOG.md) distinguish
+publication, installation and later real-use confirmation. Source tests use synthetic directories outside checkout.
 E2 supplies exact confirmations, managed actions/recovery and SKILL.md export/drift.
 Sleep adds an explicitly requested finite review of accumulated cases and open problems.
 Ask “Review accumulated experience” or request one Activity. The same model reviews exact

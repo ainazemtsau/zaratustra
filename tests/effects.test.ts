@@ -269,7 +269,11 @@ test("E2 disk approval invalidation: material revision, scopes, policy, epoch, r
     try {
       assert.throws(
         () => f.core.commit({ ...req, preview_ref: p.request_id }),
-        /changed|mismatch|expired|approval|Preview|source/i,
+        change === "epoch"
+          ? (error: unknown) =>
+              error instanceof CoreError &&
+              error.code === "RESTORE_RECONCILIATION_REQUIRED"
+          : /changed|mismatch|expired|approval|Preview|source/i,
         change,
       );
     } finally {
