@@ -3,6 +3,7 @@ import {
   ApprovalSchemaSQL,
   ExperienceSchemaSQL,
   MemorySchemaSQL,
+  MemoryIndexSchemaSQL,
   SleepSchemaSQL,
   requireThat,
 } from "../core/index.ts";
@@ -27,6 +28,11 @@ const definitions = [
     name: m[2],
   })),
 );
+const concurrentIndexes = new Set(
+  [...MemoryIndexSchemaSQL.matchAll(/CREATE (?:UNIQUE )?INDEX (\w+) /g)].map(
+    (m) => m[1],
+  ),
+);
 const normalize = (sql: string) =>
   sql.trim().replace(/;$/, "").replace(/\s+/g, " ");
 
@@ -35,7 +41,11 @@ export function checkIndexes(
   mode: "require" | "allow-derived-repair" | "repair" = "require",
 ) {
   const missing: string[] = [];
+  const schemaVersion = Number(
+    db.prepare("PRAGMA user_version").get()!.user_version,
+  );
   for (const expected of definitions) {
+    if (schemaVersion < 9 && concurrentIndexes.has(expected.name)) continue;
     if (
       expected.name.startsWith("sleep_") &&
       Number(db.prepare("PRAGMA user_version").get()!.user_version) < 7

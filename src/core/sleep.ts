@@ -104,7 +104,7 @@ function inherited(db: StoragePort, item: Item) {
  * Review progress depends on its frozen inputs. A correction depends on the exact
  * member and declared grounds, even when the canonical Method has older context.
  */
-export function sleepAccessRefs(db: StoragePort) {
+export function sleepAccessRefs(db: StoragePort, itemIds?: readonly string[]) {
   const edges = new Map<string, Item["evidence_refs"]>();
   if (!db.get("SELECT name FROM sqlite_master WHERE name='sleep_items'"))
     return edges;
@@ -116,7 +116,8 @@ export function sleepAccessRefs(db: StoragePort) {
     review_id: string;
     episode_id: string;
   }>(
-    "SELECT i.json,r.work_id,r.id AS review_id,r.episode_id FROM sleep_items i JOIN sleep_reviews r ON r.id=i.review_id",
+    `SELECT i.json,r.work_id,r.id AS review_id,r.episode_id FROM sleep_items i JOIN sleep_reviews r ON r.id=i.review_id${itemIds ? " WHERE i.id IN (" + itemIds.map(() => "?").join(",") + ")" : ""}`,
+    ...(itemIds ?? []),
   )) {
     const item = SleepItem.parse(JSON.parse(row.json)),
       grounds = inherited(db, item);

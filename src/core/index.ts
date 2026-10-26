@@ -79,6 +79,8 @@ export { validateWorks } from "./work.ts";
 export { ExperienceSchemaSQL, validateMethods } from "./experience.ts";
 export {
   MemorySchemaSQL,
+  MemoryIndexSchemaSQL,
+  initializeMemoryIndex,
   refreshMemory,
   validateMemory,
   SearchSchema,
@@ -562,7 +564,35 @@ export class Core {
       this.assertReconciled(effect.work_ref.id, effect.step_id);
     if (effect.document?.state === "removed" && effect.document.ref)
       this.assertDocumentRemovable(effect.document.ref.id);
-    return this.effects.dispatch(effect, preview, call);
+    return this.effects.dispatch(effect, preview, call, () => {
+      if (effect.work_ref) {
+        this.assertExecutable(effect.work_ref.id);
+        const foreign = this.storage
+          .all<{ json: string }>(
+            "SELECT json FROM claims WHERE work_id=?",
+            effect.work_ref.id,
+          )
+          .map((row) => JSON.parse(row.json))
+          .some(
+            (claim) =>
+              claim.epoch === this.context.epoch &&
+              claim.state === "active" &&
+              (claim.runtime_id !== this.context.runtime_id ||
+                claim.session_id !== this.context.session_id),
+          );
+        requireThat(
+          !foreign,
+          "WORK_IN_USE",
+          "Another runtime acquired this Work after preview; inspect and reconcile before dispatch.",
+        );
+      }
+      if (effect.document?.activity_ref)
+        requireThat(
+          this.record(effect.document.activity_ref.id).data.status === "active",
+          "INVALID_TRANSITION",
+          "Activity no longer admits new actions.",
+        );
+    });
   }
   inspectFile(request: string) {
     this.authorize();
@@ -801,19 +831,62 @@ export class Core {
     this.memory.barrier();
     return this.sleep.batch(runId, cursor);
   }
+  private commandDepth = 0;
   constructor(
     public storage: StoragePort,
     public context: CallContext,
     private fault?: (point: string) => void,
-  ) {}
-  private authorize(write = false) {
-    this.storage.assertActive?.(this.context.epoch, write);
+  ) {
+    const snapshots = new Set([
+      "map",
+      "focus",
+      "snapshot",
+      "diagnostics",
+      "inspectFile",
+      "pendingDocuments",
+      "documentRegistration",
+      "operation",
+      "handoff",
+      "recoveryInspect",
+      "methodExport",
+      "skillExportStatus",
+    ]);
+    if (storage.withCommandSync)
+      for (const name of Object.getOwnPropertyNames(Core.prototype)) {
+        if (name === "constructor") continue;
+        const descriptor = Object.getOwnPropertyDescriptor(
+          Core.prototype,
+          name,
+        );
+        if (typeof descriptor?.value !== "function") continue;
+        const original = descriptor.value as (...args: unknown[]) => unknown;
+        Object.defineProperty(this, name, {
+          value: (...args: unknown[]) =>
+            storage.withCommandSync!(() => {
+              const outer = this.commandDepth++ === 0;
+              try {
+                if (outer) this.pruneCapturedSources();
+                return snapshots.has(name) && storage.withReadSnapshot
+                  ? storage.withReadSnapshot(() => original.apply(this, args))
+                  : original.apply(this, args);
+              } finally {
+                this.commandDepth--;
+              }
+            }),
+          configurable: true,
+        });
+      }
+  }
+  private pruneCapturedSources() {
     for (const source of this.sources.values())
       if (Date.parse(source.captured_at) < Date.now() - 1800000) {
         if (this.context.can_write && !this.storage.readonly)
           this.storage.unpinSource?.(source.handle);
         this.sources.delete(source.handle);
       }
+  }
+  private authorize(write = false) {
+    this.storage.assertActive?.(this.context.epoch, write);
     requireThat(
       this.context.processing_allowed,
       "PERMISSION_DENIED",
@@ -834,7 +907,7 @@ export class Core {
       requireThat(
         this.context.can_write && !this.storage.readonly,
         "READ_ONLY",
-        "Another writing process owns this workspace, or writes are disabled.",
+        "This context is explicitly read-only; writes are disabled.",
       );
     this.storage.get("SELECT count(*) AS n FROM records");
   }
@@ -1092,7 +1165,9 @@ export class Core {
   private retrieval<T>(operation: string, input: unknown, action: () => T): T {
     const start = performance.now();
     try {
-      const result = action();
+      const result = this.storage.withReadSnapshot
+        ? this.storage.withReadSnapshot(action)
+        : action();
       const data = (result as { data?: unknown }).data ?? result;
       this.memory.trace(operation, input, data, start);
       return result;
@@ -2001,7 +2076,7 @@ export class Core {
           ? ["Snapshot incomplete; read must_read refs and catalog."]
           : []),
       ],
-      write_mode: this.storage.readonly ? "read-only" : "single-writer",
+      write_mode: this.storage.readonly ? "read-only" : "coordinated",
       data_only: true,
     };
     while (
@@ -2228,6 +2303,28 @@ export class Core {
     this.storage.exec("BEGIN IMMEDIATE");
     try {
       this.authorize(true);
+      const reserved = this.storage.get<{ hash: string }>(
+        "SELECT hash FROM intents WHERE request_id=?",
+        request.request_id,
+      );
+      requireThat(
+        reserved?.hash === hash,
+        "IDEMPOTENCY_CONFLICT",
+        "Request ID was reserved for a different payload.",
+      );
+      const raced = this.storage.get<{ hash: string; json: string }>(
+        "SELECT hash,json FROM receipts WHERE request_id=?",
+        request.request_id,
+      );
+      if (raced) {
+        requireThat(
+          raced.hash === hash,
+          "IDEMPOTENCY_CONFLICT",
+          "Request ID belongs to another committed payload.",
+        );
+        this.storage.exec("COMMIT");
+        return this.memory.sanitizeTechnical(JSON.parse(raced.json)) as Receipt;
+      }
       if (request.preview_ref || this.requiresApproval(request)) {
         const exact = this.previewExact(request, bindings);
         const preview = request.preview_ref
@@ -3714,7 +3811,13 @@ export class Core {
             }),
         );
       }
-      refreshMemory(this.storage);
+      refreshMemory(
+        this.storage,
+        false,
+        [],
+        [...changed.keys(), ...experience.changed.keys()],
+        false,
+      );
       for (const r of [...changed.values(), ...experience.changed.values()]) {
         requireThat(
           this.memory.allowed(r.id),
@@ -3781,6 +3884,7 @@ export class Core {
             this.storage.unpinSource?.(source.pending_key);
         }
       }
+      refreshMemory(this.storage, false, [], []);
       this.fault?.("before_commit");
       this.storage.exec("COMMIT");
       this.fault?.("after_commit");
@@ -3811,7 +3915,13 @@ export function failure(error: unknown) {
       : validation
         ? "Input does not match the published runtime schema."
         : "Storage operation failed; inspect current operations before retrying any uncertain commit.",
-    retryable: false,
+    retryable:
+      known &&
+      ["STORE_BUSY", "REVISION_CONFLICT", "CURSOR_INVALIDATED"].includes(
+        error.code,
+      ),
+    ...(known && error.code === "STORE_BUSY" ? { retry_after_ms: 250 } : {}),
+    ...(known && error.details ? { details: error.details } : {}),
   };
 }
 

@@ -1,12 +1,12 @@
 {
   "name": "zaratustra",
-  "version": "0.5.0-dev.1",
+  "version": "0.6.0-dev.1",
   "private": true,
   "type": "module",
   "description": "Durable Work and addressed materials for Pi; full R1 remains in development",
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=24.16.0 <25"
   },
   "packageManager": "npm@11.6.2",
   "pi": {
@@ -21,7 +21,7 @@
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-coding-agent": ">=1.4.0 <1.5.0",
     "typebox": "*"
   },
   "dependencies": {

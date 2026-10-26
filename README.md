@@ -1,5 +1,13 @@
 # Zaratustra — durable work, memory and textual Methods
 
+Current concurrency delivery requires Pi 1.4.x and Node 24.16+ in the 24.x LTS line
+(qualified: Pi 1.4.0, Node 24.22.1, SQLite 3.53.4). Shared local sessions coordinate
+short operations; opening another chat no longer makes its memory read-only. Before
+upgrading schema 8 to 9, close old Pi sessions once. Existing Activities and history
+remain. See [concurrency and upgrade](docs/CONCURRENCY.md). Verification is bounded
+to ten processes after the owner stopped larger qualification; 100-process support
+is not claimed. No server or launcher is added.
+
 A development Pi package with one extension, English bootstrap and four small skills.
 Through conversation, the model saves Activity/Work, exact original Evidence and
 English Knowledge; a fresh process can discover the continuation from disk.

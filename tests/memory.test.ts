@@ -8,6 +8,29 @@ import { Core, CoreError, digest } from "../src/core/index.ts";
 import type { JsonObject, RecordRow } from "../src/core/index.ts";
 import { DiskStorage } from "../src/storage/index.ts";
 
+function removeConcurrentFixtureSchema(db: DatabaseSync, target: number) {
+  for (const row of db
+    .prepare("SELECT name FROM sqlite_schema WHERE type='trigger'")
+    .all() as { name: string }[])
+    if (/^(memory_dirty_|concurrency_)/.test(row.name))
+      db.exec('DROP TRIGGER "' + row.name + '"');
+  for (const name of [
+    "memory_pending",
+    "memory_technical",
+    "memory_dirty",
+    "memory_edges",
+    "memory_nodes",
+    "memory_ordinals",
+    "memory_index_meta",
+    "concurrency_meta",
+  ])
+    db.exec("DROP TABLE IF EXISTS " + name);
+  db.exec(
+    "DROP INDEX IF EXISTS memory_access_restricted; DROP INDEX IF EXISTS sleep_prior_item;",
+  );
+  db.prepare("DELETE FROM migrations WHERE version>?").run(target);
+}
+
 function fixture(scopes: string[] = []) {
   const home = mkdtempSync(
     join(process.env.ZARATUSTRA_TEST_ROOT ?? tmpdir(), "zara-D-"),
@@ -299,16 +322,16 @@ test("D literal English FTS, exact authentic aliases, punctuation/metacharacters
       }),
     "CURSOR_INVALIDATED",
   );
-  f.commit([entity("third")]);
-  code(
-    () =>
-      f.core.search({
-        kinds: ["entity"],
-        limit: 1,
-        cursor: first.next_cursor!,
-      }),
-    "CURSOR_INVALIDATED",
-  );
+  const third = f.commit([entity("third")]).created.third;
+  const continued = f.core.search({
+    kinds: ["entity"],
+    limit: 1,
+    cursor: first.next_cursor!,
+  }).data;
+  assert.deepEqual(continued.cards, second.cards);
+  assert.equal(continued.has_more, false);
+  assert.ok(!continued.cards.some((card) => card.id === third));
+  assert.notEqual(continued.cards[0].id, first.cards[0].id);
   code(
     () => f.core.search({ kinds: ["entity"], cursor: "not-a-cursor" }),
     "CURSOR_INVALIDATED",
@@ -786,16 +809,18 @@ test("D schema-2 migration faults preserve filled canonical rows, original mater
     const before = JSON.stringify(
       tables.map((t) => f.disk.all("SELECT * FROM " + t)),
     );
-    f.disk.workspace.schema_version = 2;
-    f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
-    f.disk.exec(
+    const workspace = { ...f.disk.workspace, schema_version: 2 };
+    f.disk.close();
+    const predecessor = new DatabaseSync(join(f.home, "zara.sqlite"));
+    removeConcurrentFixtureSchema(predecessor, 2);
+    predecessor
+      .prepare("UPDATE meta SET json=?")
+      .run(JSON.stringify(workspace));
+    predecessor.exec(
       "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
     );
-    writeFileSync(
-      join(f.home, "workspace.json"),
-      JSON.stringify(f.disk.workspace),
-    );
-    f.disk.close();
+    predecessor.close();
+    writeFileSync(join(f.home, "workspace.json"), JSON.stringify(workspace));
     assert.throws(
       () =>
         new DiskStorage(f.home, (p) => {
@@ -805,7 +830,7 @@ test("D schema-2 migration faults preserve filled canonical rows, original mater
     );
     const recovered = new DiskStorage(f.home);
     t.after(() => recovered.close());
-    assert.equal(recovered.workspace.schema_version, 7);
+    assert.equal(recovered.workspace.schema_version, 9);
     assert.equal(
       JSON.stringify(tables.map((t) => recovered.all("SELECT * FROM " + t))),
       before,
@@ -872,16 +897,16 @@ test("D memory migration rejects a broken legacy Work graph without replacing or
   const before = JSON.stringify(
     f.disk.all("SELECT * FROM records ORDER BY id"),
   );
-  f.disk.workspace.schema_version = 2;
-  f.disk.run("UPDATE meta SET json=?", JSON.stringify(f.disk.workspace));
-  f.disk.exec(
+  const workspace = { ...f.disk.workspace, schema_version: 2 };
+  f.disk.close();
+  const predecessor = new DatabaseSync(join(f.home, "zara.sqlite"));
+  removeConcurrentFixtureSchema(predecessor, 2);
+  predecessor.prepare("UPDATE meta SET json=?").run(JSON.stringify(workspace));
+  predecessor.exec(
     "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; DROP INDEX intent_kind; DROP VIEW addressed_current; DROP VIEW addressed_versions; DROP INDEX run_episode_key; DROP INDEX method_content_version; DROP TABLE experience_rows; DROP TABLE experience_versions; DROP TABLE memory_text; DROP TABLE memory_names; DROP TABLE memory_docs; DROP TABLE memory_meta; DROP TABLE memberships; DROP TABLE concept_parents; DROP TABLE relations; DROP TABLE relation_history; DROP TABLE retrieval_trace; DROP INDEX knowledge_predicate; DROP INDEX knowledge_subject; DROP INDEX knowledge_object; PRAGMA user_version=2;",
   );
-  writeFileSync(
-    join(f.home, "workspace.json"),
-    JSON.stringify(f.disk.workspace),
-  );
-  f.disk.close();
+  predecessor.close();
+  writeFileSync(join(f.home, "workspace.json"), JSON.stringify(workspace));
   code(() => new DiskStorage(f.home), "STORE_UNAVAILABLE");
   const raw = new DatabaseSync(join(f.home, "zara.sqlite"), { readOnly: true });
   try {

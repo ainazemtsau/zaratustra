@@ -362,7 +362,7 @@ test("documents: missing parent restores explicitly; publication blocks drift an
   });
 });
 
-test("documents: schema7 upgrade keeps records; schema8 backup includes retained document originals", async (t) => {
+test("documents: schema7 upgrades through schema9; current backup includes retained document originals", async (t) => {
   const f = fixture();
   t.after(() => f.disk.close());
   // Make an exact empty legacy-7 fixture; no real owner workspace is accessed.
@@ -373,13 +373,37 @@ test("documents: schema7 upgrade keeps records; schema8 backup includes retained
     String(db.prepare("select json from meta").get()!.json),
   );
   meta.schema_version = 7;
+  db.exec("BEGIN IMMEDIATE");
+  for (const row of db
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND (name GLOB 'memory_dirty_*' OR name GLOB 'concurrency_*')",
+    )
+    .all() as { name: string }[])
+    db.exec(`DROP TRIGGER "${row.name.replaceAll('"', '""')}"`);
+  for (const name of [
+    "memory_index_meta",
+    "memory_ordinals",
+    "memory_nodes",
+    "memory_edges",
+    "memory_dirty",
+    "memory_technical",
+    "memory_pending",
+    "concurrency_meta",
+  ])
+    db.exec(`DROP TABLE IF EXISTS ${name}`);
+  db.exec(
+    "DROP INDEX IF EXISTS memory_access_restricted; DROP INDEX IF EXISTS sleep_prior_item;",
+  );
+  db.prepare("DELETE FROM migrations WHERE version>7").run();
   db.prepare("update meta set json=?").run(JSON.stringify(meta));
   db.exec("pragma user_version=7");
+  db.exec("COMMIT");
   db.close();
   writeFileSync(join(home, "workspace.json"), JSON.stringify(meta));
   f.restart();
-  assert.equal(f.disk.workspace.schema_version, 8);
+  assert.equal(f.disk.workspace.schema_version, 9);
   assert.ok(f.disk.get("select json from migrations where version=8"));
+  assert.ok(f.disk.get("select json from migrations where version=9"));
   const first = await f.apply({
     path: "example/source.md",
     title: "Source",
@@ -394,7 +418,7 @@ test("documents: schema7 upgrade keeps records; schema8 backup includes retained
   );
   const saved = await admin.backup(f.disk);
   const verified = admin.verify(saved.backup);
-  assert.equal(verified.manifest.schema, 8);
+  assert.equal(verified.manifest.schema, 9);
   const hash = String(f.read(d.head_ref.id).data.blob_ref);
   assert.match(
     readFileSync(join(saved.backup, "materials", hash), "utf8"),

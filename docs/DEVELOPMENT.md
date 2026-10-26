@@ -1,16 +1,14 @@
-# Current assignment: managed documents
+# Current assignment: concurrent workspace
 
-Read ../AGENTS.md and DOCUMENTS.md. The owner authorized implementation on 23 October
-2026 and explicitly limited verification to quick necessary mechanical checks. No
-long/full-suite/deliver or live model conversations, API loops or Activity-quality demos.
-Pi 1.4.0, Node 22.19.0. Current source base is fa6a38e.
+Read ../AGENTS.md and CONCURRENCY.md. Owner approved local multi-session coordination
+on 26 October 2026. The later owner amendment stops 100-process qualification: accepted
+verification is at most ten processes; retain prior failed attempts honestly. No further
+100-process or heavy growth runs. No full historical check/deliver matrix or model/API
+conversations. Use targeted mechanical tests, types/lint/build and focused review.
 
-Use native Pi write semantics, existing guarded effects/approvals/receipts, Entity
-resources and immutable Evidence/materials. Schema 8 protects the document registry
-from older writers; verified pre-migration backup and interrupted-manifest repair reuse
-the existing migration machinery. Do not change real ZT or old evidence.
-
-Focused static helper review is a pre-pass, not physical-chat R1/G5 qualification.
-The owner performs real usage acceptance. No total usage claims from synthetic tests.
+Pi 1.4.0, isolated Node 24.22.1 / SQLite 3.53.4. Keep global Node/Pi and real private ZT/
+Health unchanged. Domain identities/history stay; schema 9/control 2 introduce concurrency
+and derived indexes. No server/daemon, per-Activity SQL tables or automatic Git actions.
+Historical original specs and sealed evidence remain unchanged.
 
 END_OF_FILE: docs/DEVELOPMENT.md

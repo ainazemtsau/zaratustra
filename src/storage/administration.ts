@@ -11,6 +11,9 @@ import {
 import { basename, join, resolve } from "node:path";
 import { z } from "zod";
 import { checkIndexes } from "./indexes.ts";
+import { Coordination } from "./coordination.ts";
+import type { Operation } from "./coordination.ts";
+import { initializeConcurrencyState } from "./schema.ts";
 import {
   Approvals,
   addressedRefs,
@@ -31,6 +34,8 @@ import {
   PersistedSupportData,
   PersistedEvidenceData,
   SleepSchemaSQL,
+  MemoryIndexSchemaSQL,
+  initializeMemoryIndex,
   validateSleep,
 } from "../core/index.ts";
 import type {
@@ -71,6 +76,37 @@ const tables = [
   "lifecycle_events",
 ];
 const sleepTables = ["sleep_reviews", "sleep_items", "sleep_coverage"];
+const schema9Tables = [
+  "concurrency_meta",
+  "memory_index_meta",
+  "memory_ordinals",
+  "memory_nodes",
+  "memory_edges",
+  "memory_dirty",
+  "memory_technical",
+  "memory_pending",
+];
+const PendingOperation = z.strictObject({
+  operation_id: z.string().min(1),
+  epoch: z.string().min(1),
+  session_id: z.string().optional(),
+  kind: z.string().min(1),
+  digest: z.string().min(1),
+  resources: z.array(z.string().min(1)),
+  runtime_id: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),
+  phase: z.string().min(1),
+  status: z.enum(["active", "unknown", "settled"]),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+const CoordinationSnapshot = z.strictObject({
+  format: z.literal(1),
+  pending: z.array(PendingOperation).max(10000),
+  coverage: z.literal(
+    "pending at capture admission plus operations first admitted during the SQLite snapshot; settled window operations remain conservative restore barriers",
+  ),
+});
 const component = z.strictObject({
   path: z
     .string()
@@ -78,28 +114,34 @@ const component = z.strictObject({
   length: z.number().int().min(0).max(536870912),
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
 });
-const Manifest = z.strictObject({
-  format: z.literal("zaratustra.bundle.v1"),
-  schema: z.union([z.literal(6), z.literal(7), z.literal(8)]),
-  workspace_id: z.string(),
-  captured_epoch: z.string(),
-  captured_seq: z.number().int().nonnegative(),
-  captured_at: z.iso.datetime(),
-  complete: z.literal(true),
-  coverage: z.literal(
-    "full current and retained historical/deleted metadata; historical authority is not runnable",
-  ),
-  components: z.array(component).min(2).max(1002),
-});
+const Manifest = z
+  .strictObject({
+    format: z.literal("zaratustra.bundle.v1"),
+    schema: z.union([z.literal(6), z.literal(7), z.literal(8), z.literal(9)]),
+    workspace_id: z.string(),
+    captured_epoch: z.string(),
+    captured_seq: z.number().int().nonnegative(),
+    captured_at: z.iso.datetime(),
+    complete: z.literal(true),
+    coverage: z.literal(
+      "full current and retained historical/deleted metadata; historical authority is not runnable",
+    ),
+    components: z.array(component).min(2).max(1002),
+    coordination: CoordinationSnapshot.optional(),
+  })
+  .refine((m) => m.schema < 9 || m.coordination !== undefined, {
+    message: "Schema-9 bundles require immutable pending-operation metadata.",
+  });
 export type BundleManifest = z.infer<typeof Manifest>;
 type Disk = StoragePort & {
   home: string;
   controlHome: string;
-  backupTo(path: string): Promise<void>;
+  backupTo(path: string, operationId?: string): Promise<void>;
   readBlob(hash: string): Buffer;
   close(): void;
   closeConnection(): void;
   connectionClosed: boolean;
+  coordination: Coordination;
 };
 export function fullAccess(ctx: CallContext, write = false) {
   requireThat(
@@ -137,6 +179,9 @@ function dbRows(db: DatabaseSync) {
       ...(Number(db.prepare("PRAGMA user_version").get()!.user_version) >= 7
         ? sleepTables
         : []),
+      ...(Number(db.prepare("PRAGMA user_version").get()!.user_version) >= 9
+        ? schema9Tables
+        : []),
     ].map((t) => [t, db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all()]),
   );
 }
@@ -167,7 +212,7 @@ function validate(
   allowDerivedIndexRepair = false,
 ) {
   requireThat(
-    [6, 7, 8].includes(
+    [6, 7, 8, 9].includes(
       Number(db.prepare("PRAGMA user_version").get()!.user_version),
     ),
     "STORE_UNAVAILABLE",
@@ -377,6 +422,7 @@ export class Administration {
     readonly backupRoot: string,
     readonly context: CallContext,
     private fault?: (point: string) => void,
+    readonly coordination?: Coordination,
   ) {
     const store: PreviewStore = {
       get workspace() {
@@ -445,8 +491,65 @@ export class Administration {
     );
     return safePath(this.backupRoot, resolve(this.backupRoot, path));
   }
+  private withCoordinator<T>(
+    disk: Disk | undefined,
+    action: (c: Coordination) => T,
+  ): T {
+    const shared = disk?.coordination ?? this.coordination;
+    if (shared) return action(shared);
+    const control = readControl(this.home);
+    const c = new Coordination(this.home, "administration-" + randomUUID(), {
+      ...(control?.format === 2 ? { expectedId: control.coordination_id } : {}),
+      create: control?.format !== 2,
+    });
+    try {
+      return action(c);
+    } finally {
+      c.close();
+    }
+  }
   private fingerprint() {
-    const data = activeLocation(this.home);
+    const data = activeLocation(this.home),
+      control = readControl(this.home);
+    // A healthy store binds approval to meaningful committed state. Retrieval
+    // traces, WAL checkpoints and other physical rewrites do not change this.
+    let db: DatabaseSync | undefined;
+    try {
+      const path = safePath(this.home, join(data, "zara.sqlite"));
+      requireThat(
+        existsSync(path),
+        "STORE_UNAVAILABLE",
+        "Current DB is missing.",
+      );
+      db = new DatabaseSync(path, { readOnly: true });
+      const revision = db
+        .prepare("SELECT state_revision FROM concurrency_meta")
+        .get();
+      const workspace = JSON.parse(
+        String(db.prepare("SELECT json FROM meta").get()!.json),
+      );
+      requireThat(
+        revision &&
+          Number.isSafeInteger(revision.state_revision) &&
+          Number(revision.state_revision) >= 0 &&
+          workspace.epoch === this.context.epoch,
+        "STORE_UNAVAILABLE",
+        "Current state counter is unavailable.",
+      );
+      return bytesHash(
+        canonical({
+          workspace_id: workspace.workspace_id,
+          epoch: control?.epoch ?? workspace.epoch,
+          generation: control?.generation ?? ".",
+          state_revision: Number(revision.state_revision),
+        }),
+      );
+    } catch {
+      // Recovery remains possible when the current database is absent/corrupt.
+      // Exact physical bytes are the conservative fallback in that case.
+    } finally {
+      db?.close();
+    }
     return bytesHash(
       canonical(
         [
@@ -548,39 +651,93 @@ export class Administration {
     };
   }
   async backup(disk: Disk, holdLivePin = false) {
-    this.authorize();
-    disk.assertActive?.(this.context.epoch, true);
-    requireThat(
-      !disk.readonly,
-      "READ_ONLY",
-      "Backup capture requires the stable writer.",
-    );
-    const bundle = newDirectory(this.backupRoot, "backup-"),
+    const c = disk.coordination,
       key = "backup-" + randomUUID();
-    disk.run(
-      "INSERT INTO lifecycle_pins VALUES(?,?)",
-      key,
-      JSON.stringify({ kind: "backup-all", expires_at: Date.now() + 1800000 }),
-    );
+    let bundle = "",
+      admitted = false,
+      complete = false;
+    const captured = new Map<string, Operation>();
+    let watermark = 0;
+    const capture = (operations: Operation[]) => {
+      for (const operation of operations) {
+        if (operation.operation_id === key) continue;
+        const prior = captured.get(operation.operation_id);
+        captured.set(operation.operation_id, {
+          ...operation,
+          resources: [
+            ...new Set([...(prior?.resources ?? []), ...operation.resources]),
+          ].sort(),
+        });
+      }
+    };
     try {
-      await disk.backupTo(join(bundle, "database.sqlite"));
-      this.fault?.("after_snapshot");
-      const db = new DatabaseSync(join(bundle, "database.sqlite"), {
-        readOnly: true,
+      await c.run("mutate", () => {
+        this.authorize();
+        disk.assertActive?.(this.context.epoch, true);
+        requireThat(
+          !disk.readonly,
+          "READ_ONLY",
+          "Backup capture requires write setup.",
+        );
+        this.recoverAbandonedBackups(disk);
+        bundle = newDirectory(this.backupRoot, "backup-");
+        c.reserve({
+          operation_id: key,
+          epoch: this.context.epoch,
+          session_id: this.context.session_id,
+          kind: "backup",
+          digest: bytesHash(bundle),
+          resources: ["backup:" + bundle],
+        });
+        admitted = true;
+        // Every cleanup command checks this shared pin before unlinking. Keep it
+        // until the finished SQLite snapshot supplies its exact retained hashes.
+        disk.run(
+          "INSERT INTO lifecycle_pins VALUES(?,?)",
+          key,
+          JSON.stringify({
+            kind: "backup-all",
+            operation_id: key,
+            bundle,
+            expires_at: null,
+          }),
+        );
+        const initial = c.captureOperations();
+        watermark = initial.watermark;
+        capture(initial.pending);
       });
+      // SQLite's online snapshot and immutable blob copies run without the gate.
+      // The durable reservation prevents a concurrent generation switch.
+      await disk.backupTo(join(bundle, "database.sqlite"), key);
+      this.fault?.("after_snapshot");
+      const db = new DatabaseSync(join(bundle, "database.sqlite"));
       let manifest: BundleManifest;
       try {
+        // A self-contained bundle never depends on an unmanifested WAL.
+        db.exec("PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL;");
+        // The capture's own transient all-materials pin cannot outlive the job
+        // in a restored generation. Every other captured pin stays unchanged.
+        db.prepare("DELETE FROM lifecycle_pins WHERE key=?").run(key);
         const s = port(db, bundle),
           hashes = blobs(db);
-        disk.run(
-          "UPDATE lifecycle_pins SET json=? WHERE key=?",
-          JSON.stringify({
-            kind: "backup",
-            hashes,
-            expires_at: holdLivePin ? null : Date.now() + 1800000,
-            bundle,
-          }),
-          key,
+        await c.run(
+          "settle",
+          () => {
+            disk.assertActive?.(this.context.epoch, true);
+            disk.run(
+              "UPDATE lifecycle_pins SET json=? WHERE key=?",
+              JSON.stringify({
+                kind: "backup",
+                hashes,
+                expires_at: null,
+                bundle,
+              }),
+              key,
+            );
+            capture(c.operationsSince(watermark));
+            capture(c.pending());
+          },
+          { operationId: key },
         );
         mkdirSync(join(bundle, "materials"));
         for (const hash of hashes) {
@@ -604,7 +761,7 @@ export class Administration {
         ];
         manifest = {
           format: "zaratustra.bundle.v1",
-          schema: s.workspace.schema_version as 6 | 7 | 8,
+          schema: s.workspace.schema_version as 6 | 7 | 8 | 9,
           workspace_id: s.workspace.workspace_id,
           captured_epoch: s.workspace.epoch,
           captured_seq: Number(
@@ -615,9 +772,15 @@ export class Administration {
           complete: true,
           coverage:
             "full current and retained historical/deleted metadata; historical authority is not runnable",
+          coordination: CoordinationSnapshot.parse({
+            format: 1,
+            pending: [...captured.values()],
+            coverage:
+              "pending at capture admission plus operations first admitted during the SQLite snapshot; settled window operations remain conservative restore barriers",
+          }),
           components: paths.map((path) => {
-            const b = readFileSync(join(bundle, path));
-            return { path, length: b.length, sha256: bytesHash(b) };
+            const bytes = readFileSync(join(bundle, path));
+            return { path, length: bytes.length, sha256: bytesHash(bytes) };
           }),
         };
       } finally {
@@ -625,7 +788,8 @@ export class Administration {
       }
       requireThat(
         manifest.components.length <= 1002 &&
-          manifest.components.reduce((n, c) => n + c.length, 0) <= 1073741824,
+          manifest.components.reduce((n, item) => n + item.length, 0) <=
+            1073741824,
         "VALIDATION_ERROR",
         "Bundle exceeds 1000 managed blobs or 1 GiB total; no complete artifact was delivered.",
       );
@@ -634,6 +798,7 @@ export class Administration {
         JSON.stringify(manifest, null, 2),
       );
       const verified = this.verify(bundle);
+      complete = true;
       return {
         backup: bundle,
         identity: verified.identity,
@@ -645,20 +810,32 @@ export class Administration {
         index_repairs_required: verified.index_repairs_required,
         schema_ready: verified.schema_ready,
       };
-    } catch (e) {
-      atomicJSON(join(bundle, "INCOMPLETE.json"), {
-        complete: false,
-        error: e instanceof Error ? e.message : "failed",
-      });
-      throw e;
+    } catch (err) {
+      if (bundle)
+        atomicJSON(join(bundle, "INCOMPLETE.json"), {
+          complete: false,
+          error: err instanceof Error ? err.message : "failed",
+        });
+      throw err;
     } finally {
-      if (!holdLivePin) disk.run("DELETE FROM lifecycle_pins WHERE key=?", key);
+      if (admitted)
+        await c.run(
+          "settle",
+          () => {
+            if (!holdLivePin || !complete)
+              disk.run("DELETE FROM lifecycle_pins WHERE key=?", key);
+            c.release(key);
+          },
+          { operationId: key },
+        );
     }
   }
   restorePreview(backup: string, consequence: string, alternatives: string) {
     this.authorize(true);
     const b = this.verify(backup),
-      fingerprint = this.fingerprint();
+      fingerprint = this.withCoordinator(undefined, (c) =>
+        c.sync("read", () => this.fingerprint()),
+      );
     const generations = join(this.home, "generations");
     const quarantine = newDirectory(generations, "");
     mkdirSync(join(quarantine, "materials"));
@@ -717,6 +894,35 @@ export class Administration {
         storage.workspace = JSON.parse(migration.after);
         this.fault?.("restore_sleep_before_schema_commit");
       }
+      if (storage.workspace.schema_version < 9) {
+        const before = JSON.stringify(storage.workspace);
+        if (
+          !db
+            .prepare(
+              "SELECT name FROM sqlite_schema WHERE type='table' AND name='memory_index_meta'",
+            )
+            .get()
+        )
+          db.exec(MemoryIndexSchemaSQL);
+        storage.workspace = { ...storage.workspace, schema_version: 9 };
+        db.prepare("UPDATE meta SET json=?").run(
+          JSON.stringify(storage.workspace),
+        );
+        db.prepare("INSERT INTO migrations VALUES(9,?)").run(
+          JSON.stringify({
+            before,
+            after: JSON.stringify(storage.workspace),
+            backup: join(b.path, "database.sqlite"),
+            backup_sha256: b.manifest.components.find(
+              (item) => item.path === "database.sqlite",
+            )!.sha256,
+            recorded_at: new Date().toISOString(),
+          }),
+        );
+        db.exec("PRAGMA user_version=9");
+      }
+      initializeConcurrencyState(storage);
+      initializeMemoryIndex(storage);
       rebuilt_indexes = checkIndexes(db, "repair");
       const workspace = { ...storage.workspace, epoch };
       db.prepare("UPDATE meta SET json=?").run(JSON.stringify(workspace));
@@ -780,6 +986,7 @@ export class Administration {
       backup_identity: b.identity,
       destination: quarantine,
       new_epoch: epoch,
+      previous_epoch: this.context.epoch,
       workspace_id: b.manifest.workspace_id,
       captured_seq: b.manifest.captured_seq,
       current_fingerprint: fingerprint,
@@ -804,7 +1011,32 @@ export class Administration {
       loss: exact.loss,
     };
   }
-  restore(ref: string, disk?: Disk) {
+  private importRestoreBarriers(ref: string, c: Coordination) {
+    this.authorize(true);
+    const preview = this.approvals.read(ref),
+      exact = preview.payload.exact;
+    this.approvals.verify(ref, "restore", exact);
+    requireThat(
+      this.fingerprint() === exact.current_fingerprint,
+      "APPROVAL_STALE",
+      "Current memory changed while restore drained; prepare and confirm a fresh preview.",
+    );
+    const backup = this.verify(String(exact.backup));
+    requireThat(
+      backup.identity === exact.backup_identity,
+      "APPROVAL_STALE",
+      "Backup identity changed.",
+    );
+    // Stable current barriers stay in place. Historical active attempts become
+    // conservative unknowns, including independent documents with no Work.
+    c.importUnknown(
+      (backup.manifest.coordination?.pending ?? []).map((operation) => ({
+        ...operation,
+        status: "unknown" as const,
+      })),
+    );
+  }
+  private switchRestore(ref: string, disk: Disk | undefined, c: Coordination) {
     this.authorize(true);
     const p = this.approvals.read(ref),
       e = p.payload.exact;
@@ -812,111 +1044,139 @@ export class Administration {
     requireThat(
       this.fingerprint() === e.current_fingerprint,
       "APPROVAL_STALE",
-      "Current memory changed since restore preview.",
+      "Current memory changed since restore preview; prepare and confirm a fresh preview.",
     );
     requireThat(
       this.verify(String(e.backup)).identity === e.backup_identity,
       "APPROVAL_STALE",
       "Backup identity changed.",
     );
-    const lock = join(this.home, "writer.lock"),
-      token = randomUUID();
-    if (disk) {
-      disk.assertActive?.(this.context.epoch, true);
-      // Keep the SAME stable lease while SQLite checkpoints/closes. No new
-      // fingerprint baseline can absorb another writer's unapproved commit.
-      disk.closeConnection();
-    } else {
-      if (existsSync(lock)) {
-        const owner = JSON.parse(readFileSync(lock, "utf8"));
-        let alive = true;
-        try {
-          process.kill(owner.pid, 0);
-        } catch (err) {
-          alive = (err as NodeJS.ErrnoException).code !== "ESRCH";
-        }
-        requireThat(
-          !alive,
-          "WORK_IN_USE",
-          "A conflicting writer owns the stable control lock.",
-        );
-        removeLock(safePath(this.home, lock));
-      }
-      durableNew(lock, JSON.stringify({ pid: process.pid, token }));
+    disk?.assertActive?.(this.context.epoch, true);
+    disk?.closeConnection();
+    const dest = safePath(this.home, String(e.destination));
+    for (const c of e.quarantine_components as {
+      path: string;
+      length: number;
+      sha256: string;
+    }[]) {
+      const bytes = readFileSync(safePath(dest, join(dest, c.path)));
+      requireThat(
+        bytes.length === c.length && bytesHash(bytes) === c.sha256,
+        "APPROVAL_STALE",
+        "Verified quarantine bytes changed after preview.",
+      );
     }
+    const db = new DatabaseSync(join(dest, "zara.sqlite"), {
+      readOnly: true,
+    });
     try {
-      if (!disk)
-        requireThat(
-          this.fingerprint() === e.current_fingerprint,
-          "APPROVAL_STALE",
-          "Current memory changed before the stable writer lease was acquired.",
-        );
-      const dest = safePath(this.home, String(e.destination));
-      for (const c of e.quarantine_components as {
-        path: string;
-        length: number;
-        sha256: string;
-      }[]) {
-        const bytes = readFileSync(safePath(dest, join(dest, c.path)));
-        requireThat(
-          bytes.length === c.length && bytesHash(bytes) === c.sha256,
-          "APPROVAL_STALE",
-          "Verified quarantine bytes changed after preview.",
-        );
-      }
-      const db = new DatabaseSync(join(dest, "zara.sqlite"), {
-        readOnly: true,
-      });
-      try {
-        validate(db, dest);
-      } finally {
-        db.close();
-      }
-      this.approvals.consume(ref, "restore", e, String(e.restoration_id));
-      this.fault?.("restore_before_switch");
-      // A manifest-only legacy admission guard also makes old E2 writers refuse
-      // a recovered root whose legacy DB and manifest were both lost.
-      if (
-        !existsSync(join(this.home, "workspace.json")) &&
-        !existsSync(join(this.home, "zara.sqlite"))
-      )
-        durableNew(
-          join(this.home, "workspace.json"),
-          JSON.stringify({
-            workspace_id: e.workspace_id,
-            epoch: e.new_epoch,
-            schema_version: 7,
-            inactive_generation_guard: true,
-          }),
-        );
-      writeControl(this.home, {
-        format: 1,
-        generation: "generations/" + basename(dest),
-        workspace_id: String(e.workspace_id),
-        epoch: String(e.new_epoch),
-        restoration: {
-          ...e,
-          preview_digest: p.operation_digest,
-          decision: p.answer ?? null,
-          recorded_at: new Date().toISOString(),
-        },
-      });
-      this.fault?.("restore_after_switch");
-      return {
-        switched: true,
-        epoch: e.new_epoch,
-        backup_identity: e.backup_identity,
-        captured_seq: e.captured_seq,
-        loss: e.loss,
-        reconciliation_required: true,
-      };
+      validate(db, dest);
     } finally {
-      if (disk) disk.close();
-      else if (
-        existsSync(lock) &&
-        JSON.parse(readFileSync(lock, "utf8")).token === token
-      )
-        removeLock(safePath(this.home, lock));
+      db.close();
+    }
+    this.approvals.consume(ref, "restore", e, String(e.restoration_id));
+    this.fault?.("restore_before_switch");
+    // A manifest-only legacy admission guard also makes old E2 writers refuse
+    // a recovered root whose legacy DB and manifest were both lost.
+    if (
+      !existsSync(join(this.home, "workspace.json")) &&
+      !existsSync(join(this.home, "zara.sqlite"))
+    )
+      durableNew(
+        join(this.home, "workspace.json"),
+        JSON.stringify({
+          workspace_id: e.workspace_id,
+          epoch: e.new_epoch,
+          schema_version: 7,
+          inactive_generation_guard: true,
+        }),
+      );
+    writeControl(this.home, {
+      format: 2,
+      coordination_id: c.identity,
+      coordination_protocol: 1,
+      generation: "generations/" + basename(dest),
+      workspace_id: String(e.workspace_id),
+      epoch: String(e.new_epoch),
+      restoration: {
+        ...e,
+        preview_digest: p.operation_digest,
+        decision: p.answer ?? null,
+        recorded_at: new Date().toISOString(),
+      },
+    });
+    this.fault?.("restore_after_switch");
+    return {
+      switched: true,
+      epoch: e.new_epoch,
+      backup_identity: e.backup_identity,
+      captured_seq: e.captured_seq,
+      loss: e.loss,
+      reconciliation_required: true,
+    };
+  }
+  restore(ref: string, disk?: Disk) {
+    return this.withCoordinator(disk, (c) => {
+      let token: string | undefined;
+      try {
+        token = c.sync("maintenance", () => {
+          this.authorize(true);
+          const preview = this.approvals.read(ref);
+          this.approvals.verify(ref, "restore", preview.payload.exact);
+          return c.beginMaintenance("restore", this.context.epoch);
+        });
+        // Persist imported barriers before the irreversible control switch.
+        // A later failure can only leave extra conservative barriers.
+        c.sync("maintenance", () => {
+          c.exclusiveMaintenance(token);
+          this.importRestoreBarriers(ref, c);
+        });
+        return c.sync("maintenance", () => this.switchRestore(ref, disk, c));
+      } finally {
+        if (token) c.sync("maintenance", () => c.endMaintenance(token));
+        if (disk?.connectionClosed) disk.close();
+      }
+    });
+  }
+  async restoreWhenDrained(ref: string, disk?: Disk, timeoutMs = 5000) {
+    const shared = disk?.coordination ?? this.coordination;
+    if (!shared) return this.restore(ref, disk);
+    let token: string | undefined;
+    try {
+      token = await shared.run("maintenance", () => {
+        this.authorize(true);
+        const preview = this.approvals.read(ref);
+        this.approvals.verify(ref, "restore", preview.payload.exact);
+        return shared.beginMaintenance("restore", this.context.epoch);
+      });
+      const deadline = Date.now() + timeoutMs;
+      while (true) {
+        const pending = await shared.run(
+          "maintenance",
+          () => shared.drainMaintenance().pending,
+        );
+        if (!pending) break;
+        requireThat(
+          Date.now() < deadline,
+          "STORE_BUSY",
+          "Live operations are still settling; restore did not switch generations. Retry after they settle.",
+        );
+        // Settlers must acquire the gate while this administrator waits.
+        await new Promise<void>((resolve) =>
+          setTimeout(resolve, Math.min(25, Math.max(1, deadline - Date.now()))),
+        );
+      }
+      await shared.run("maintenance", () => {
+        shared.exclusiveMaintenance(token);
+        this.importRestoreBarriers(ref, shared);
+      });
+      return await shared.run("maintenance", () =>
+        this.switchRestore(ref, disk, shared),
+      );
+    } finally {
+      if (token)
+        await shared.run("maintenance", () => shared.endMaintenance(token));
+      if (disk?.connectionClosed) disk.close();
     }
   }
 
@@ -1002,8 +1262,70 @@ export class Administration {
       },
     };
   }
+  private recoverAbandonedBackups(disk: Disk) {
+    if (
+      !this.context.can_write ||
+      !this.context.scopes?.includes("restricted:write")
+    )
+      return;
+    this.authorize(true);
+    disk.coordination.assertHeld();
+    for (const row of disk.all<{ key: string; json: string }>(
+      "SELECT key,json FROM lifecycle_pins",
+    )) {
+      const pin = JSON.parse(row.json);
+      if (
+        pin.kind !== "backup-all" ||
+        typeof pin.operation_id !== "string" ||
+        typeof pin.bundle !== "string"
+      )
+        continue;
+      const operation = disk.coordination.operation(pin.operation_id);
+      if (
+        !operation ||
+        operation.kind !== "backup" ||
+        operation.runtime_id === disk.coordination.runtimeId ||
+        operation.digest !== bytesHash(pin.bundle) ||
+        !operation.resources.includes("backup:" + pin.bundle)
+      )
+        continue;
+      try {
+        disk.coordination.adopt(pin.operation_id);
+      } catch (error) {
+        if ((error as { code?: string }).code === "STORE_BUSY") continue;
+        throw error;
+      }
+      const bundle = this.location(pin.bundle);
+      if (!existsSync(join(bundle, "manifest.json")))
+        atomicJSON(join(bundle, "INCOMPLETE.json"), {
+          complete: false,
+          reason:
+            "Abandoned backup capture cancelled only after its runtime OS lease was proved gone.",
+          operation_id: pin.operation_id,
+        });
+      disk.run(
+        "DELETE FROM lifecycle_pins WHERE key=? AND json=?",
+        row.key,
+        row.json,
+      );
+      disk.run(
+        "INSERT INTO lifecycle_events VALUES(?,?)",
+        "backup-recovery-" + randomUUID(),
+        JSON.stringify({
+          kind: "backup_capture_recovery",
+          operation_id: pin.operation_id,
+          candidate: bundle,
+          status: "aborted",
+          complete_claimed: false,
+          candidate_files_preserved: true,
+        }),
+      );
+      disk.coordination.release(pin.operation_id);
+    }
+  }
   private garbage(disk: Disk) {
     this.authorize(true);
+    this.recoverAbandonedBackups(disk);
     disk.assertActive?.(this.context.epoch, true);
     const live = new Set<string>();
     for (const { json } of disk.all<{ json: string }>(
@@ -1080,96 +1402,105 @@ export class Administration {
     };
   }
   cleanupPreview(disk: Disk, consequence: string, alternatives: string) {
-    const exact = this.garbage(disk);
-    const draft = this.approvals.draft(
-      "cleanup",
-      exact,
-      [],
-      consequence,
-      alternatives,
-    );
-    this.drafts.add(draft.request_id);
-    return draft;
+    return disk.coordination.sync("mutate", () => {
+      const exact = this.garbage(disk);
+      const draft = this.approvals.draft(
+        "cleanup",
+        exact,
+        [],
+        consequence,
+        alternatives,
+      );
+      this.drafts.add(draft.request_id);
+      return draft;
+    });
   }
   cleanup(ref: string, disk: Disk) {
-    this.authorize(true);
-    this.approvals.read(ref);
-    const exact = this.garbage(disk);
-    this.approvals.verify(ref, "cleanup", exact);
-    const id = "cleanup-" + randomUUID(),
-      removed: string[] = [];
-    this.approvals.consume(ref, "cleanup", exact, id);
-    disk.run(
-      "INSERT INTO lifecycle_events VALUES(?,?)",
-      id,
-      JSON.stringify({ kind: "cleanup", status: "requested", exact, removed }),
-    );
-    const persist = (status: string) => {
-      const receipt = {
-        kind: "cleanup",
-        visibility: "restricted",
-        request_id: id,
-        status,
-        epoch: this.context.epoch,
-        removed: [...removed],
-        coverage: exact.coverage,
+    return disk.coordination.sync("mutate", () => {
+      this.authorize(true);
+      this.approvals.read(ref);
+      const exact = this.garbage(disk);
+      this.approvals.verify(ref, "cleanup", exact);
+      const id = "cleanup-" + randomUUID(),
+        removed: string[] = [];
+      this.approvals.consume(ref, "cleanup", exact, id);
+      disk.run(
+        "INSERT INTO lifecycle_events VALUES(?,?)",
+        id,
+        JSON.stringify({
+          kind: "cleanup",
+          status: "requested",
+          exact,
+          removed,
+        }),
+      );
+      const persist = (status: string) => {
+        const receipt = {
+          kind: "cleanup",
+          visibility: "restricted",
+          request_id: id,
+          status,
+          epoch: this.context.epoch,
+          removed: [...removed],
+          coverage: exact.coverage,
+        };
+        disk.exec("BEGIN IMMEDIATE");
+        try {
+          disk.run(
+            "UPDATE lifecycle_events SET json=? WHERE id=?",
+            JSON.stringify(receipt),
+            id,
+          );
+          disk.run(
+            "INSERT INTO intents VALUES(?,?,?) ON CONFLICT(request_id) DO UPDATE SET json=excluded.json",
+            id,
+            bytesHash(canonical(exact)),
+            JSON.stringify({
+              request_id: id,
+              kind: "cleanup",
+              status,
+              epoch: this.context.epoch,
+              payload: exact,
+              receipt,
+            }),
+          );
+          disk.run(
+            "INSERT INTO receipts VALUES(?,?,?,?) ON CONFLICT(request_id) DO UPDATE SET json=excluded.json",
+            id,
+            bytesHash(canonical(exact)),
+            JSON.stringify(receipt),
+            "{}",
+          );
+          disk.exec("COMMIT");
+          return receipt;
+        } catch (err) {
+          disk.exec("ROLLBACK");
+          throw err;
+        }
       };
-      disk.exec("BEGIN IMMEDIATE");
+      persist("requested");
       try {
-        disk.run(
-          "UPDATE lifecycle_events SET json=? WHERE id=?",
-          JSON.stringify(receipt),
-          id,
-        );
-        disk.run(
-          "INSERT INTO intents VALUES(?,?,?) ON CONFLICT(request_id) DO UPDATE SET json=excluded.json",
-          id,
-          bytesHash(canonical(exact)),
-          JSON.stringify({
-            request_id: id,
-            kind: "cleanup",
-            status,
-            epoch: this.context.epoch,
-            payload: exact,
-            receipt,
-          }),
-        );
-        disk.run(
-          "INSERT INTO receipts VALUES(?,?,?,?) ON CONFLICT(request_id) DO UPDATE SET json=excluded.json",
-          id,
-          bytesHash(canonical(exact)),
-          JSON.stringify(receipt),
-          "{}",
-        );
-        disk.exec("COMMIT");
-        return receipt;
+        for (const item of exact.candidates) {
+          // Fresh references/pins and exact file identity before every native unlink.
+          const current = this.garbage(disk).candidates.find(
+            (c) => c.path === item.path,
+          );
+          requireThat(
+            current && canonical(current) === canonical(item),
+            "REVISION_CONFLICT",
+            "Cleanup references/pins/identity changed.",
+          );
+          removeOwned(disk.home, item.path);
+          removed.push(item.path);
+          persist("requested");
+          this.fault?.("cleanup_after_unlink");
+        }
+        return persist("confirmed");
       } catch (err) {
-        disk.exec("ROLLBACK");
+        persist("unknown");
         throw err;
       }
-    };
-    persist("requested");
-    try {
-      for (const item of exact.candidates) {
-        // Fresh references/pins and exact file identity before every native unlink.
-        const current = this.garbage(disk).candidates.find(
-          (c) => c.path === item.path,
-        );
-        requireThat(
-          current && canonical(current) === canonical(item),
-          "REVISION_CONFLICT",
-          "Cleanup references/pins/identity changed.",
-        );
-        removeOwned(disk.home, item.path);
-        removed.push(item.path);
-        persist("requested");
-        this.fault?.("cleanup_after_unlink");
-      }
-      return persist("confirmed");
-    } catch (err) {
-      persist("unknown");
-      throw err;
-    }
+    });
   }
   releasePinPreview(
     disk: Disk,
@@ -1177,71 +1508,64 @@ export class Administration {
     consequence: string,
     alternatives: string,
   ) {
-    this.authorize(true);
-    disk.assertActive?.(this.context.epoch, true);
-    const row = disk.get<{ json: string }>(
-        "SELECT json FROM lifecycle_pins WHERE key=?",
-        key,
-      ),
-      pin = row ? JSON.parse(row.json) : null;
-    requireThat(
-      pin?.kind === "backup" && pin.bundle,
-      "REFERENCE_NOT_FOUND",
-      "Held backup pin unavailable.",
-    );
-    const verified = this.verify(pin.bundle),
-      draft = this.approvals.draft(
-        "release_backup_pin",
-        { key, pin, backup_identity: verified.identity },
-        [],
-        consequence,
-        alternatives,
+    return disk.coordination.sync("mutate", () => {
+      this.authorize(true);
+      disk.assertActive?.(this.context.epoch, true);
+      const row = disk.get<{ json: string }>(
+          "SELECT json FROM lifecycle_pins WHERE key=?",
+          key,
+        ),
+        pin = row ? JSON.parse(row.json) : null;
+      requireThat(
+        pin?.kind === "backup" && pin.bundle,
+        "REFERENCE_NOT_FOUND",
+        "Held backup pin unavailable.",
       );
-    this.drafts.add(draft.request_id);
-    return draft;
+      const verified = this.verify(pin.bundle),
+        draft = this.approvals.draft(
+          "release_backup_pin",
+          { key, pin, backup_identity: verified.identity },
+          [],
+          consequence,
+          alternatives,
+        );
+      this.drafts.add(draft.request_id);
+      return draft;
+    });
   }
   releasePin(ref: string, disk: Disk) {
-    this.authorize(true);
-    disk.assertActive?.(this.context.epoch, true);
-    const p = this.approvals.read(ref),
-      e = p.payload.exact;
-    const row = disk.get<{ json: string }>(
-      "SELECT json FROM lifecycle_pins WHERE key=?",
-      String(e.key),
-    );
-    requireThat(
-      row && canonical(JSON.parse(row.json)) === canonical(e.pin),
-      "APPROVAL_STALE",
-      "Backup pin changed.",
-    );
-    requireThat(
-      this.verify(String((e.pin as JsonObject).bundle)).identity ===
-        e.backup_identity,
-      "APPROVAL_STALE",
-      "Held independent bundle changed.",
-    );
-    this.approvals.consume(
-      ref,
-      "release_backup_pin",
-      e,
-      "release-" + randomUUID(),
-    );
-    disk.run("DELETE FROM lifecycle_pins WHERE key=?", String(e.key));
-    return {
-      released: e.key,
-      backup_identity: e.backup_identity,
-      independent_bundle_preserved: true,
-    };
+    return disk.coordination.sync("mutate", () => {
+      this.authorize(true);
+      disk.assertActive?.(this.context.epoch, true);
+      const p = this.approvals.read(ref),
+        e = p.payload.exact;
+      const row = disk.get<{ json: string }>(
+        "SELECT json FROM lifecycle_pins WHERE key=?",
+        String(e.key),
+      );
+      requireThat(
+        row && canonical(JSON.parse(row.json)) === canonical(e.pin),
+        "APPROVAL_STALE",
+        "Backup pin changed.",
+      );
+      requireThat(
+        this.verify(String((e.pin as JsonObject).bundle)).identity ===
+          e.backup_identity,
+        "APPROVAL_STALE",
+        "Held independent bundle changed.",
+      );
+      this.approvals.consume(
+        ref,
+        "release_backup_pin",
+        e,
+        "release-" + randomUUID(),
+      );
+      disk.run("DELETE FROM lifecycle_pins WHERE key=?", String(e.key));
+      return {
+        released: e.key,
+        backup_identity: e.backup_identity,
+        independent_bundle_preserved: true,
+      };
+    });
   }
-}
-import { unlinkSync } from "node:fs";
-function removeLock(path: string) {
-  const before = statSync(path, { bigint: true }),
-    after = statSync(path, { bigint: true });
-  requireThat(
-    before.dev === after.dev && before.ino === after.ino,
-    "WORK_IN_USE",
-    "Lock identity changed.",
-  );
-  unlinkSync(path);
 }

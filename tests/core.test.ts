@@ -304,15 +304,14 @@ test("source expiry, forged fields and unsupported kinds do not mutate domain st
   assert.equal(f.core.sequence(), 0);
   f.disk.close();
 });
-test("one writing process, read-only/corrupt/missing stores never claim success or reset saved bytes", () => {
+test("shared writers coexist; explicit read-only/corrupt/missing stores never claim success or reset saved bytes", () => {
   const f = fixture();
   f.core.commit(payload(f.core));
   const second = new DiskStorage(f.home);
-  assert.equal(second.readonly, true);
-  assert.throws(
-    () => make(second).commit(payload(make(second))),
-    /writing process/,
-  );
+  assert.equal(second.readonly, false);
+  const peer = make(second);
+  assert.equal(peer.commit(payload(peer, "second-writer")).committed, true);
+  assert.equal(f.core.sequence(), 2);
   second.close();
   f.disk.exec("PRAGMA query_only=ON");
   assert.throws(() => f.core.commit(payload(f.core, "read-only-fault")));
@@ -383,7 +382,7 @@ test("retained Markdown survives source removal, exact bytes/read ranges and int
   );
   f.disk.close();
 });
-test("bounded catalog cursors reject changed generation and permissions apply to reads", () => {
+test("live catalog cursors survive unrelated changes and permissions apply to reads", () => {
   const f = fixture();
   f.core.commit(payload(f.core, "first"));
   f.core.commit(payload(f.core, "second"));
@@ -391,10 +390,10 @@ test("bounded catalog cursors reject changed generation and permissions apply to
   assert.equal(page.has_more, true);
   assert.ok(page.next_cursor);
   f.core.commit(payload(f.core, "third"));
-  assert.throws(
-    () => f.core.browse("work", undefined, 1, page.next_cursor!),
-    /Restart/,
-  );
+  const continued = f.core.browse("work", undefined, 1, page.next_cursor!).data;
+  assert.equal(continued.cards.length, 1);
+  assert.notEqual(continued.cards[0].id, page.cards[0].id);
+  assert.equal(continued.has_more, false);
   f.core.context.processing_allowed = false;
   assert.throws(() => f.core.map(), /authority/);
   assert.throws(() => f.core.snapshot(), /authority/);

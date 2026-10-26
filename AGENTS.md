@@ -1,31 +1,30 @@
-# Zaratustra — managed Activity documents
+# Zaratustra — concurrent workspace
 
-Current owner assignment, 23 October 2026: implement the agreed general document process.
-Pi 1.4 only. Base fa6a38e9856c712d6b677419c14830f8f1fad364. Read docs/DOCUMENTS.md.
-The owner explicitly requests only quick necessary mechanical checks, types/lint/build.
-Do not run npm run check/deliver/full scale suites or live model/RPC conversations for
-this task. No model API calls or synthetic Activity-quality demonstrations. Real Activity
-usefulness is the owner's trial. Preserve existing evidence and failed checks honestly.
-Earlier Sleep assignment is retained in docs/documents-predecessor-\*-fa6a38e.md; its
-scope, mandatory long/live qualification and branch rules do not control this new task.
+Current owner assignment, 26 October 2026: implement the approved parallel-agent plan.
+Base 4f31e3088a95fdad41457418d4b18963b4c69488; branch codex/concurrent-workspace.
+One local shared workspace, Pi 1.4.0, isolated verification Node 24.22.1.
+Preserve all domain identities/history and existing trust/approval/restore boundaries.
+The new owner assignment supersedes the earlier lifetime-single-writer restriction.
 
-One implementation writer. A focused read-only helper review is authorized by the
-requesting-code-review skill. No private ZT/Health data, credentials, Direction OS live
-state or archive access. Keep global Node/Pi unchanged. Public source edits stay here;
-mechanical tests use isolated temp directories, not real personal data.
+Use stable SQLite coordination, short complete Core phases, runtime OS leases,
+durable narrow resource reservations, schema 9 and fenced maintenance. No daemon,
+server, model/planner, per-Activity SQL tables, runtime Git or owner ignore edits.
+Core stays portable behind StoragePort. Native Pi owns actual text writes.
+Independent implementers may own disjoint modules; one root integrator owns shared
+interfaces and commits. Never revert another writer's changes. Read module AGENTS;
+references there to a lifetime writer are superseded by this assignment.
 
-Keep Core Pi-independent, SQLite behind StoragePort, one trusted writer and existing
-access/approval/restore barriers. Native Pi owns text writing. Reuse Changes, Evidence,
-Entity resources, material blobs, intents and receipts. No per-Activity SQL tables,
-new editor/runtime/model/planner/background daemon, runtime Git or owner ignore edits.
-Files are canonical contents; Core holds registry, immutable observed versions and links.
-Schemas are standard bounded JSON Schema, not a custom language. Original sources stay
-original; working instructions stay English and conversation uses the owner's language.
+Run focused mechanical concurrency/recovery/privacy tests, types, lint, build and
+review. Owner amendment: stop 100-process qualification; use at most ten processes and
+short necessary checks. Preserve failed larger attempts; no more heavy growth runs. No paid
+model/API conversations, full historical check/deliver/scale sweeps or invented live
+acceptance. Preserve failures and report measured limits. Do not read or modify
+private ZT/Health, credentials, Direction OS live state or archives. Keep global
+Node/Pi unchanged; verify with a downloaded, checksum-checked isolated runtime.
 
-Run focused tests/documents.test.ts plus selected fast regressions, tsc, ESLint,
-format checks and build. Do not claim independent live PASS, full R1/T31 or owner
-usefulness. Publish the checked source normally; no force push or foreign-ref changes.
-The owner updates private ZT manually. Hand back exact commit, quick checks, remaining
-limits, zero model calls and one pinned install command.
+Publish checked source normally, no force push or foreign-ref changes. Hand back
+exact commit, checks, limitations, zero model calls and pinned owner update command.
+The owner updates private ZT after closing old sessions; no automatic migration of
+real personal data during development.
 
 END_OF_FILE: AGENTS.md

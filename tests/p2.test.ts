@@ -141,7 +141,9 @@ test("import preflight uses Core processing, identity and write authority", (t) 
   f.core.context.can_write = true;
   const epoch = f.core.context.epoch;
   f.core.context.epoch = "wrong";
-  assert.throws(() => f.core.authorizeImport(), /epoch mismatch/);
+  assert.throws(() => f.core.authorizeImport(), {
+    code: "RESTORE_RECONCILIATION_REQUIRED",
+  });
   f.core.context.epoch = epoch;
   assert.doesNotThrow(() => f.core.authorizeImport());
   assert.equal(domain(f.disk), before);

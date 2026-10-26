@@ -1,12 +1,36 @@
-outcome: Owner-amended Pi1.4-only development/qualification alignment complete; exact dev SDK1.4.0. Validated public/native toolchain7c3861727befe7f18df855afb4c658abaa88d49e. Production runtime delta vsd9b65518c157391f20586a36f32d87b438e3c51c is ZERO; original qualified runtime07510ecb20e47bf01e40207b0013083e8b8e32e5. No compatibility correction or new feature. Final docs SHA/readback sealed externally; no independent PASS/fullR1/T31/owner usefulness claim.
-evidence: docs/SLEEP-PI14.md and docs/sleep-pi14-evidence/. Raw new evidence C:/projects/zaratustra-v1-sleep-pi14-evidence-20261022; final-public/native exact identity in final-readback.json and completed handback. npm ci passed; one npm run deliver includes full check:161tests/159pass/2inherited Windows skips/0fail. Actual development/global package+loadedSDK+CLI1.4.0; fresh normal discovery1extension/3skills and default-cwd startup M passed with0provider dispatch. All29 runtime/working-instruction files,21 compiled artifacts and22 production lock entries unchanged; native four dependencies resolve outside checkout.
-assumptions: Owner's exact amendment «если что работаем только на pi 1.4» supersedes earlier1.3 baseline/separate1.4 arrangement. No further1.3 executions. Prior genuine1.4 L transfers by measured product/working-instruction/production-dependency and actual SDK/CLI byte equality; prior1.3 results stay historical. Original specification and prior reports/seals/ledgers unchanged; completed d9b RESULT byte-preserved in docs/sleep-preview-RESULT-d9b6551.md.
-cuts: Only devpin/scoped lock/current guidance and synthetic host guard changed. Five known coordinator categories retain prior mechanical dispositions; new full1.4 regressions pass. No new L for unchanged production behavior. Native lock bytes differ through seven measured peer:true removals and package-key reordering, with versions/integrities unchanged. Two Windows permission/case-sensitive skips; full dev audit reports9high/native production0, no unrelated audit fix. Root's separate fresh review/fullR1/T31/owner usefulness/all-version audit remain separate.
-cost: Linked prior cumulative58attempts/626dispatches/USD24.3995008 Pi estimate;36607395 input including cache/191161 output/26698368 cache-read. This host amendment adds0model attempts/0dispatches/USD0incremental Pi estimate; total cost is NOT zero. Actual billing and Codex CLI monetary cost unknown. All previous failures and accounting preserved, including historical1.3/early1.4; two corrected M audit assumptions and authoring/read setup errors retained. No budgets/caps/reset/double count; independent reviewer accounting is separate.
-manual-acceptance: Root coordinates the separate fresh physical reviewer and eventual main merge. Owner judges usefulness and updates privateZT manually. No global Pi/Node change, private workspace access or credential-content exposure/copy/manual alteration. Native AuthStorage may refresh normally. No owner acceptance or independent verdict assigned here. No remaining product/toolchain blocker observed within this bounded amendment; final exact publication/install verified in external readback before handback.
-next: solmax
+# Concurrent workspace delivery
 
-Current reproduction, M/L attribution, inherited five-category dispositions and exact validated
-isolated install command: [SLEEP-PI14.md](docs/SLEEP-PI14.md). Final documentation commit cannot
-embed its own SHA; exact final published/native SHA and install command are in external
-final-readback.json and the completed handback. No production behavior changed after7c38617.
+Base: 4f31e3088a95fdad41457418d4b18963b4c69488. Branch codex/concurrent-workspace.
+Package 0.6.0-dev.1. Qualified runtime: Pi 1.4.0, isolated Node 24.22.1 / SQLite 3.53.4.
+
+Delivered: stable SQLite coordination, short complete Core phases, OS runtime leases,
+FIFO admission, narrow document/native reservations, cancellation and crash recovery.
+Schema 9/control 2 preserve domain IDs, history and materials while fencing old writers.
+Live cursors and incremental access/text indexes preserve privacy across concurrent work.
+Restore drains live operations, preserves unknown barriers and recovers dead administrators.
+No server, daemon, launcher, per-Activity databases or runtime Git was added.
+
+Owner amendment: ten processes are sufficient; no further 100-process/heavy-growth runs.
+Accepted synthetic evidence: 2 processes/20 receipts (~1.57s execution), 10 processes/
+100 receipts (~9.14s). Seed history and cursor continuation preserved. These are real
+storage/Core processes, not model sessions. Two earlier larger failures remain FAILED
+in scale-attempt-01.json and scale-attempt-02.json; 100-process support is NOT qualified.
+No stress processes remain. Fixtures were Windows Temp directories, never private ZT.
+
+Final focused tests: 51 PASS, zero failures/skips, 48.8s, at most two test suites at once.
+Types, source lint, build and module boundaries (44 modules/127 dependencies) passed.
+Targeted review found and refuted close/cancel/claim/retry/orphan/drain/restore races;
+final reviewer found no important remaining issue in amended 10-process scope.
+Neighboring Core/Work/P2: 27 initially passed; two obsolete assertions were updated and
+passed individually. Full historical check/deliver was not run. Full R1/T31 and real
+owner usefulness are not claimed. Product provider/model calls: ZERO.
+
+Global Node/Pi and private ZT/Health were unchanged. Close old Pi sessions once, update
+Node to the qualified 24.22.1, then install the exact published commit locally. Existing
+Activities migrate safely; no restart-from-scratch or per-launch variables are needed.
+Live owners cannot be displaced by timeout; uncertain actions require inspection, not
+replay. One computer/local disk, cooperative trusted agents. Arbitrary shell exactly-once,
+independently versioned Work steps and multi-device concurrent work remain separate.
+Details: CONCURRENCY.md; evidence: concurrency-evidence/verification.json and scale.json.
+
+END_OF_FILE: RESULT.md

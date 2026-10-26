@@ -14,6 +14,7 @@ import type {
   AddressedRow,
   CallContext,
   JsonObject,
+  StoragePort,
 } from "../src/core/index.ts";
 import {
   Administration,
@@ -21,6 +22,29 @@ import {
   activeLocation,
 } from "../src/storage/index.ts";
 import { DatabaseSync } from "node:sqlite";
+
+function removeConcurrentFixtureSchema(db: DatabaseSync, target: number) {
+  for (const row of db
+    .prepare("SELECT name FROM sqlite_schema WHERE type='trigger'")
+    .all() as { name: string }[])
+    if (/^(memory_dirty_|concurrency_)/.test(row.name))
+      db.exec('DROP TRIGGER "' + row.name + '"');
+  for (const name of [
+    "memory_pending",
+    "memory_technical",
+    "memory_dirty",
+    "memory_edges",
+    "memory_nodes",
+    "memory_ordinals",
+    "memory_index_meta",
+    "concurrency_meta",
+  ])
+    db.exec("DROP TABLE IF EXISTS " + name);
+  db.exec(
+    "DROP INDEX IF EXISTS memory_access_restricted; DROP INDEX IF EXISTS sleep_prior_item;",
+  );
+  db.prepare("DELETE FROM migrations WHERE version>?").run(target);
+}
 
 const ref = (client_ref: string) => ({ client_ref });
 const fail = (f: () => unknown, code: string) =>
@@ -331,7 +355,7 @@ test("Sleep access: exact commit previews preserve authorized payload and approv
   );
   const ro = new DiskStorage(f.home);
   t.after(() => ro.close());
-  assert.equal(ro.readonly, true);
+  assert.equal(ro.readonly, false);
   fail(
     () => new Core(ro, { ...f.ctx, scopes: [] }).operation(preview.request_id),
     "REFERENCE_NOT_FOUND",
@@ -540,7 +564,7 @@ test("Sleep access: unclassified legacy preparations hide full operations, disco
     assert.equal(f.disk.all("SELECT * FROM sleep_reviews").length, 0);
     const ro = new DiskStorage(f.home);
     t.after(() => ro.close());
-    assert.equal(ro.readonly, true);
+    assert.equal(ro.readonly, false);
     for (const disk of [f.disk, ro]) {
       const reader = new Core(disk, { ...f.ctx, scopes: [] });
       fail(() => reader.read(e), "REFERENCE_NOT_FOUND");
@@ -551,7 +575,7 @@ test("Sleep access: unclassified legacy preparations hide full operations, disco
       );
       assert.deepEqual(reader.snapshot(), {
         ...snapshot,
-        write_mode: disk.readonly ? "read-only" : "single-writer",
+        write_mode: disk.readonly ? "read-only" : "coordinated",
       });
       assert.deepEqual(reader.browse("operations"), operations);
       assert.deepEqual(reader.browse("changes"), changes);
@@ -612,56 +636,54 @@ test("Sleep access: current permitted-only pending starts remain fully readable 
   }
 });
 
-test("Sleep access: read-only projection cannot downgrade a writer's newly committed restriction", (t) => {
+test("Sleep access: committed inherited restrictions reach the next read snapshot without full projection", (t) => {
   const f = fixture();
   t.after(() => f.disk.close());
   const pub = f.evidence("Permitted concurrency control"),
     r = f.start();
   f.finish(r);
   const w = f.commit([work("ordinary")]).created.ordinary;
-  const ro = new DiskStorage(f.home);
-  t.after(() => ro.close());
-  assert.equal(ro.readonly, true);
-  const low = new Core(ro, {
+  const observer = new DiskStorage(f.home);
+  t.after(() => observer.close());
+  assert.equal(observer.readonly, false);
+  const low = new Core(observer, {
     ...f.ctx,
     scopes: [],
-    runtime_id: "low-interleaved",
+    can_write: false,
+    runtime_id: "explicit-observer",
   });
-  const original = ro.all.bind(ro);
-  let interleaved = false,
-    priv = "";
-  ro.all = <T>(sql: string, ...params: (string | number | null)[]): T[] => {
-    if (
-      !interleaved &&
-      sql === "SELECT id,revision,restricted FROM memory_docs"
-    ) {
-      interleaved = true;
-      priv = protectedEvidence(f, "SYNTHETIC-INTERLEAVED-PRIVATE-462098");
-      f.commit(
-        [
-          {
-            op: "update_record",
-            ref: { id: w },
-            title: f.read(w).title,
-            data: {
-              ...f.read(w).data,
-              current_state: "SYNTHETIC-INTERLEAVED-PRIVATE-462098",
-              context_refs: [{ id: priv }],
-            },
-          },
-        ],
-        [w],
-      );
-    }
+  const original = observer.all.bind(observer);
+  observer.all = <T>(
+    sql: string,
+    ...params: (string | number | null)[]
+  ): T[] => {
+    assert.notEqual(
+      sql,
+      "SELECT id,revision,restricted FROM memory_docs",
+      "Ready access format must not reconstruct every historical restriction.",
+    );
     return original<T>(sql, ...params);
   };
+  assert.ok(low.read(w));
+  const priv = protectedEvidence(f, "SYNTHETIC-INTERLEAVED-PRIVATE-462098");
+  f.commit(
+    [
+      {
+        op: "update_record",
+        ref: { id: w },
+        title: f.read(w).title,
+        data: {
+          ...f.read(w).data,
+          current_state: "SYNTHETIC-INTERLEAVED-PRIVATE-462098",
+          context_refs: [{ id: priv }],
+        },
+      },
+    ],
+    [w],
+  );
   const result = JSON.stringify(low.snapshot());
-  assert(interleaved);
   for (const hidden of ["SYNTHETIC-INTERLEAVED-PRIVATE-462098", w, priv])
-    assert.ok(
-      !result.includes(hidden),
-      "Concurrent inherited restriction downgraded by old read projection",
-    );
+    assert.ok(!result.includes(hidden));
   assert.ok(low.read(pub));
   fail(() => low.read(w), "REFERENCE_NOT_FOUND");
 });
@@ -724,10 +746,12 @@ test("Sleep access: protected-only progress hides metadata and preserves visible
     (pl.browse("changes").data as { generation: string }).generation,
     first.generation,
   );
-  fail(
-    () => pl.browse("changes", undefined, 1, first.next_cursor),
-    "CURSOR_INVALIDATED",
-  );
+  const continued = pl.browse("changes", undefined, 1, first.next_cursor);
+  assert.ok(!JSON.stringify(continued).includes(pending.reason));
+  const replayed = pl.browse("changes", undefined, 1, first.next_cursor);
+  assert.deepEqual(replayed.data.cards, continued.data.cards);
+  assert.equal(replayed.data.has_more, continued.data.has_more);
+  assert.equal(replayed.data.generation, continued.data.generation);
 });
 
 test("Sleep access: exact correction grounds and review status survive stale schema-7 projection, read-only reopen, rebuild and restore without canonical rewrites", async (t) => {
@@ -786,18 +810,46 @@ test("Sleep access: exact correction grounds and review status survive stale sch
       "SELECT json FROM records UNION ALL SELECT json FROM revisions UNION ALL SELECT json FROM changes UNION ALL SELECT json FROM sleep_items",
     );
   const preserved = canonicalRows();
-  // Reconstruct only the old derived access flags, as in an already progressed
-  // schema-7 store written before this fix. Exact canonical support stays intact.
-  f.disk.run(
-    "UPDATE memory_docs SET restricted=0 WHERE id IN (?,?,?)",
-    m,
-    w,
-    run,
-  );
-  const ro = new DiskStorage(f.home);
+  // Use a separate actual legacy shape: a schema9 ready marker must never
+  // suppress repair of intentionally stale schema7 derived access flags.
+  const legacyPath = join(f.home, "legacy-access.sqlite");
+  f.disk.exec("VACUUM INTO '" + legacyPath.replaceAll("'", "''") + "'");
+  const predecessor = new DatabaseSync(legacyPath);
+  removeConcurrentFixtureSchema(predecessor, 7);
+  const legacyWorkspace = { ...f.disk.workspace, schema_version: 7 };
+  predecessor
+    .prepare("UPDATE meta SET json=?")
+    .run(JSON.stringify(legacyWorkspace));
+  predecessor.exec("PRAGMA user_version=7");
+  predecessor
+    .prepare("UPDATE memory_docs SET restricted=0 WHERE id IN (?,?,?)")
+    .run(m, w, run);
+  predecessor.close();
+  const raw = new DatabaseSync(legacyPath, { readOnly: true });
+  let closed = false;
+  const ro: StoragePort & { close(): void } = {
+    workspace: legacyWorkspace,
+    readonly: true,
+    exec: () => {
+      throw Error("Synthetic legacy port is read-only.");
+    },
+    run: () => {
+      throw Error("Synthetic legacy port is read-only.");
+    },
+    get: <T>(sql: string, ...params: (string | number | null)[]) =>
+      raw.prepare(sql).get(...params) as T | undefined,
+    all: <T>(sql: string, ...params: (string | number | null)[]) =>
+      raw.prepare(sql).all(...params) as T[],
+    readMaterial: (hash: string) => f.disk.readMaterial(hash),
+    close: () => {
+      if (!closed) {
+        raw.close();
+        closed = true;
+      }
+    },
+  };
   t.after(() => ro.close());
-  assert.equal(ro.readonly, true);
-  const inspect = (disk: DiskStorage) => {
+  const inspect = (disk: StoragePort) => {
     const low = new Core(disk, {
       ...f.ctx,
       ...disk.workspace,
@@ -1075,9 +1127,17 @@ test("Sleep disk fresh-process read-only continuation, empty review and explicit
   assert.equal(batch.cards.length, 10);
   assert.equal(batch.has_more, true);
   const readonly = new DiskStorage(f.home);
-  const observer = new Core(readonly, { ...f.ctx, runtime_id: "read-only" });
+  const observer = new Core(readonly, {
+    ...f.ctx,
+    runtime_id: "concurrent-observer",
+  });
   assert.deepEqual(observer.sleepBatch(run), f.core.sleepBatch(run));
-  fail(() => observer.commit(f.checkpoint(run)), "READ_ONLY");
+  const deniedWriter = new Core(readonly, {
+    ...f.ctx,
+    can_write: false,
+    runtime_id: "explicit-read-only",
+  });
+  fail(() => deniedWriter.commit(f.checkpoint(run)), "READ_ONLY");
   readonly.close();
   f.disk.close();
   const nextDisk = new DiskStorage(f.home);
@@ -1205,6 +1265,7 @@ test("Sleep disk schema-6 migration faults retain canonical bytes and verified b
       epoch: metadata.epoch,
       schema_version: 6,
     };
+    removeConcurrentFixtureSchema(db, 6);
     db.exec(
       "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; PRAGMA user_version=6;",
     );
@@ -1221,7 +1282,7 @@ test("Sleep disk schema-6 migration faults retain canonical bytes and verified b
     assert.ok(readdirSync(f.home).some((p) => p.startsWith("pre-schema-7-")));
     const migrated = new DiskStorage(f.home);
     t.after(() => migrated.close());
-    assert.equal(migrated.workspace.schema_version, 7);
+    assert.equal(migrated.workspace.schema_version, 9);
     assert.deepEqual(migrated.all("SELECT * FROM records"), rows);
     assert.deepEqual(migrated.all("SELECT * FROM receipts"), receipts);
     assert.ok(migrated.get("SELECT id FROM records WHERE id=?", e));
@@ -1303,15 +1364,31 @@ test("Sleep disk schema-6 bundles verify unchanged and migrate only in quarantin
   const path = backup.backup,
     db = new DatabaseSync(join(path, "database.sqlite"));
   const ws = { ...f.disk.workspace, schema_version: 6 };
+  removeConcurrentFixtureSchema(db, 6);
   db.exec(
     "DROP TABLE sleep_items; DROP TABLE sleep_reviews; DROP TABLE sleep_coverage; PRAGMA user_version=6;",
   );
   db.prepare("UPDATE meta SET json=?").run(JSON.stringify(ws));
   db.close();
   const exported = JSON.parse(readFileSync(join(path, "export.json"), "utf8"));
-  for (const t of ["sleep_items", "sleep_reviews", "sleep_coverage"])
+  for (const t of [
+    "sleep_items",
+    "sleep_reviews",
+    "sleep_coverage",
+    "memory_pending",
+    "memory_technical",
+    "memory_dirty",
+    "memory_edges",
+    "memory_nodes",
+    "memory_ordinals",
+    "memory_index_meta",
+    "concurrency_meta",
+  ])
     delete exported.tables[t];
   exported.schema = 6;
+  exported.tables.migrations = exported.tables.migrations.filter(
+    (row: { version: number }) => row.version <= 6,
+  );
   writeFileSync(join(path, "export.json"), JSON.stringify(exported));
   const manifest = JSON.parse(
     readFileSync(join(path, "manifest.json"), "utf8"),
@@ -1333,7 +1410,7 @@ test("Sleep disk schema-6 bundles verify unchanged and migrate only in quarantin
   const q = new DatabaseSync(join(preview.destination, "zara.sqlite"), {
     readOnly: true,
   });
-  assert.equal(q.prepare("PRAGMA user_version").get()!.user_version, 7);
+  assert.equal(q.prepare("PRAGMA user_version").get()!.user_version, 9);
   assert.ok(q.prepare("SELECT * FROM migrations WHERE version=7").get());
   q.close();
   assert.ok(f.disk.get("SELECT json FROM meta"));

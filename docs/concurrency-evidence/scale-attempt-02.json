@@ -1,0 +1,263 @@
+{
+  "runtime": {
+    "node": "v24.22.1",
+    "sqlite": "3.53.4",
+    "platform": "win32",
+    "architecture": "x64",
+    "host_total_ram_bytes": 33396609024,
+    "host_free_ram_at_start_bytes": 3478097920
+  },
+  "fixture_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-UoLSfq",
+  "model_calls": 0,
+  "groups": [
+    {
+      "workers": 2,
+      "saves_per_worker": 10,
+      "separate_activity_workers": 1,
+      "shared_activity_workers": 1,
+      "growth": false,
+      "seed": {
+        "activities": 2,
+        "works": 4,
+        "entities": 10,
+        "revisions": 1,
+        "records": 16,
+        "historical_revisions": 16,
+        "seed_ms": 235.10610000000003
+      },
+      "ready_ms": 432.78060000000016,
+      "execute_ms": 1567.7478,
+      "actual": {
+        "receipts": 20,
+        "changes": 20,
+        "records": 19,
+        "revisions": 37
+      },
+      "expected": {
+        "receipts": 20,
+        "changes": 20,
+        "records": 19,
+        "revisions": 37
+      },
+      "queue_wait_ms": {
+        "n": 20,
+        "min": 8.041200000000003,
+        "p50": 8.349699999999984,
+        "p95": 722.09,
+        "p99": 722.09,
+        "max": 722.09
+      },
+      "core_phase_ms": {
+        "n": 20,
+        "min": 35.99770000000001,
+        "p50": 45.27729999999997,
+        "p95": 142.8652000000002,
+        "p99": 142.8652000000002,
+        "max": 142.8652000000002
+      },
+      "command_ms": {
+        "n": 20,
+        "min": 51.4076,
+        "p50": 60.517799999999966,
+        "p95": 779.0257,
+        "p99": 779.0257,
+        "max": 779.0257
+      },
+      "startup_ms": {
+        "n": 2,
+        "min": 143.58339999999998,
+        "p50": 196.03500000000003,
+        "p95": 196.03500000000003,
+        "p99": 196.03500000000003,
+        "max": 196.03500000000003
+      },
+      "backend": "compiled-dist",
+      "source_hashes": {
+        "core/index.ts": "b6af6a9797ee8cc17edefc739ee5a3c9d72839038e6185dd5b5f5599dcc38fc1",
+        "core/memory.ts": "cf91d6bc4aab6cb9635010fb75856d897bf8383d66c688d8fc655f172fe5a703",
+        "core/memory-index.ts": "99745a4045e59299347f50709134a4a9de29d80521fa59bb746278283756f7c5",
+        "storage/index.ts": "0fecb9d3cca09c30666cbd288b99f3f6f87c8a68f5648dc03daceaa3ad6dfac7",
+        "storage/coordination.ts": "8cacac759a879633c43302a41a534d99a136e14ad3d7b8c4c1aa37a6ac6de9b1"
+      },
+      "backend_hashes": {
+        "core/index": "1918e81be0197a51f14e86b2f3a519f56d2e119f7f72d82269ab91715d205329",
+        "core/memory": "50c0e6e7d501fcf6632a15c54614be3e2214ab422f5631b64346b3783ef93c05",
+        "core/memory-index": "1b9bfb9d0222df8696d99f361457aabb8d59f04597977d96e3bf5b1d4028a565",
+        "storage/index": "6043de5c45d8866a5c3d5dec8b8b6bf4bbade1b75a9d16ee42fcc1fca971e847",
+        "storage/coordination": "795f3dd0329bd5e2f6d04f0710b435da80c7e3c13d2c693f2d7786fe14e459a0"
+      },
+      "coordination_open_ms": {
+        "n": 2,
+        "min": 28.27630000000002,
+        "p50": 30.83450000000002,
+        "p95": 30.83450000000002,
+        "p99": 30.83450000000002,
+        "max": 30.83450000000002
+      },
+      "disk_open_ms": {
+        "n": 2,
+        "min": 109.67580000000001,
+        "p50": 164.97829999999996,
+        "p95": 164.97829999999996,
+        "p99": 164.97829999999996,
+        "max": 164.97829999999996
+      },
+      "worker_rss_peak_bytes": {
+        "n": 2,
+        "min": 96006144,
+        "p50": 97222656,
+        "p95": 97222656,
+        "p99": 97222656,
+        "max": 97222656
+      },
+      "sum_worker_sampled_peak_rss_bytes": 193228800,
+      "seed_history_digest": "35b8cf029039682b209ea887ff7e5d73842e7ed3d676955187cd1cf96d536d7a",
+      "initial_cursor_rows": 4,
+      "cursor_survived_unrelated_writes": true,
+      "receipts_unique": true,
+      "ids_unique": true,
+      "no_missing_or_extra_rows": true,
+      "all_replays_identical": true,
+      "changed_payload_rejected": true,
+      "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-UoLSfq\\group-2-mixed",
+      "model_calls": 0
+    },
+    {
+      "workers": 10,
+      "saves_per_worker": 10,
+      "separate_activity_workers": 5,
+      "shared_activity_workers": 5,
+      "growth": false,
+      "seed": {
+        "activities": 2,
+        "works": 4,
+        "entities": 10,
+        "revisions": 1,
+        "records": 16,
+        "historical_revisions": 16,
+        "seed_ms": 248.66789999999992
+      },
+      "ready_ms": 1154.1068,
+      "execute_ms": 9141.802300000001,
+      "actual": {
+        "receipts": 100,
+        "changes": 100,
+        "records": 31,
+        "revisions": 121
+      },
+      "expected": {
+        "receipts": 100,
+        "changes": 100,
+        "records": 31,
+        "revisions": 121
+      },
+      "queue_wait_ms": {
+        "n": 100,
+        "min": 7.372299999999996,
+        "p50": 8.544300000000021,
+        "p95": 4592.4555,
+        "p99": 8107.9133,
+        "max": 8107.9133
+      },
+      "core_phase_ms": {
+        "n": 100,
+        "min": 33.32580000000007,
+        "p50": 54.03659999999945,
+        "p95": 73.87699999999995,
+        "p99": 92.55869999999959,
+        "max": 92.55869999999959
+      },
+      "command_ms": {
+        "n": 100,
+        "min": 48.70699999999988,
+        "p50": 70.00939999999991,
+        "p95": 4650.1352,
+        "p99": 8196.403,
+        "max": 8196.403
+      },
+      "startup_ms": {
+        "n": 10,
+        "min": 164.12720000000002,
+        "p50": 550.0245,
+        "p95": 814.6913999999999,
+        "p99": 814.6913999999999,
+        "max": 814.6913999999999
+      },
+      "backend": "compiled-dist",
+      "source_hashes": {
+        "core/index.ts": "b6af6a9797ee8cc17edefc739ee5a3c9d72839038e6185dd5b5f5599dcc38fc1",
+        "core/memory.ts": "cf91d6bc4aab6cb9635010fb75856d897bf8383d66c688d8fc655f172fe5a703",
+        "core/memory-index.ts": "99745a4045e59299347f50709134a4a9de29d80521fa59bb746278283756f7c5",
+        "storage/index.ts": "0fecb9d3cca09c30666cbd288b99f3f6f87c8a68f5648dc03daceaa3ad6dfac7",
+        "storage/coordination.ts": "8cacac759a879633c43302a41a534d99a136e14ad3d7b8c4c1aa37a6ac6de9b1"
+      },
+      "backend_hashes": {
+        "core/index": "1918e81be0197a51f14e86b2f3a519f56d2e119f7f72d82269ab91715d205329",
+        "core/memory": "50c0e6e7d501fcf6632a15c54614be3e2214ab422f5631b64346b3783ef93c05",
+        "core/memory-index": "1b9bfb9d0222df8696d99f361457aabb8d59f04597977d96e3bf5b1d4028a565",
+        "storage/index": "6043de5c45d8866a5c3d5dec8b8b6bf4bbade1b75a9d16ee42fcc1fca971e847",
+        "storage/coordination": "795f3dd0329bd5e2f6d04f0710b435da80c7e3c13d2c693f2d7786fe14e459a0"
+      },
+      "coordination_open_ms": {
+        "n": 10,
+        "min": 36.177700000000016,
+        "p50": 42.98149999999998,
+        "p95": 46.69549999999998,
+        "p99": 46.69549999999998,
+        "max": 46.69549999999998
+      },
+      "disk_open_ms": {
+        "n": 10,
+        "min": 121.4031,
+        "p50": 502.3586,
+        "p95": 775.1451999999999,
+        "p99": 775.1451999999999,
+        "max": 775.1451999999999
+      },
+      "worker_rss_peak_bytes": {
+        "n": 10,
+        "min": 74719232,
+        "p50": 97804288,
+        "p95": 98131968,
+        "p99": 98131968,
+        "max": 98131968
+      },
+      "sum_worker_sampled_peak_rss_bytes": 944836608,
+      "seed_history_digest": "35b8cf029039682b209ea887ff7e5d73842e7ed3d676955187cd1cf96d536d7a",
+      "initial_cursor_rows": 4,
+      "cursor_survived_unrelated_writes": true,
+      "receipts_unique": true,
+      "ids_unique": true,
+      "no_missing_or_extra_rows": true,
+      "all_replays_identical": true,
+      "changed_payload_rejected": true,
+      "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-UoLSfq\\group-10-mixed",
+      "model_calls": 0
+    }
+  ],
+  "guarded_conflict": null,
+  "lost_reply_recovery": null,
+  "started_at": "2026-10-26T10:35:36.063Z",
+  "failed_group": {
+    "workers": 100,
+    "saves_per_worker": 10,
+    "growth": true,
+    "seed": {
+      "activities": 20,
+      "works": 80,
+      "entities": 4900,
+      "revisions": 5,
+      "records": 5000,
+      "historical_revisions": 25000,
+      "seed_ms": 19873.818799999997
+    },
+    "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-UoLSfq\\group-100-mixed"
+  },
+  "passed": false,
+  "failure": {
+    "code": "ERR_ASSERTION",
+    "message": "{\"worker\":\"mixed-0\",\"code\":1,\"signal\":null,\"report\":\"C:\\\\Users\\\\Anton\\\\AppData\\\\Local\\\\Temp\\\\zara-concurrent-qualification-UoLSfq\\\\group-100-mixed\\\\mixed-0.report.json\",\"selected\":\"separate\",\"data\":{\"worker\":\"mixed-0\",\"pid\":71976,\"mode\":\"separate\",\"saves\":[],\"receipts\":[],\"startup_ms\":853.3374999999999,\"source_hashes\":{\"core/index.ts\":\"b6af6a9797ee8cc17edefc739ee5a3c9d72839038e6185dd5b5f5599dcc38fc1\",\"core/memory.ts\":\"cf91d6bc4aab6cb9635010fb75856d897bf8383d66c688d8fc655f172fe5a703\",\"core/memory-index.ts\":\"99745a4045e59299347f50709134a4a9de29d80521fa59bb746278283756f7c5\",\"storage/index.ts\":\"0fecb9d3cca09c30666cbd288b99f3f6f87c8a68f5648dc03daceaa3ad6dfac7\",\"storage/coordination.ts\":\"8cacac759a879633c43302a41a534d99a136e14ad3d7b8c4c1aa37a6ac6de9b1\"},\"rss_peak_bytes\":74747904,\"backend\":\"dist\",\"backend_hashes\":{\"core/index\":\"1918e81be0197a51f14e86b2f3a519f56d2e119f7f72d82269ab91715d205329\",\"core/memory\":\"50c0e6e7d501fcf6632a15c54614be3e2214ab422f5631b64346b3783ef93c05\",\"core/memory-index\":\"1b9bfb9d0222df8696d99f361457aabb8d59f04597977d96e3bf5b1d4028a565\",\"storage/index\":\"6043de5c45d8866a5c3d5dec8b8b6bf4bbade1b75a9d16ee42fcc1fca971e847\",\"storage/coordination\":\"795f3dd0329bd5e2f6d04f0710b435da80c7e3c13d2c693f2d7786fe14e459a0\"},\"model_calls\":0,\"coordination_open_ms\":77.43020000000001,\"disk_open_ms\":767.6684,\"error\":{\"code\":\"STORE_BUSY\",\"message\":\"Coordination request timed out before admission.\",\"stack\":\"Error: Coordination request timed out before admission.\\n    at failure (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:11:11)\\n    at busy (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:14:12)\\n    at Coordination.checkRequest (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:318:13)\\n    at Coordination.run (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:378:22)\\n    at async file:///C:/projects/zaratustra-v1/scripts/concurrent-worker.mjs:167:23\"},\"elapsed_ms\":118807.3785}}\n\n1 !== 0\n",
+    "stack": "AssertionError [ERR_ASSERTION]: {\"worker\":\"mixed-0\",\"code\":1,\"signal\":null,\"report\":\"C:\\\\Users\\\\Anton\\\\AppData\\\\Local\\\\Temp\\\\zara-concurrent-qualification-UoLSfq\\\\group-100-mixed\\\\mixed-0.report.json\",\"selected\":\"separate\",\"data\":{\"worker\":\"mixed-0\",\"pid\":71976,\"mode\":\"separate\",\"saves\":[],\"receipts\":[],\"startup_ms\":853.3374999999999,\"source_hashes\":{\"core/index.ts\":\"b6af6a9797ee8cc17edefc739ee5a3c9d72839038e6185dd5b5f5599dcc38fc1\",\"core/memory.ts\":\"cf91d6bc4aab6cb9635010fb75856d897bf8383d66c688d8fc655f172fe5a703\",\"core/memory-index.ts\":\"99745a4045e59299347f50709134a4a9de29d80521fa59bb746278283756f7c5\",\"storage/index.ts\":\"0fecb9d3cca09c30666cbd288b99f3f6f87c8a68f5648dc03daceaa3ad6dfac7\",\"storage/coordination.ts\":\"8cacac759a879633c43302a41a534d99a136e14ad3d7b8c4c1aa37a6ac6de9b1\"},\"rss_peak_bytes\":74747904,\"backend\":\"dist\",\"backend_hashes\":{\"core/index\":\"1918e81be0197a51f14e86b2f3a519f56d2e119f7f72d82269ab91715d205329\",\"core/memory\":\"50c0e6e7d501fcf6632a15c54614be3e2214ab422f5631b64346b3783ef93c05\",\"core/memory-index\":\"1b9bfb9d0222df8696d99f361457aabb8d59f04597977d96e3bf5b1d4028a565\",\"storage/index\":\"6043de5c45d8866a5c3d5dec8b8b6bf4bbade1b75a9d16ee42fcc1fca971e847\",\"storage/coordination\":\"795f3dd0329bd5e2f6d04f0710b435da80c7e3c13d2c693f2d7786fe14e459a0\"},\"model_calls\":0,\"coordination_open_ms\":77.43020000000001,\"disk_open_ms\":767.6684,\"error\":{\"code\":\"STORE_BUSY\",\"message\":\"Coordination request timed out before admission.\",\"stack\":\"Error: Coordination request timed out before admission.\\n    at failure (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:11:11)\\n    at busy (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:14:12)\\n    at Coordination.checkRequest (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:318:13)\\n    at Coordination.run (file:///C:/projects/zaratustra-v1/dist/storage/coordination.js:378:22)\\n    at async file:///C:/projects/zaratustra-v1/scripts/concurrent-worker.mjs:167:23\"},\"elapsed_ms\":118807.3785}}\n\n1 !== 0\n\n    at runGroup (file:///C:/projects/zaratustra-v1/scripts/concurrent-scale.mjs:399:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/projects/zaratustra-v1/scripts/concurrent-scale.mjs:690:28"
+  },
+  "finished_at": "2026-10-26T10:38:32.625Z"
+}

@@ -82,6 +82,7 @@ export type FileEffect = z.infer<typeof FileEffectSchema>;
 export interface EffectRow {
   payload_not_retained?: boolean;
   document_superseded_by?: string;
+  superseded_by?: string;
   request_id: string;
   kind: "managed_file";
   status: string;
@@ -136,7 +137,12 @@ export class Effects {
     );
     return e;
   }
-  dispatch(effect: FileEffect, previewRef: string, callId: string) {
+  dispatch(
+    effect: FileEffect,
+    previewRef: string,
+    callId: string,
+    admit?: () => void,
+  ) {
     const old = this.db.get(
       "SELECT request_id FROM intents WHERE request_id=?",
       effect.request_id,
@@ -148,9 +154,10 @@ export class Effects {
     );
     this.db.exec("BEGIN IMMEDIATE");
     try {
+      admit?.();
       const unresolved = this.db
         .all<{ json: string }>(
-          "SELECT json FROM intents WHERE json_extract(json,'$.kind')='managed_file' AND json_extract(json,'$.status') IN ('requested','unknown') AND json_extract(json,'$.document_superseded_by') IS NULL",
+          "SELECT json FROM intents WHERE json_extract(json,'$.kind')='managed_file' AND json_extract(json,'$.status') IN ('requested','unknown') AND json_extract(json,'$.document_superseded_by') IS NULL AND json_extract(json,'$.superseded_by') IS NULL",
         )
         .map((r) => JSON.parse(r.json) as EffectRow)
         .filter(
@@ -274,6 +281,23 @@ export class Effects {
         JSON.stringify(e.receipt),
         "{}",
       );
+      if (
+        e.status === "confirmed" &&
+        e.payload.retry_of &&
+        !e.payload.document
+      ) {
+        const prior = this.read(e.payload.retry_of);
+        requireThat(
+          prior.epoch === e.epoch && prior.payload.target === e.payload.target,
+          "UNKNOWN_EFFECT",
+          "Confirmed retry does not match its original resource.",
+        );
+        this.db.run(
+          "UPDATE intents SET json=json_set(json,'$.superseded_by',?) WHERE request_id=?",
+          e.request_id,
+          prior.request_id,
+        );
+      }
       this.db.exec("COMMIT");
       return e;
     } catch (err) {

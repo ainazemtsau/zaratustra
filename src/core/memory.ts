@@ -20,14 +20,23 @@ import { sleepAccessRefs } from "./sleep.ts";
 
 const hash = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
-const sleepOperations = (json: string, path: string) =>
-  `EXISTS(SELECT 1 FROM json_each(${json},'${path}') op WHERE json_extract(op.value,'$.op') IN ('start_sleep','sleep_checkpoint'))`;
-// Both persisted preparation forms can contain copied input before review
-// bindings commit. Preview scopes are trusted authority, not caller-selected
-// sensitivity: restricted-read or absent authority leaves sensitivity unknown.
-// Keep the exact payload/digest intact, including after approval status changes.
-const unknownSleepPreparation = (json: string) =>
-  `((coalesce(json_extract(${json},'$.status'),'')<>'committed' AND coalesce(json_extract(${json},'$.visibility'),'') NOT IN ('workspace','restricted') AND ${sleepOperations(json, "$.payload.ops")}) OR (coalesce(json_extract(${json},'$.kind'),'')='preview' AND coalesce(json_extract(${json},'$.payload.action'),'')='commit' AND ${sleepOperations(json, "$.payload.exact.ops")} AND (coalesce(json_type(${json},'$.payload.scopes'),'')<>'array' OR EXISTS(SELECT 1 FROM json_each(${json},'$.payload.scopes') scope WHERE scope.value='restricted:read'))))`;
+import {
+  MemoryIndexSchemaSQL,
+  assertMemoryIndexReadable,
+  addressedIds,
+  addressedRefs,
+  memoryIndexIdentity,
+  memoryIndexReady,
+  refreshMemoryIndex,
+  unknownSleepPreparation,
+} from "./memory-index.ts";
+export {
+  MemoryIndexSchemaSQL,
+  addressedIds,
+  addressedRefs,
+  initializeMemoryIndex,
+} from "./memory-index.ts";
+
 export const MemorySchemaSQL = `
  CREATE TABLE memory_meta(seq INTEGER NOT NULL, build INTEGER NOT NULL);
  INSERT INTO memory_meta VALUES(0,1);
@@ -45,64 +54,9 @@ export const MemorySchemaSQL = `
  CREATE INDEX trace_access ON retrieval_trace(access_key,seq);
  CREATE INDEX knowledge_predicate ON records(json_extract(json,'$.data.predicate'));
  CREATE INDEX knowledge_subject ON records(json_extract(json,'$.data.subject_ref.id'));
- CREATE INDEX knowledge_object ON records(json_extract(json,'$.data.object_ref.id'));`;
+ CREATE INDEX knowledge_object ON records(json_extract(json,'$.data.object_ref.id'));
+ ${MemoryIndexSchemaSQL}`;
 
-export function addressedIds(value: unknown, technicalKeys = false): string[] {
-  const found = new Set<string>();
-  const walk = (v: unknown) => {
-    // Match the existing JSON-tree technical classifier at every depth,
-    // including string-ID arrays in redacted metadata such as affected_ids.
-    if (typeof v === "string") found.add(v);
-    else if (Array.isArray(v)) v.forEach(walk);
-    else if (v && typeof v === "object") {
-      const o = v as JsonObject;
-      if (technicalKeys) Object.keys(o).forEach((id) => found.add(id));
-      if (typeof o.id === "string") found.add(o.id);
-      if (
-        o.changed &&
-        typeof o.changed === "object" &&
-        !Array.isArray(o.changed)
-      )
-        Object.keys(o.changed).forEach((id) => found.add(id));
-      // Technical rows also carry string IDs outside typed Ref objects.
-      for (const [k, child] of Object.entries(o)) {
-        if (
-          ["work_id", "record_id", "relation_id"].includes(k) &&
-          typeof child === "string"
-        )
-          found.add(child);
-        if (typeof child === "string") found.add(child);
-        walk(child);
-      }
-    }
-  };
-  walk(value);
-  return [...found];
-}
-export function addressedRefs(
-  value: unknown,
-): { id: string; revision?: number; content_version?: number }[] {
-  const refs: { id: string; revision?: number; content_version?: number }[] =
-    [];
-  const walk = (v: unknown) => {
-    if (Array.isArray(v)) v.forEach(walk);
-    else if (v && typeof v === "object") {
-      const o = v as JsonObject;
-      if (
-        typeof o.id === "string" &&
-        Object.keys(o).every((k) =>
-          ["id", "revision", "content_version"].includes(k),
-        )
-      )
-        refs.push(
-          o as { id: string; revision?: number; content_version?: number },
-        );
-      Object.values(o).forEach(walk);
-    }
-  };
-  walk(value);
-  return refs;
-}
 export function validateMemory(
   final: RecordRow[],
   get: (ref: unknown, kind?: string) => RecordRow,
@@ -230,7 +184,7 @@ export function validateMemory(
 }
 
 /** Shared access projection for stored indexes and old read-only schema-7 indexes. */
-function accessProjection(storage: StoragePort) {
+export function fullAccessProjection(storage: StoragePort) {
   const experience = !!storage.get(
     "SELECT name FROM sqlite_master WHERE type='view' AND name='addressed_current'",
   );
@@ -320,115 +274,17 @@ export function refreshMemory(
   storage: StoragePort,
   rebuild = false,
   rewrittenIds: readonly string[] = [],
+  changedIds?: readonly string[],
+  finalize = true,
 ) {
-  const { byId, versions, versionKey, restrictions, versionRestrictions } =
-    accessProjection(storage);
-  if (rebuild) {
-    storage.exec(
-      "DELETE FROM memory_text; DELETE FROM memory_names; DELETE FROM memory_docs;",
-    );
-  } else
-    for (const id of new Set(rewrittenIds)) {
-      // Rewritten retained bodies need fresh text, but unrelated docids/cursors
-      // must remain stable, including for observers unable to see this target.
-      for (const { docid } of storage.all<{ docid: number }>(
-        "SELECT docid FROM memory_docs WHERE id=?",
-        id,
-      )) {
-        storage.run("DELETE FROM memory_text WHERE rowid=?", docid);
-        storage.run("DELETE FROM memory_names WHERE rowid=?", docid);
-      }
-      storage.run("DELETE FROM memory_docs WHERE id=?", id);
-    }
-  for (const r of versions) {
-    const restricted =
-      r.visibility === "restricted" ||
-      restrictions.get(r.id) ||
-      addressedIds(r).some((id) => restrictions.get(id));
-    const effectiveRestricted =
-      restricted || versionRestrictions.get(versionKey(r));
-    const exists = storage.get<{ docid: number }>(
-      "SELECT docid FROM memory_docs WHERE id=? AND revision=?",
-      r.id,
-      r.revision,
-    );
-    if (exists)
-      storage.run(
-        "UPDATE memory_docs SET restricted=? WHERE docid=?",
-        effectiveRestricted ? 1 : 0,
-        exists.docid,
-      );
-    else {
-      storage.run(
-        "INSERT INTO memory_docs(id,revision,restricted) VALUES(?,?,?)",
-        r.id,
-        r.revision,
-        effectiveRestricted ? 1 : 0,
-      );
-      const doc = storage.get<{ docid: number }>(
-        "SELECT docid FROM memory_docs WHERE id=? AND revision=?",
-        r.id,
-        r.revision,
-      )!;
-      const names = [
-        r.title,
-        ...((r.data.aliases as string[] | undefined) ?? []),
-        ...Object.values((r.data.external_ids as JsonObject | undefined) ?? {}),
-      ].join("\n");
-      // Never index whole originals or parser bodies as if translated working prose.
-      const working = [
-        r.title,
-        r.body ?? "",
-        r.data.statement,
-        r.data.definition,
-        r.data.disambiguation,
-        r.data.purpose,
-        r.data.objective,
-        r.data.current_state,
-        r.data.next_action,
-        r.data.applicability,
-        r.data.instructions,
-        r.data.input_contract,
-        r.data.expected_output,
-        r.data.limitations,
-        r.data.summary,
-        r.data.context_requirements
-          ? canonical(r.data.context_requirements)
-          : null,
-        r.data.tool_requirements ? canonical(r.data.tool_requirements) : null,
-        r.data.conditions ? canonical(r.data.conditions) : "",
-      ]
-        .filter((v) => typeof v === "string")
-        .join("\n");
-      storage.run(
-        "INSERT INTO memory_text(rowid,text) VALUES(?,?)",
-        doc.docid,
-        working,
-      );
-      storage.run(
-        "INSERT INTO memory_names(rowid,names) VALUES(?,?)",
-        doc.docid,
-        names,
-      );
-    }
+  storage.exec("SAVEPOINT memory_refresh");
+  try {
+    refreshMemoryIndex(storage, rebuild, rewrittenIds, changedIds, finalize);
+    storage.exec("RELEASE memory_refresh");
+  } catch (error) {
+    storage.exec("ROLLBACK TO memory_refresh; RELEASE memory_refresh;");
+    throw error;
   }
-  storage.exec("DELETE FROM memberships; DELETE FROM concept_parents;");
-  for (const r of byId.values()) {
-    if (r.storage === "tombstone") continue;
-    for (const c of r.concept_ids)
-      storage.run("INSERT OR IGNORE INTO memberships VALUES(?,?)", r.id, c.id);
-    if (r.kind === "concept")
-      for (const p of r.data.broader_ids as { id: string }[])
-        storage.run(
-          "INSERT OR IGNORE INTO concept_parents VALUES(?,?)",
-          r.id,
-          p.id,
-        );
-  }
-  storage.run(
-    "UPDATE memory_meta SET seq=(SELECT coalesce(max(seq),0) FROM changes),build=build+?",
-    rebuild ? 1 : 0,
-  );
 }
 
 const kinds = z.enum([
@@ -523,6 +379,8 @@ export interface CursorState {
   generation: string;
   access: string;
   last: number;
+  high?: number;
+  incarnation?: string;
 }
 const accessCaches = new WeakMap<StoragePort, { stamp: string; sql: string }>();
 export class Memory {
@@ -531,7 +389,18 @@ export class Memory {
     private ctx: CallContext,
     private cursors: Map<string, CursorState>,
   ) {}
+  private windowHigh = Number.MAX_SAFE_INTEGER;
+  private collectionHigh(collection: string) {
+    return memoryIndexReady(this.db)
+      ? this.db.get<{ n: number }>(
+          "SELECT coalesce(max(ordinal),0) AS n FROM memory_ordinals WHERE collection=?",
+          collection,
+        )!.n
+      : Number.MAX_SAFE_INTEGER;
+  }
   private accessDocsSQL() {
+    assertMemoryIndexReadable(this.db);
+    if (memoryIndexReady(this.db)) return "memory_docs";
     // Old schema-7 derived indexes may predate Sleep access edges. Reuse the same
     // projection without rewriting canonical/history rows, including on read-only
     // connections. Normal refreshed stores retain the indexed SQL fast path.
@@ -549,7 +418,7 @@ export class Memory {
     ]);
     const cached = accessCaches.get(this.db);
     if (cached?.stamp === stamp) return cached.sql;
-    const { versionRestrictions } = accessProjection(this.db);
+    const { versionRestrictions } = fullAccessProjection(this.db);
     const docs = this.db.all<{
       id: string;
       revision: number;
@@ -575,6 +444,13 @@ export class Memory {
     return sql;
   }
   visibleSequence(through = Number.MAX_SAFE_INTEGER) {
+    assertMemoryIndexReadable(this.db);
+    if (memoryIndexReady(this.db))
+      return this.db.get<{ n: number }>(
+        "SELECT count(*) AS n FROM memory_technical WHERE collection='changes' AND sequence<=?" +
+          (this.restricted ? "" : " AND restricted=0"),
+        through,
+      )!.n;
     return this.db.get<{ n: number }>(
       `SELECT count(*) AS n FROM changes t WHERE t.seq<=? AND ${this.technicalSQL("t")}`,
       through,
@@ -607,6 +483,9 @@ export class Memory {
       this.ctx.epoch,
       this.ctx.principal,
       [...(this.ctx.scopes ?? [])].sort(),
+      this.ctx.processing_allowed,
+      this.ctx.can_write,
+      this.ctx.policy_revision ?? null,
     ]);
   }
   allowed(id: string, revision?: number) {
@@ -674,6 +553,19 @@ export class Memory {
     );
   }
   generation() {
+    assertMemoryIndexReadable(this.db);
+    if (memoryIndexReady(this.db)) {
+      const state = this.db.get<{
+        public_generation: number;
+        all_generation: number;
+      }>(
+        "SELECT public_generation,all_generation FROM memory_index_meta WHERE singleton=1",
+      )!;
+      return hash([
+        this.accessKey,
+        this.restricted ? state.all_generation : state.public_generation,
+      ]);
+    }
     const visible = this.db.all<{ id: string; revision: number }>(
       `SELECT d.id,d.revision FROM ${this.accessDocsSQL()} d JOIN addressed_current r ON r.id=d.id AND json_extract(r.json,'$.revision')=d.revision WHERE (d.restricted=0 OR ?=1) ORDER BY d.id`,
       this.restricted,
@@ -714,20 +606,29 @@ export class Memory {
       );
     }
   }
-  cursor(cursor: string | undefined, query: unknown, generation: string) {
+  cursor(
+    cursor: string | undefined,
+    query: unknown,
+    generation: string,
+    high = Number.MAX_SAFE_INTEGER,
+  ) {
+    this.windowHigh = high;
     if (!cursor) return 0;
     try {
       const c = this.cursors.get(cursor);
       requireThat(
         c &&
           c.query === hash(query) &&
-          c.generation === generation &&
+          (memoryIndexReady(this.db)
+            ? c.incarnation === memoryIndexIdentity(this.db)
+            : c.generation === generation) &&
           c.access === this.accessKey &&
           Number.isSafeInteger(c.last) &&
           c.last >= 0,
         "CURSOR_INVALIDATED",
         "Restart the bounded query; query, access or generation changed.",
       );
+      this.windowHigh = c.high ?? high;
       return c.last as number;
     } catch {
       throw new CoreError(
@@ -749,6 +650,8 @@ export class Memory {
       query: hash(query),
       generation,
       access: this.accessKey,
+      high: this.windowHigh,
+      incarnation: memoryIndexIdentity(this.db),
       last: has_more ? key(cards.at(-1)!) : 0,
     };
     let next_cursor: string | null = null;
@@ -817,7 +720,25 @@ export class Memory {
         limit,
         mode: mode ?? null,
       },
-      last = this.cursor(cursor, filters, generation);
+      collection =
+        mode === "current_claims"
+          ? "current"
+          : ((
+              {
+                operations: "intents",
+                changes: "changes",
+                handoffs: "handoffs",
+                claims: "claims",
+                relations: "relations",
+                history: "history",
+              } as Record<string, string>
+            )[view] ?? "current"),
+      last = this.cursor(
+        cursor,
+        filters,
+        generation,
+        this.collectionHigh(collection),
+      );
     const technical: Record<string, { table: string; key: string }> = {
       operations: { table: "intents", key: "rowid" },
       changes: { table: "changes", key: "seq" },
@@ -848,9 +769,27 @@ export class Memory {
       const kindFilter = supportKinds[view]
         ? ` AND t.kind='${supportKinds[view]}'`
         : "";
+      const indexed = memoryIndexReady(this.db);
+      const identity =
+        view === "history"
+          ? "json_array(t.id,t.revision)"
+          : supportKinds[view]
+            ? "t.id"
+            : view === "operations"
+              ? "t.request_id"
+              : view === "claims"
+                ? "t.token"
+                : view === "changes"
+                  ? "cast(t.seq AS TEXT)"
+                  : "t.id";
+      const pageKey = indexed ? "o.ordinal" : `t.${key}`;
+      const ordinals = indexed
+        ? ` JOIN memory_ordinals o ON o.collection='${collection}' AND o.identity=${identity}`
+        : "";
       const rows = this.db.all<{ key: number; json: string }>(
-        `SELECT t.${key} AS key,t.json FROM ${table} t WHERE t.${key}>? ${kindFilter} AND ${this.technicalSQL("t")} AND (? IS NULL OR ${view === "history" ? "t.id=?" : "EXISTS(SELECT 1 FROM json_tree(t.json) WHERE atom=?)"}) ORDER BY t.${key} LIMIT ?`,
+        `SELECT ${pageKey} AS key,t.json FROM ${table} t${ordinals} WHERE ${pageKey}>? AND ${pageKey}<=? ${kindFilter} AND ${this.technicalSQL("t")} AND (? IS NULL OR ${view === "history" ? "t.id=?" : "EXISTS(SELECT 1 FROM json_tree(t.json) WHERE atom=?)"}) ORDER BY ${pageKey} LIMIT ?`,
         last,
+        this.windowHigh,
         recordId ?? null,
         recordId ?? null,
         limit + 1,
@@ -926,8 +865,13 @@ export class Memory {
         }),
       };
     }
-    const where = ["r.rowid>?", this.visibleSQL("r")],
-      params: (string | number | null)[] = [last];
+    const indexed = memoryIndexReady(this.db),
+      pageKey = indexed ? "o.ordinal" : "r.rowid",
+      ordinalJoin = indexed
+        ? " JOIN memory_ordinals o ON o.collection='current' AND o.identity=r.id"
+        : "",
+      where = [pageKey + ">?", pageKey + "<=?", this.visibleSQL("r")],
+      params: (string | number | null)[] = [last, this.windowHigh];
     const kind: Record<string, string> = {
       activities: "activity",
       work: "work",
@@ -1016,7 +960,7 @@ export class Memory {
         );
     } else throw new CoreError("VALIDATION_ERROR", "Unsupported catalog view.");
     const rows = this.db.all<{ key: number; json: string }>(
-      `SELECT r.rowid AS key,r.json FROM records r WHERE ${where.join(" AND ")} ORDER BY r.rowid LIMIT ?`,
+      `SELECT ${pageKey} AS key,r.json FROM records r${ordinalJoin} WHERE ${where.join(" AND ")} ORDER BY ${pageKey} LIMIT ?`,
       ...params,
       limit + 1,
     );
@@ -1129,14 +1073,30 @@ export class Memory {
       );
     this.barrier();
     const generation = this.generation(),
-      last = this.cursor(cursor, filters, generation),
-      limit = p.limit ?? 20;
+      collection = p.history ? "history" : "current",
+      last = this.cursor(
+        cursor,
+        filters,
+        generation,
+        this.collectionHigh(collection),
+      ),
+      limit = p.limit ?? 20,
+      indexed = memoryIndexReady(this.db),
+      pageKey = indexed ? "o.ordinal" : "d.docid",
+      ordinalJoin = indexed
+        ? ` JOIN memory_ordinals o ON o.collection='${collection}' AND o.identity=${p.history ? "json_array(d.id,d.revision)" : "d.id"}`
+        : "";
     const where = [
-        "d.docid>?",
+        pageKey + ">?",
+        pageKey + "<=?",
         "(d.restricted=0 OR ?=1)",
         p.history ? "1" : "d.revision=json_extract(r.json,'$.revision')",
       ],
-      params: (string | number | null)[] = [last, this.restricted];
+      params: (string | number | null)[] = [
+        last,
+        this.windowHigh,
+        this.restricted,
+      ];
     let hits = "";
     if (expression) {
       const queries: string[] = [];
@@ -1222,14 +1182,15 @@ export class Memory {
     try {
       const rows = this.db.all<{
         docid: number;
+        key: number;
         json: string;
         reasons: string | null;
       }>(
-        `${hits} SELECT d.docid,v.json,${expression ? "(SELECT group_concat(DISTINCT reason) FROM hits WHERE hits.docid=d.docid)" : "NULL"} AS reasons FROM ${this.accessDocsSQL()} d JOIN records r ON r.id=d.id JOIN revisions v ON v.id=d.id AND v.revision=d.revision WHERE ${where.join(" AND ")} ORDER BY d.docid LIMIT ?`,
+        `${hits} SELECT d.docid,${pageKey} AS key,v.json,${expression ? "(SELECT group_concat(DISTINCT reason) FROM hits WHERE hits.docid=d.docid)" : "NULL"} AS reasons FROM ${this.accessDocsSQL()} d JOIN records r ON r.id=d.id JOIN revisions v ON v.id=d.id AND v.revision=d.revision${ordinalJoin} WHERE ${where.join(" AND ")} ORDER BY ${pageKey} LIMIT ?`,
         ...params,
         limit + 1,
       );
-      const page = this.page(rows, limit, filters, generation, (r) => r.docid);
+      const page = this.page(rows, limit, filters, generation, (r) => r.key);
       return {
         ...page,
         cards: page.cards.map((r) =>

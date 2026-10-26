@@ -1,0 +1,186 @@
+{
+  "runtime": {
+    "node": "v24.22.1",
+    "sqlite": "3.53.4",
+    "platform": "win32",
+    "architecture": "x64",
+    "host_total_ram_bytes": 33396609024,
+    "host_free_ram_at_start_bytes": 1788211200
+  },
+  "fixture_root": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-T2NJ1S",
+  "model_calls": 0,
+  "groups": [
+    {
+      "workers": 2,
+      "saves_per_worker": 10,
+      "separate_activity_workers": 1,
+      "shared_activity_workers": 1,
+      "growth": false,
+      "seed": {
+        "activities": 2,
+        "works": 4,
+        "entities": 10,
+        "revisions": 1,
+        "records": 16,
+        "historical_revisions": 16,
+        "seed_ms": 284.35460000000006
+      },
+      "ready_ms": 857.5250000000001,
+      "execute_ms": 1868.9562999999998,
+      "actual": {
+        "receipts": 20,
+        "changes": 20,
+        "records": 19,
+        "revisions": 37
+      },
+      "expected": {
+        "receipts": 20,
+        "changes": 20,
+        "records": 19,
+        "revisions": 37
+      },
+      "queue_wait_ms": {
+        "n": 20,
+        "min": 8.603000000000065,
+        "p50": 10.101599999999962,
+        "p95": 929.4894,
+        "p99": 929.4894,
+        "max": 929.4894
+      },
+      "core_phase_ms": {
+        "n": 20,
+        "min": 50.88109999999983,
+        "p50": 57.195499999999925,
+        "p95": 71.50319999999988,
+        "p99": 71.50319999999988,
+        "max": 71.50319999999988
+      },
+      "command_ms": {
+        "n": 20,
+        "min": 69.05899999999997,
+        "p50": 75.61850000000004,
+        "p95": 995.1462,
+        "p99": 995.1462,
+        "max": 995.1462
+      },
+      "startup_ms": {
+        "n": 2,
+        "min": 164.06779999999992,
+        "p50": 265.3959,
+        "p95": 265.3959,
+        "p99": 265.3959,
+        "max": 265.3959
+      },
+      "worker_rss_peak_bytes": {
+        "n": 2,
+        "min": 125456384,
+        "p50": 128139264,
+        "p95": 128139264,
+        "p99": 128139264,
+        "max": 128139264
+      },
+      "sum_worker_sampled_peak_rss_bytes": 253595648,
+      "seed_history_digest": "35b8cf029039682b209ea887ff7e5d73842e7ed3d676955187cd1cf96d536d7a",
+      "initial_cursor_rows": 4,
+      "cursor_survived_unrelated_writes": true,
+      "receipts_unique": true,
+      "ids_unique": true,
+      "no_missing_or_extra_rows": true,
+      "all_replays_identical": true,
+      "changed_payload_rejected": true,
+      "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-T2NJ1S\\group-2-mixed",
+      "model_calls": 0
+    },
+    {
+      "workers": 10,
+      "saves_per_worker": 10,
+      "separate_activity_workers": 5,
+      "shared_activity_workers": 5,
+      "growth": false,
+      "seed": {
+        "activities": 2,
+        "works": 4,
+        "entities": 10,
+        "revisions": 1,
+        "records": 16,
+        "historical_revisions": 16,
+        "seed_ms": 281.7968000000001
+      },
+      "ready_ms": 2204.2604,
+      "execute_ms": 11351.2114,
+      "actual": {
+        "receipts": 100,
+        "changes": 100,
+        "records": 31,
+        "revisions": 121
+      },
+      "expected": {
+        "receipts": 100,
+        "changes": 100,
+        "records": 31,
+        "revisions": 121
+      },
+      "queue_wait_ms": {
+        "n": 100,
+        "min": 7.7053000000014435,
+        "p50": 8.869799999999486,
+        "p95": 6425.5413,
+        "p99": 10127.1633,
+        "max": 10127.1633
+      },
+      "core_phase_ms": {
+        "n": 100,
+        "min": 43.04819999999927,
+        "p50": 60.8187999999991,
+        "p95": 81.95529999999962,
+        "p99": 428.1202999999987,
+        "max": 428.1202999999987
+      },
+      "command_ms": {
+        "n": 100,
+        "min": 57.330299999999625,
+        "p50": 77.01339999999982,
+        "p95": 6510.852400000001,
+        "p99": 10561.787800000002,
+        "max": 10561.787800000002
+      },
+      "startup_ms": {
+        "n": 10,
+        "min": 238.76119999999992,
+        "p50": 828.3072,
+        "p95": 1183.5432999999998,
+        "p99": 1183.5432999999998,
+        "max": 1183.5432999999998
+      },
+      "worker_rss_peak_bytes": {
+        "n": 10,
+        "min": 102236160,
+        "p50": 124555264,
+        "p95": 129495040,
+        "p99": 129495040,
+        "max": 129495040
+      },
+      "sum_worker_sampled_peak_rss_bytes": 1169948672,
+      "seed_history_digest": "35b8cf029039682b209ea887ff7e5d73842e7ed3d676955187cd1cf96d536d7a",
+      "initial_cursor_rows": 4,
+      "cursor_survived_unrelated_writes": true,
+      "receipts_unique": true,
+      "ids_unique": true,
+      "no_missing_or_extra_rows": true,
+      "all_replays_identical": true,
+      "changed_payload_rejected": true,
+      "fixture": "C:\\Users\\Anton\\AppData\\Local\\Temp\\zara-concurrent-qualification-T2NJ1S\\group-10-mixed",
+      "model_calls": 0
+    }
+  ],
+  "guarded_conflict": null,
+  "lost_reply_recovery": null,
+  "started_at": "2026-10-26T10:22:57.346Z",
+  "passed": false,
+  "failure": {
+    "code": "STORE_BUSY",
+    "message": "Another runtime holds the complete Core phase; retry asynchronously.",
+    "stack": "Error: Another runtime holds the complete Core phase; retry asynchronously.\n    at failure (C:\\projects\\zaratustra-v1\\src\\storage\\coordination.ts:65:9)\n    at busy (C:\\projects\\zaratustra-v1\\src\\storage\\coordination.ts:68:10)\n    at Coordination.sync (C:\\projects\\zaratustra-v1\\src\\storage\\coordination.ts:462:9)\n    at DiskStorage.closeConnection (C:\\projects\\zaratustra-v1\\src\\storage\\index.ts:1037:28)\n    at DiskStorage.close (C:\\projects\\zaratustra-v1\\src\\storage\\index.ts:1042:10)\n    at runGroup (file:///C:/projects/zaratustra-v1/scripts/concurrent-scale.mjs:485:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///C:/projects/zaratustra-v1/scripts/concurrent-scale.mjs:620:28"
+  },
+  "finished_at": "2026-10-26T10:26:39.852Z"
+}

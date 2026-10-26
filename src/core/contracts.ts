@@ -795,6 +795,12 @@ export type AddressedRow = RecordRow | SupportingRow;
 export interface StoragePort {
   workspace: { workspace_id: string; epoch: string; schema_version: number };
   readonly: boolean;
+  /** Whole synchronous command; nested calls reuse the current storage capability. */
+  withCommandSync?<T>(
+    callback: () => T,
+    kind?: "read" | "mutate" | "settle" | "maintenance",
+  ): T;
+  withReadSnapshot?<T>(callback: () => T): T;
   exec(sql: string): void;
   get<T>(sql: string, ...params: (string | number | null)[]): T | undefined;
   all<T>(sql: string, ...params: (string | number | null)[]): T[];
@@ -808,6 +814,7 @@ export class CoreError extends Error {
   constructor(
     public code: string,
     message: string,
+    public details?: Record<string, unknown>,
   ) {
     super(message);
   }

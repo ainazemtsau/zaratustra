@@ -1,3 +1,4 @@
+import type { Coordination } from "./coordination.ts";
 import { randomUUID, createHash } from "node:crypto";
 import {
   closeSync,
@@ -19,13 +20,20 @@ import { noAliases } from "./output.ts";
 
 export const bytesHash = (b: Uint8Array | string) =>
   createHash("sha256").update(b).digest("hex");
-export const ControlSchema = z.strictObject({
-  format: z.literal(1),
-  workspace_id: z.string().min(1),
-  epoch: z.string().min(1),
-  generation: z.string().regex(/^(\.|generations\/[a-f0-9-]+)$/),
-  restoration: z.record(z.string(), z.unknown()).nullable(),
-});
+export const ControlSchema = z
+  .strictObject({
+    format: z.union([z.literal(1), z.literal(2)]),
+    coordination_id: z.string().min(1).optional(),
+    coordination_protocol: z.literal(1).optional(),
+    workspace_id: z.string().min(1),
+    epoch: z.string().min(1),
+    generation: z.string().regex(/^(\.|generations\/[a-f0-9-]+)$/),
+    restoration: z.record(z.string(), z.unknown()).nullable(),
+  })
+  .refine(
+    (c) => c.format !== 2 || !!c.coordination_id,
+    "Coordinated control requires a stable coordination identity.",
+  );
 export type Control = z.infer<typeof ControlSchema>;
 export function contained(root: string, path: string) {
   const rel = relative(resolve(root), resolve(path));
@@ -128,4 +136,59 @@ export function removeOwned(root: string, path: string) {
     "Cleanup only removes a checked regular file.",
   );
   rmSync(path);
+}
+
+/** Recover only a proven-dead administrator at the atomic generation-pointer boundary.
+ * Never resumes an external action or releases uncertain resource reservations.
+ */
+export async function recoverMaintenance(
+  home: string,
+  coordination: Coordination,
+) {
+  const deadline = Date.now() + 30000;
+  for (;;) {
+    try {
+      const state = coordination.maintenanceInfo();
+      if (state.mode === "normal") return false;
+      requireThat(
+        state.token,
+        "STORE_UNAVAILABLE",
+        "Unrecognized maintenance fence; preserve control data.",
+      );
+      coordination.adoptMaintenance(state.token);
+      return await coordination.run(
+        "maintenance",
+        () => {
+          const current = readControl(home);
+          requireThat(
+            current?.format === 2 &&
+              current.coordination_id === coordination.identity,
+            "STORE_UNAVAILABLE",
+            "Dead maintenance has an unrecognized control identity; preserve the fence.",
+          );
+          const unchanged = current.epoch === state.expected_epoch;
+          const switched =
+            state.kind === "restore" &&
+            current.restoration?.previous_epoch === state.expected_epoch &&
+            current.restoration?.new_epoch === current.epoch &&
+            !!current.restoration?.preview_digest;
+          requireThat(
+            state.kind === "restore" && (unchanged || switched),
+            "STORE_UNAVAILABLE",
+            "Cannot prove whether interrupted maintenance switched generations; preserve and inspect control data.",
+          );
+          coordination.endMaintenance(state.token!);
+          return true;
+        },
+        { timeoutMs: Math.max(1, deadline - Date.now()) },
+      );
+    } catch (error) {
+      if (
+        (error as { code?: string }).code !== "STORE_BUSY" ||
+        Date.now() >= deadline
+      )
+        throw error;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  }
 }

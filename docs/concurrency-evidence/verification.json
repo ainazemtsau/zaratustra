@@ -1,0 +1,45 @@
+{
+  "base": "4f31e3088a95fdad41457418d4b18963b4c69488",
+  "branch": "codex/concurrent-workspace",
+  "package": "0.6.0-dev.1",
+  "runtime": {
+    "node": "24.22.1",
+    "sqlite": "3.53.4",
+    "pi_sdk": "1.4.0",
+    "platform": "win32-x64"
+  },
+  "focused_tests": {
+    "passed": 51,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 48796.0943
+  },
+  "static": {
+    "types": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "boundary": "PASS44modules127dependencies"
+  },
+  "owner_amendment": "Ten sufficient; no further 100/heavy-growth qualification",
+  "product_model_calls": 0,
+  "private_ZT_modified": false,
+  "hundred_process_support_qualified": false,
+  "artifacts": {
+    "scale.json": {
+      "bytes": 9458,
+      "sha256": "045fcf8d8a1666b4ee68a6a954a2df1c404f5fff7d14e463b6b291baf5605f3f"
+    },
+    "scale-attempt-01.json": {
+      "bytes": 5913,
+      "sha256": "54273e09bb2df2c2e4cd3cee43134eef5d31743b3166aa88dcda2c390760e2a2"
+    },
+    "scale-attempt-02.json": {
+      "bytes": 12954,
+      "sha256": "e01966ccfb3afd4b0a43d7857b46e25ea8776a45f08089c69f54bee91dfaccc3"
+    },
+    "focused-tests.log": {
+      "bytes": 5876,
+      "sha256": "3a67dcf31c38e726c614b01ffccaaa48f0787d6309fc758d5056d20c77f57640"
+    }
+  }
+}

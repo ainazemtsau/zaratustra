@@ -1,5 +1,11 @@
 # Ordinary project startup and owner-controlled Git tracking
 
+Current amendment: concurrent local sessions use schema 9/control 2 and require
+Pi 1.4 with Node 24.16+ (qualified 24.22.1). Close predecessor Pi sessions once
+before upgrading. Runtime OS leases and short command coordination replace the
+lifetime single-writer restriction below. See [current concurrency](CONCURRENCY.md).
+Historical verification retains its original labels and versions.
+
 The ordinary startup and owner Git policy below remain current. Its verification
 section records the predecessor startup task and its exact versions. The later
 Sleep candidate uses the same extension and defaults, adds a third entry skill and

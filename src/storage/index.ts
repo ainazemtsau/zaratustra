@@ -1,3 +1,13 @@
+import {
+  Coordination,
+  type CommandKind,
+  type OperationOptions,
+} from "./coordination.ts";
+import { verifyRuntime } from "./runtime.ts";
+import { initializeConcurrencyState } from "./schema.ts";
+export { Coordination } from "./coordination.ts";
+export type { CommandKind, OperationOptions } from "./coordination.ts";
+export { verifyRuntime } from "./runtime.ts";
 export { DocumentFiles } from "./documents.ts";
 import {
   activeLocation,
@@ -9,6 +19,7 @@ import {
 export {
   activeLocation,
   readControl,
+  recoverMaintenance,
   removeOwned,
   safePath,
 } from "./control.ts";
@@ -46,6 +57,7 @@ import {
   LifecycleSchemaSQL,
   SleepSchemaSQL,
   refreshMemory,
+  MemoryIndexSchemaSQL,
   validateMemory,
   validateWorks,
 } from "../core/index.ts";
@@ -75,7 +87,11 @@ function durableWrite(path: string, bytes: Uint8Array | string) {
   }
 }
 export class DiskStorage implements StoragePort {
-  workspace: StoragePort["workspace"];
+  workspace!: StoragePort["workspace"];
+  readonly coordination: Coordination;
+  private ownsCoordination: boolean;
+  private flushingMemory = false;
+  private checkedPhase: object | undefined;
   readonly = false;
   private db!: DatabaseSync;
   private lockToken = randomUUID();
@@ -88,14 +104,46 @@ export class DiskStorage implements StoragePort {
   constructor(
     public home: string,
     private migrationFault?: (point: string) => void,
+    options: {
+      coordination?: Coordination;
+      runtimeId?: string;
+      readOnly?: boolean;
+    } = {},
   ) {
+    verifyRuntime();
+    requireThat(
+      isAbsolute(home),
+      "VALIDATION_ERROR",
+      "Memory home must be absolute.",
+    );
+    this.controlHome = resolve(home);
+    this.readonly = options.readOnly ?? false;
+    const control = readControl(this.controlHome);
+    this.ownsCoordination = !options.coordination;
+    this.coordination =
+      options.coordination ??
+      new Coordination(this.controlHome, options.runtimeId, {
+        expectedId: control?.coordination_id,
+        create: !control || control.format === 1,
+      });
+    try {
+      this.coordination.sync("maintenance", () => this.initialize(home));
+    } catch (error) {
+      try {
+        this.close();
+      } catch {
+        /* Preserve the initialization error. */
+      }
+      throw error;
+    }
+  }
+  private initialize(home: string) {
     requireThat(
       isAbsolute(home),
       "VALIDATION_ERROR",
       "ZARATUSTRA_HOME must be an absolute trusted setup path.",
     );
     home = resolve(home);
-    this.controlHome = home;
     home = activeLocation(home);
     this.home = home;
     mkdirSync(home, { recursive: true });
@@ -114,35 +162,43 @@ export class DiskStorage implements StoragePort {
       "Workspace manifest/database mismatch; preserve files and diagnose.",
     );
     try {
-      const lock = join(this.controlHome, "writer.lock");
-      if (existsSync(lock)) {
-        const owner = JSON.parse(readFileSync(lock, "utf8")) as { pid: number };
-        let alive = true;
-        try {
-          process.kill(owner.pid, 0);
-        } catch (e) {
-          alive = (e as NodeJS.ErrnoException).code !== "ESRCH";
+      // Only the one-time legacy transition takes the old lifetime lease.
+      if (readControl(this.controlHome)?.format !== 2) {
+        const lock = join(this.controlHome, "writer.lock");
+        if (existsSync(lock)) {
+          const owner = JSON.parse(readFileSync(lock, "utf8")) as {
+            pid: number;
+          };
+          let alive = true;
+          try {
+            process.kill(owner.pid, 0);
+          } catch (error) {
+            alive = (error as NodeJS.ErrnoException).code !== "ESRCH";
+          }
+          requireThat(
+            !alive,
+            "STORE_BUSY",
+            "Close old Pi sessions before upgrading this workspace to concurrent access.",
+          );
+          unlinkSync(lock);
         }
-        if (!alive) unlinkSync(lock);
+        try {
+          durableWrite(
+            lock,
+            JSON.stringify({ pid: process.pid, token: this.lockToken }),
+          );
+          this.ownsLock = true;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "EEXIST")
+            throw new CoreError(
+              "STORE_BUSY",
+              "Another session is upgrading this workspace; retry.",
+            );
+          throw error;
+        }
       }
-      try {
-        durableWrite(
-          lock,
-          JSON.stringify({ pid: process.pid, token: this.lockToken }),
-        );
-        this.ownsLock = true;
-      } catch (e) {
-        if ((e as NodeJS.ErrnoException).code === "EEXIST")
-          this.readonly = true;
-        else throw e;
-      }
-      requireThat(
-        hadDb || !this.readonly,
-        "READ_ONLY",
-        "Workspace is being initialized by another writer.",
-      );
       this.db = new DatabaseSync(dbPath, { readOnly: this.readonly });
-      this.db.exec("PRAGMA foreign_keys=ON; PRAGMA busy_timeout=1000;");
+      this.db.exec("PRAGMA foreign_keys=ON; PRAGMA busy_timeout=0;");
       if (!this.readonly)
         this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;");
       if (!hadDb) {
@@ -183,6 +239,21 @@ export class DiskStorage implements StoragePort {
         const version = this.get<{ user_version: number }>(
           "PRAGMA user_version",
         )?.user_version;
+        if (version === 9 && this.workspace.schema_version === 8) {
+          const receipt = this.get<{ json: string }>(
+            "SELECT json FROM migrations WHERE version=9",
+          );
+          const migration = receipt ? JSON.parse(receipt.json) : null;
+          requireThat(
+            migration &&
+              migration.before === JSON.stringify(this.workspace) &&
+              migration.after === meta?.json,
+            "STORE_UNAVAILABLE",
+            "Unrecognized interrupted concurrent migration; preserve store.",
+          );
+          this.replaceManifest(meta!.json);
+          this.workspace = JSON.parse(meta!.json);
+        }
         if (
           version === 8 &&
           this.workspace.schema_version === 7 &&
@@ -328,18 +399,33 @@ export class DiskStorage implements StoragePort {
               this.workspace.schema_version === 5 ||
               this.workspace.schema_version === 6 ||
               this.workspace.schema_version === 7 ||
-              this.workspace.schema_version === 8) &&
+              this.workspace.schema_version === 8 ||
+              this.workspace.schema_version === 9) &&
             version === this.workspace.schema_version,
           "STORE_UNAVAILABLE",
           "Unknown schema or workspace identity mismatch; no replacement store will be created.",
         );
       }
-      requireThat(
-        this.get<{ integrity_check: string }>("PRAGMA integrity_check")
-          ?.integrity_check === "ok",
-        "STORE_UNAVAILABLE",
-        "SQLite integrity check failed.",
-      );
+      if (!hadDb || this.workspace.schema_version < 9) {
+        requireThat(
+          this.get<{ integrity_check: string }>("PRAGMA integrity_check")
+            ?.integrity_check === "ok",
+          "STORE_UNAVAILABLE",
+          "SQLite integrity check failed.",
+        );
+      } else {
+        // Validated schema-9 generations do not re-scan every historical page for
+        // each new client. Creation/migration/restore and explicit doctor retain
+        // full integrity checks; ordinary queries still fail closed on IO/corruption.
+        const index = this.get<{ format: number }>(
+          "SELECT format FROM memory_index_meta WHERE singleton=1",
+        );
+        requireThat(
+          index?.format === 1,
+          "STORE_UNAVAILABLE",
+          "Unknown access-index format; preserve this store for recovery.",
+        );
+      }
       if (this.workspace.schema_version === 1) this.migrate();
       if (this.workspace.schema_version === 2) this.migrateMemory();
       if (this.workspace.schema_version === 3) this.migrateMemory(4);
@@ -347,6 +433,7 @@ export class DiskStorage implements StoragePort {
       if (this.workspace.schema_version === 5) this.migrateMemory(6);
       if (this.workspace.schema_version === 6) this.migrateMemory(7);
       if (this.workspace.schema_version === 7) this.migrateMemory(8);
+      if (this.workspace.schema_version === 8) this.migrateMemory(9);
       const control = readControl(this.controlHome);
       if (control)
         requireThat(
@@ -355,21 +442,51 @@ export class DiskStorage implements StoragePort {
           "STORE_UNAVAILABLE",
           "Active control identity mismatch; no replacement.",
         );
-      else if (!this.readonly)
+      if (!control || control.format !== 2)
         writeControl(this.controlHome, {
-          format: 1,
-          generation: ".",
+          ...(control ?? { generation: ".", restoration: null }),
+          format: 2,
+          coordination_id: this.coordination.identity,
+          coordination_protocol: 1,
           workspace_id: this.workspace.workspace_id,
           epoch: this.workspace.epoch,
-          restoration: null,
         });
+      if (this.ownsLock) {
+        const legacy = join(this.controlHome, "writer.lock");
+        if (
+          existsSync(legacy) &&
+          JSON.parse(readFileSync(legacy, "utf8")).token === this.lockToken
+        )
+          unlinkSync(legacy);
+        this.ownsLock = false;
+      }
       this.initializing = false;
       if (!this.readonly) {
         mkdirSync(join(home, "materials"), { recursive: true });
         mkdirSync(join(home, "staging"), { recursive: true });
       }
+      for (const name of [
+        "importFile",
+        "readBlob",
+        "readMaterial",
+        "doctor",
+        "pinSource",
+        "unpinSource",
+      ] as const) {
+        const original = this[name].bind(this) as (...args: never[]) => unknown;
+        Object.defineProperty(this, name, {
+          value: (...args: never[]) =>
+            this.withCommandSync(() => original(...args)),
+          configurable: true,
+        });
+      }
     } catch (e) {
-      this.close();
+      try {
+        this.db?.close();
+        this.connectionClosed = true;
+      } catch {
+        /* Preserve original failure. */
+      }
       throw e;
     }
   }
@@ -488,24 +605,34 @@ export class DiskStorage implements StoragePort {
               ? "lifecycle"
               : target === 7
                 ? "sleep"
-                : "documents";
+                : target === 8
+                  ? "documents"
+                  : "concurrency";
     this.migrationFault?.(faultPrefix + "_after_backup");
     const after = JSON.stringify({ ...this.workspace, schema_version: target });
     this.exec("BEGIN IMMEDIATE");
     try {
       this.exec(
-        target === 3
-          ? MemorySchemaSQL
-          : target === 4
-            ? ExperienceSchemaSQL
-            : target === 5
-              ? ApprovalSchemaSQL
-              : target === 6
-                ? LifecycleSchemaSQL
-                : target === 7
-                  ? SleepSchemaSQL
-                  : "SELECT 1;",
+        target === 9 &&
+          this.get(
+            "SELECT name FROM sqlite_master WHERE name='memory_index_meta'",
+          )
+          ? "SELECT 1;"
+          : target === 3
+            ? MemorySchemaSQL
+            : target === 4
+              ? ExperienceSchemaSQL
+              : target === 5
+                ? ApprovalSchemaSQL
+                : target === 6
+                  ? LifecycleSchemaSQL
+                  : target === 7
+                    ? SleepSchemaSQL
+                    : target === 9
+                      ? MemoryIndexSchemaSQL
+                      : "SELECT 1;",
       );
+      if (target === 9) initializeConcurrencyState(this);
       refreshMemory(this, true);
       this.run(
         "INSERT INTO migrations VALUES(?,?)",
@@ -631,42 +758,143 @@ export class DiskStorage implements StoragePort {
   }
   assertActive(epoch: string, write = false) {
     if (this.initializing) return;
-    const c = readControl(this.controlHome);
     requireThat(
-      !this.closed &&
-        !this.connectionClosed &&
-        c &&
-        c.epoch === epoch &&
-        c.workspace_id === this.workspace.workspace_id &&
-        activeLocation(this.controlHome) === this.home,
+      !this.closed && !this.connectionClosed && epoch === this.workspace.epoch,
       "RESTORE_RECONCILIATION_REQUIRED",
-      "Workspace or epoch mismatch: active generation changed; reload the workspace.",
+      "Workspace connection/epoch is no longer active; reload.",
     );
+    const phase = this.coordination.phaseToken;
+    // The stable operation gate excludes every generation switch. Validate filesystem
+    // authority once per capability, never once per SQL statement or across phases.
+    if (!phase || this.checkedPhase !== phase) {
+      const control = readControl(this.controlHome);
+      requireThat(
+        control &&
+          control.epoch === epoch &&
+          control.workspace_id === this.workspace.workspace_id &&
+          activeLocation(this.controlHome) === this.home,
+        "RESTORE_RECONCILIATION_REQUIRED",
+        "Active generation changed; reload the workspace.",
+      );
+      this.checkedPhase = phase;
+    }
     if (write) {
       requireThat(
         !this.administrative,
         "WORK_IN_USE",
-        "A consistent backup is capturing this workspace.",
+        "A consistent backup is capturing this connection.",
       );
-      const lock = join(this.controlHome, "writer.lock");
       requireThat(
-        !this.readonly &&
-          existsSync(lock) &&
-          JSON.parse(readFileSync(lock, "utf8")).token === this.lockToken,
+        !this.readonly,
         "READ_ONLY",
-        "Another writing process owns the stable writer lease, or writes are disabled.",
+        "Writes are explicitly disabled for this connection.",
       );
+      this.coordination.assertHeld();
     }
   }
-  async backupTo(path: string) {
-    this.assertActive(this.workspace.epoch, true);
-    this.administrative = true;
+  private flushMemory() {
+    if (
+      this.initializing ||
+      this.flushingMemory ||
+      this.closed ||
+      this.connectionClosed ||
+      this.db.isTransaction
+    )
+      return;
+    if (
+      !this.db
+        .prepare("SELECT name FROM sqlite_master WHERE name='memory_dirty'")
+        .get() ||
+      !this.db.prepare("SELECT 1 FROM memory_dirty LIMIT 1").get()
+    )
+      return;
+    requireThat(
+      !this.readonly,
+      "INDEX_UNAVAILABLE",
+      "Derived state needs a writable coordinated refresh before this read.",
+    );
+    this.flushingMemory = true;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      refreshMemory(this, false, [], []);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    } finally {
+      this.flushingMemory = false;
+    }
+  }
+  private commandResult<T>(callback: () => T): T {
+    this.flushMemory();
+    let failed = false;
+    try {
+      return callback();
+    } catch (error) {
+      failed = true;
+      throw error;
+    } finally {
+      try {
+        this.flushMemory();
+      } catch (error) {
+        if (!failed) throw error;
+      }
+    }
+  }
+  withCommandSync<T>(callback: () => T, kind: CommandKind = "mutate"): T {
+    if (this.initializing || this.coordination.held) return callback();
+    return this.coordination.sync(kind, () => this.commandResult(callback));
+  }
+  withOperation<T>(
+    kind: CommandKind,
+    callback: () => T,
+    options?: OperationOptions,
+  ): Promise<T> {
+    return this.coordination.run(
+      kind,
+      () => this.commandResult(callback),
+      options,
+    );
+  }
+  withReadSnapshot<T>(callback: () => T): T {
+    return this.withCommandSync(() => {
+      if (this.db.isTransaction) return callback();
+      this.db.exec("BEGIN DEFERRED");
+      try {
+        const value = callback();
+        this.db.exec("COMMIT");
+        return value;
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }, "read");
+  }
+  async backupTo(path: string, operationId?: string) {
+    await this.withOperation(
+      "settle",
+      () => {
+        this.assertActive(this.workspace.epoch, true);
+        this.administrative = true;
+      },
+      { operationId },
+    );
     try {
       await backup(this.db, path);
     } finally {
-      this.administrative = false;
+      await this.withOperation(
+        "settle",
+        () => {
+          this.administrative = false;
+        },
+        { operationId },
+      );
     }
-    this.assertActive(this.workspace.epoch, true);
+    await this.withOperation(
+      "settle",
+      () => this.assertActive(this.workspace.epoch, true),
+      { operationId },
+    );
   }
   pinSource(key: string, hashes: string[]) {
     this.run(
@@ -683,20 +911,28 @@ export class DiskStorage implements StoragePort {
     this.run("DELETE FROM lifecycle_pins WHERE key=?", key);
   }
   exec(sql: string) {
-    this.assertActive(this.workspace?.epoch, true);
-    this.db.exec(sql);
+    return this.withCommandSync(() => {
+      this.assertActive(this.workspace?.epoch, true);
+      this.db.exec(sql);
+    });
   }
   get<T>(sql: string, ...params: (string | number | null)[]) {
-    this.assertActive(this.workspace?.epoch);
-    return this.db.prepare(sql).get(...params) as T | undefined;
+    return this.withCommandSync(() => {
+      this.assertActive(this.workspace?.epoch);
+      return this.db.prepare(sql).get(...params) as T | undefined;
+    }, "read");
   }
   all<T>(sql: string, ...params: (string | number | null)[]) {
-    this.assertActive(this.workspace?.epoch);
-    return this.db.prepare(sql).all(...params) as T[];
+    return this.withCommandSync(() => {
+      this.assertActive(this.workspace?.epoch);
+      return this.db.prepare(sql).all(...params) as T[];
+    }, "read");
   }
   run(sql: string, ...params: (string | number | null)[]) {
-    this.assertActive(this.workspace?.epoch, true);
-    this.db.prepare(sql).run(...params);
+    return this.withCommandSync(() => {
+      this.assertActive(this.workspace?.epoch, true);
+      this.db.prepare(sql).run(...params);
+    });
   }
   importFile(path: string, roots: string[], fault?: (point: string) => void) {
     this.assertActive(this.workspace.epoch, true);
@@ -776,120 +1012,165 @@ export class DiskStorage implements StoragePort {
     signal?: AbortSignal,
     fault?: (point: string) => void,
   ) {
-    authorize();
-    this.assertActive(this.workspace.epoch, true);
-    requireThat(!this.readonly, "READ_ONLY", "Imports need the one writer.");
-    requireThat(
-      isAbsolute(path),
-      "VALIDATION_ERROR",
-      "Import path must be absolute.",
+    const { bytes, format, real, pendingKey } = await this.withOperation(
+      "mutate",
+      () => {
+        authorize();
+        this.assertActive(this.workspace.epoch, true);
+        requireThat(
+          !this.readonly,
+          "READ_ONLY",
+          "Imports need the one writer.",
+        );
+        requireThat(
+          isAbsolute(path),
+          "VALIDATION_ERROR",
+          "Import path must be absolute.",
+        );
+        const real = realpathSync(path);
+        requireThat(
+          roots.some((root) => within(realpathSync(root), real)),
+          "PERMISSION_DENIED",
+          "Import escapes trusted permitted roots.",
+        );
+        const format = extname(real).slice(1).toLowerCase();
+        const limit = ["txt", "md", "markdown"].includes(format)
+          ? 1024 * 1024
+          : 64 * 1024 * 1024;
+        const fd = openSync(real, "r");
+        let bytes: Buffer;
+        try {
+          const stat = fstatSync(fd);
+          requireThat(
+            stat.isFile() && stat.size <= limit,
+            "MATERIAL_TOO_LARGE",
+            "Material must be an ordinary file within its declared size limit.",
+          );
+          bytes = readFileSync(fd);
+          requireThat(
+            bytes.length <= limit,
+            "MATERIAL_TOO_LARGE",
+            "Material grew beyond the size limit.",
+          );
+        } finally {
+          closeSync(fd);
+        }
+        const pendingKey = "pending-" + randomUUID();
+        this.pinSource(pendingKey, [sha(bytes)]);
+        this.coordination.reserve({
+          operation_id: pendingKey,
+          epoch: this.workspace.epoch,
+          kind: "import",
+          digest: sha(bytes),
+          resources: ["import:" + pendingKey],
+        });
+        this.coordination.phase(pendingKey, "dispatching");
+        return { bytes, format, real, pendingKey };
+      },
+      { signal },
     );
-    const real = realpathSync(path);
-    requireThat(
-      roots.some((root) => within(realpathSync(root), real)),
-      "PERMISSION_DENIED",
-      "Import escapes trusted permitted roots.",
-    );
-    const format = extname(real).slice(1).toLowerCase();
-    const limit = ["txt", "md", "markdown"].includes(format)
-      ? 1024 * 1024
-      : 64 * 1024 * 1024;
-    const fd = openSync(real, "r");
-    let bytes: Buffer;
     try {
-      const stat = fstatSync(fd);
-      requireThat(
-        stat.isFile() && stat.size <= limit,
-        "MATERIAL_TOO_LARGE",
-        "Material must be an ordinary file within its declared size limit.",
+      let extraction: Awaited<ReturnType<typeof extract>>;
+      if (["txt", "md", "markdown"].includes(format)) {
+        let text = "",
+          status: "readable" | "damaged" = "readable";
+        try {
+          text = new TextDecoder("utf-8", {
+            fatal: true,
+            ignoreBOM: true,
+          }).decode(bytes);
+        } catch {
+          status = "damaged";
+        }
+        extraction = {
+          format,
+          status,
+          parser: "WHATWG TextDecoder",
+          parser_version: process.version + " UTF-8",
+          text,
+          text_blob_ref: null,
+          text_hash: null,
+          total_characters: Array.from(text).length,
+          sections: [
+            {
+              locator: "text:1",
+              label: "Text",
+              start: 0,
+              end: Array.from(text).length,
+              available: status === "readable",
+            },
+          ],
+          warnings:
+            status === "damaged"
+              ? [
+                  "Invalid UTF-8; original bytes retained without readable text.",
+                ]
+              : [],
+        };
+      } else if (["pdf", "epub"].includes(format))
+        extraction = await extract(bytes, format, signal);
+      else
+        extraction = {
+          format,
+          status: "unsupported",
+          parser: "none",
+          parser_version: "none",
+          text: "",
+          text_blob_ref: null,
+          text_hash: null,
+          total_characters: 0,
+          sections: [],
+          warnings: [
+            "Unsupported format; retained original is not readable text.",
+          ],
+        };
+      return await this.withOperation(
+        "settle",
+        () => {
+          authorize();
+          requireThat(
+            !signal?.aborted,
+            "PERMISSION_DENIED",
+            "Import runtime was invalidated.",
+          );
+          this.pinSource(pendingKey, [
+            sha(bytes),
+            ...(extraction.text ? [sha(Buffer.from(extraction.text))] : []),
+          ]);
+          const blob_ref = this.retain(bytes, fault);
+          const { text, ...metadata } = extraction;
+          if (["readable", "partial"].includes(metadata.status)) {
+            metadata.text_blob_ref = this.retain(Buffer.from(text), fault);
+            metadata.text_hash = metadata.text_blob_ref;
+          }
+          this.coordination.phase(pendingKey, "complete");
+          this.coordination.release(pendingKey);
+          return {
+            pending_key: pendingKey,
+            text,
+            blob_ref,
+            byte_length: bytes.length,
+            locator: real,
+            extraction: metadata,
+          };
+        },
+        { operationId: pendingKey },
       );
-      bytes = readFileSync(fd);
-      requireThat(
-        bytes.length <= limit,
-        "MATERIAL_TOO_LARGE",
-        "Material grew beyond the size limit.",
-      );
-    } finally {
-      closeSync(fd);
-    }
-    const pendingKey = "pending-" + randomUUID();
-    this.pinSource(pendingKey, [sha(bytes)]);
-    let extraction: Awaited<ReturnType<typeof extract>>;
-    if (["txt", "md", "markdown"].includes(format)) {
-      let text = "",
-        status: "readable" | "damaged" = "readable";
+    } catch (error) {
       try {
-        text = new TextDecoder("utf-8", {
-          fatal: true,
-          ignoreBOM: true,
-        }).decode(bytes);
-      } catch {
-        status = "damaged";
-      }
-      extraction = {
-        format,
-        status,
-        parser: "WHATWG TextDecoder",
-        parser_version: "Node 22.19.0 UTF-8",
-        text,
-        text_blob_ref: null,
-        text_hash: null,
-        total_characters: Array.from(text).length,
-        sections: [
-          {
-            locator: "text:1",
-            label: "Text",
-            start: 0,
-            end: Array.from(text).length,
-            available: status === "readable",
+        await this.withOperation(
+          "settle",
+          () => {
+            this.unpinSource(pendingKey);
+            this.coordination.release(pendingKey);
           },
-        ],
-        warnings:
-          status === "damaged"
-            ? ["Invalid UTF-8; original bytes retained without readable text."]
-            : [],
-      };
-    } else if (["pdf", "epub"].includes(format))
-      extraction = await extract(bytes, format, signal);
-    else
-      extraction = {
-        format,
-        status: "unsupported",
-        parser: "none",
-        parser_version: "none",
-        text: "",
-        text_blob_ref: null,
-        text_hash: null,
-        total_characters: 0,
-        sections: [],
-        warnings: [
-          "Unsupported format; retained original is not readable text.",
-        ],
-      };
-    authorize();
-    requireThat(
-      !signal?.aborted,
-      "PERMISSION_DENIED",
-      "Import runtime was invalidated.",
-    );
-    this.pinSource(pendingKey, [
-      sha(bytes),
-      ...(extraction.text ? [sha(Buffer.from(extraction.text))] : []),
-    ]);
-    const blob_ref = this.retain(bytes, fault);
-    const { text, ...metadata } = extraction;
-    if (["readable", "partial"].includes(metadata.status)) {
-      metadata.text_blob_ref = this.retain(Buffer.from(text), fault);
-      metadata.text_hash = metadata.text_blob_ref;
+          { operationId: pendingKey },
+        );
+      } catch {
+        /* Durable import reservation remains recoverable. */
+      }
+      throw error;
     }
-    return {
-      pending_key: pendingKey,
-      text,
-      blob_ref,
-      byte_length: bytes.length,
-      locator: real,
-      extraction: metadata,
-    };
   }
   private retain(bytes: Uint8Array, fault?: (point: string) => void) {
     const hash = sha(bytes),
@@ -964,29 +1245,33 @@ export class DiskStorage implements StoragePort {
       journal: this.get("PRAGMA journal_mode"),
       schema_version: this.get("PRAGMA user_version"),
       read_only: this.readonly,
+      concurrency: this.coordination.describe(),
     };
   }
   closeConnection() {
     if (this.connectionClosed) return;
-    this.connectionClosed = true;
-    this.db?.close();
+    const close = () => {
+      this.connectionClosed = true;
+      this.db?.close();
+    };
+    if (this.initializing || this.coordination.held) close();
+    else this.coordination.sync("maintenance", close);
   }
   close() {
     if (this.closed) return;
-    this.closed = true;
-    try {
-      this.closeConnection();
-    } finally {
-      if (this.ownsLock) {
-        const path = join(this.controlHome, "writer.lock");
-        try {
-          if (JSON.parse(readFileSync(path, "utf8")).token === this.lockToken)
-            unlinkSync(path);
-        } finally {
-          this.ownsLock = false;
-        }
-      }
+    // A busy close remains retryable; never strand an open DB/OS lease behind a closed flag.
+    this.closeConnection();
+    if (this.ownsLock) {
+      const path = join(this.controlHome, "writer.lock");
+      if (
+        existsSync(path) &&
+        JSON.parse(readFileSync(path, "utf8")).token === this.lockToken
+      )
+        unlinkSync(path);
+      this.ownsLock = false;
     }
+    if (this.ownsCoordination) this.coordination.close({ poisonUnknown: true });
+    this.closed = true;
   }
 }
 export { CoreError };

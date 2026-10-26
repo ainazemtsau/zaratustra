@@ -16,17 +16,35 @@ type Register = (
   action: (input: Record<string, unknown>, ctx: ExtensionContext) => unknown,
 ) => void;
 export function registerAdministration(
-  register: Register,
+  registerTool: Register,
   a: {
     core: () => Core;
     admin: () => Administration;
     disk: () => DiskStorage | undefined;
     output: () => OutputBoundary | undefined;
-    reopen: (ctx: ExtensionContext) => void;
+    reopen: (ctx: ExtensionContext) => Promise<void>;
     restoreReady: () => void;
     needsReopen: () => boolean;
+    withOperation: DiskStorage["withOperation"];
   },
 ) {
+  const phased = new Set([
+    "zara_storage_preview",
+    "zara_storage_apply",
+    "zara_cleanup_preview",
+    "zara_cleanup",
+    "zara_backup_pin_release_preview",
+    "zara_backup_pin_release",
+    "zara_recovery_inspect",
+    "zara_reconcile_preview",
+    "zara_reconcile",
+  ]);
+  const register: Register = (name, description, schema, action) =>
+    registerTool(name, description, schema, (input, ctx) =>
+      phased.has(name)
+        ? a.withOperation("mutate", () => action(input, ctx))
+        : action(input, ctx),
+    );
   register(
     "zara_backup",
     "Create and disk-verify a consistent SQLite snapshot, exact raw managed originals/derivatives and versioned JSON export. Full-read trusted setup required. Missing/corrupt blobs refuse completeness. No arbitrary source paths.",
@@ -85,17 +103,20 @@ export function registerAdministration(
     "zara_restore",
     "Switch only the exact approved verified quarantine. A new authoritative external epoch invalidates old claims/handles/approvals/callbacks. Every restored Work/step must reconcile current-world effects, even with no receipt.",
     z.strictObject({ preview_ref: z.string() }),
-    (p, ctx) => {
+    async (p, ctx) => {
       const admin = a.admin();
       fullAccess(admin.context, true);
       a.restoreReady();
       let switched = false;
       try {
-        const result = admin.restore(p.preview_ref as string, a.disk());
+        const result = await admin.restoreWhenDrained(
+          p.preview_ref as string,
+          a.disk(),
+        );
         switched = true;
         return result;
       } finally {
-        if (switched || a.needsReopen()) a.reopen(ctx);
+        if (switched || a.needsReopen()) await a.reopen(ctx);
       }
     },
   );
