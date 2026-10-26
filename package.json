@@ -1,6 +1,6 @@
 {
   "name": "zaratustra",
-  "version": "0.6.0-dev.2",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "Durable Work and addressed materials for Pi; full R1 remains in development",

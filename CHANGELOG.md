@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 — ordinary release numbering
+
+- Publish the existing compact-approval correction as an ordinary numeric release, without an automatic dev suffix.
+- Package and lockfile version are 0.6.0. Agreed policy: patch releases for fixes, minor releases for new capabilities, rc only for explicit release candidates.
+- No runtime source, dependency versions, schema or approval behavior changed from 0.6.0-dev.2. Its exact earlier tests and limits remain historical; version correction is not a new independent fix or usefulness case.
+- The earlier v0.6.0-dev.2 tag/release is preserved, not rewritten. Personal package installation remains separately authorized and real-use confirmation remains open.
+
 ## 0.6.0-dev.2 — compact interactive approvals
 
 - Pi 1.4 interactive confirmation shows a short action/target/consequence summary, not full record data or complete file bodies.
