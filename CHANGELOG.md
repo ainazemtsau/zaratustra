@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.1 — chat-first explanations and native choices
+
+- Long proposal details are ordinary scrollable chat messages, not a pager, overlay or separate preview window. TUI confirmation is two-phase: first `review_in_chat` queues the complete finite message; only after Pi emits that exact message can a later call open a short question. Same-turn retries neither duplicate the message nor open a dialog. Revalidation occurs before review and again before the actual decision.
+- Add `zara_ask`: a short native question with selectable options and an Other answer input. Put the explanation in chat first. Labels are bounded rather than silently truncated; cancelled input and free-form answers remain data, never execution authority.
+- Protected proposals offer Confirm, Cancel and Other answer. A custom answer declines the old proposal and returns `requested_changes`; it cannot authorize or silently alter it. Confirm still requires the actual short native Yes/No answer to retain the existing exact-authority boundary. RPC/SDK keep their existing full native presentation.
+- Remove the abandoned uncommitted overlay reader and external preview harness. Earlier mechanical pager/overlay results remain development history, not acceptance of the final interaction design. No schema, control-version or dependency-version change. Installation is separate from this source release.
+
+Verification: 12 focused UI/message tests, 13 native-adapter/concurrency cases and 2 exact-binding/invalidation regressions pass on isolated Node 24.22.1 / Pi 1.4.0. Types, changed-file lint/formatting, boundaries and build pass. Coverage includes full chat rendering, short native choices/custom input, deferred-message ordering, exact display matching, actual native Yes/No and refusal. A release-review regression first exposed that a hidden message could count as displayed; the retained negative check now passes after requiring display:true. The actual Pi chat component renders complete long content beyond 24 rows in normal transcript flow.
+
+Limits: focused checks, not the full historical qualification or full R1. A UI-only manual check does not establish acceptance of the integrated protected workflow. That workflow still needs ordinary-use verification after an explicitly authorized installed update. No schema migration is introduced; upgrading from older pre-0.6.0 stores still has the earlier release's coordination/schema requirements. Source publication never updates a personal package or memory automatically.
+
 ## 0.6.0 — ordinary release numbering
 
 - Publish the existing compact-approval correction as an ordinary numeric release, without an automatic dev suffix.

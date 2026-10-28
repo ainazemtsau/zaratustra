@@ -23,6 +23,7 @@ type Tool = Parameters<ExtensionAPI["registerTool"]>[0];
 type Adapter = {
   ctx: ExtensionToolContext;
   warnings: string[];
+  messages: Parameters<ExtensionAPI["sendMessage"]>[0][];
   emit: (name: string, event?: Record<string, unknown>) => Promise<unknown>;
   call: (
     name: string,
@@ -72,13 +73,15 @@ function fixture() {
   const adapters: Adapter[] = [];
   function adapter(
     confirm: () => Promise<boolean> = async () => true,
+    options: { mode?: "sdk" | "tui"; choice?: string; custom?: string } = {},
   ): Adapter {
     const hooks = new Map<string, Hook>(),
       tools = new Map<string, Tool>(),
       warnings: string[] = [];
+    const messages: Parameters<ExtensionAPI["sendMessage"]>[0][] = [];
     const ctx = {
       cwd,
-      mode: "sdk",
+      mode: options.mode ?? "sdk",
       hasUI: true,
       model: { provider: "mechanical", id: "no-provider-dispatch" },
       sessionManager: { getSessionId: () => "native-test-" + randomUUID() },
@@ -86,6 +89,12 @@ function fixture() {
       abort() {},
       ui: {
         confirm,
+        async select() {
+          return options.choice;
+        },
+        async input() {
+          return options.custom;
+        },
         notify(message: string) {
           warnings.push(message);
         },
@@ -97,6 +106,9 @@ function fixture() {
       },
       registerTool(tool: Tool) {
         tools.set(tool.name, tool);
+      },
+      sendMessage(message: Parameters<ExtensionAPI["sendMessage"]>[0]) {
+        messages.push(message);
       },
       getThinkingLevel: () => "off",
     } as unknown as ExtensionAPI);
@@ -133,7 +145,7 @@ function fixture() {
       assert.equal(confirmed.code, undefined, JSON.stringify(confirmed));
       return { path, content };
     };
-    const value = { ctx, emit, call, snapshot, prepare, warnings };
+    const value = { ctx, emit, call, snapshot, prepare, warnings, messages };
     adapters.push(value);
     return value;
   }
@@ -154,6 +166,159 @@ function fixture() {
     },
   };
 }
+
+test("TUI proposal goes to chat before a short question; custom answer never grants permission", async () => {
+  const f = fixture();
+  let confirmations = 0;
+  const a = f.adapter(
+    async () => {
+      confirmations++;
+      return true;
+    },
+    { mode: "tui", choice: "Свой ответ…", custom: "Поменяй только заголовок" },
+  );
+  try {
+    await a.emit("session_start");
+    const path = join(f.output, "not-created.md");
+    const p = await a.call("zara_file_preview", {
+      request_id: "chat-first-custom",
+      tool: "write",
+      arguments: { path, content: "FULL CONTENT MARKER" },
+      independent_basis: "Mechanical independent fixture",
+      consequence: "Создать только эту заметку.",
+      alternatives: "Не создавать.",
+    });
+    assert.equal(p.code, undefined);
+    const request = { preview_ref: p.request_id };
+    const queued = await a.call("zara_confirm", request);
+    assert.equal(queued.status, "review_in_chat");
+    assert.equal(queued.permission_granted, false);
+    assert.equal(a.messages.length, 1);
+    assert.ok(String(a.messages[0].content).includes("FULL CONTENT MARKER"));
+    assert.equal(
+      (await a.call("zara_confirm", request)).status,
+      "review_in_chat",
+    );
+    assert.equal(
+      a.messages.length,
+      1,
+      "same-turn calls must not duplicate messages or open questions",
+    );
+    assert.equal(confirmations, 0);
+    await a.emit("message_end", {
+      message: { role: "custom", ...a.messages[0] },
+    });
+    const answer = await a.call("zara_confirm", request);
+    assert.equal(answer.requested_changes, "Поменяй только заголовок");
+    assert.equal(answer.permission_granted, false);
+    assert.equal(confirmations, 0);
+    const blocked = (await a.emit("tool_call", {
+      toolName: "write",
+      toolCallId: "not-approved",
+      input: { path, content: "FULL CONTENT MARKER" },
+    })) as { block?: boolean };
+    assert.equal(blocked.block, true);
+    assert.equal(
+      (await a.call("zara_confirm", request)).code,
+      "APPROVAL_STALE",
+    );
+    assert.equal(
+      a.messages.length,
+      1,
+      "a declined proposal must not be re-presented",
+    );
+    const question = await a.call("zara_ask", {
+      question: "Что изменить?",
+      choices: ["Заголовок", "Текст"],
+    });
+    assert.equal(question.kind, "custom");
+    assert.equal(question.answer, "Поменяй только заголовок");
+    assert.equal(question.permission_granted, false);
+  } finally {
+    await f.close();
+  }
+});
+
+test("TUI choosing Confirm after chat still requires the actual native affirmative answer", async () => {
+  const f = fixture();
+  let confirmations = 0;
+  const a = f.adapter(
+    async () => {
+      confirmations++;
+      return false;
+    },
+    { mode: "tui", choice: "Подтвердить" },
+  );
+  try {
+    await a.emit("session_start");
+    const p = await a.call("zara_file_preview", {
+      request_id: "chat-native-no",
+      tool: "write",
+      arguments: { path: join(f.output, "declined.md"), content: "declined" },
+      independent_basis: "Independent fixture",
+      consequence: "Создать заметку.",
+      alternatives: "Не создавать.",
+    });
+    const request = { preview_ref: p.request_id };
+    assert.equal(
+      (await a.call("zara_confirm", request)).status,
+      "review_in_chat",
+    );
+    await a.emit("message_end", {
+      message: { role: "custom", ...a.messages[0] },
+    });
+    const answer = await a.call("zara_confirm", request);
+    assert.equal(answer.code, undefined);
+    assert.equal(confirmations, 1);
+    assert.equal(
+      (await a.call("zara_confirm", request)).code,
+      "APPROVAL_STALE",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
+test("TUI visible chat plus actual native Yes approves only that exact proposal without executing it", async () => {
+  const f = fixture();
+  let confirmations = 0;
+  const a = f.adapter(
+    async () => {
+      confirmations++;
+      return true;
+    },
+    { mode: "tui", choice: "Подтвердить" },
+  );
+  try {
+    await a.emit("session_start");
+    const path = join(f.output, "approved-not-executed.md");
+    const preview = await a.call("zara_file_preview", {
+      request_id: "chat-native-yes",
+      tool: "write",
+      arguments: { path, content: "exact bytes" },
+      independent_basis: "Independent mechanical fixture",
+      consequence: "Создать заметку.",
+      alternatives: "Не создавать.",
+    });
+    const request = { preview_ref: preview.request_id };
+    assert.equal(
+      (await a.call("zara_confirm", request)).status,
+      "review_in_chat",
+    );
+    await a.emit("message_end", {
+      message: { role: "custom", ...a.messages[0] },
+    });
+    const answer = await a.call("zara_confirm", request);
+    assert.equal(answer.code, undefined);
+    assert.equal(answer.status, "approved-transient");
+    assert.equal((answer.answer as { affirmative: boolean }).affirmative, true);
+    assert.equal(answer.request_id, preview.request_id);
+    assert.equal(confirmations, 1);
+    assert.throws(() => readFileSync(path), { code: "ENOENT" });
+  } finally {
+    await f.close();
+  }
+});
 
 test("real Pi native writes use shared path reservations; another startup preserves a live dispatch", async () => {
   const f = fixture(),

@@ -1,263 +1,273 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import {
+  CustomMessageComponent,
   ExtensionSelectorComponent,
   initTheme,
 } from "@earendil-works/pi-coding-agent";
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { stripTerminalSequences, visibleWidth } from "@earendil-works/pi-tui";
 import {
-  approvalPages,
-  approvalSummary,
+  approvalDetails,
   approvalText,
   confirmApproval,
-  requiresApprovalReview,
 } from "../src/extension/confirmation.ts";
+import { askQuestion } from "../src/extension/questions.ts";
+import { chatReview, PROPOSAL_MESSAGE } from "../src/extension/chat-review.ts";
 import { renderApproval } from "../src/extension/preview.ts";
 
 type Proposal = Parameters<typeof renderApproval>[0];
-const proposal = (overrides: Partial<Proposal> = {}): Proposal => ({
+const proposal = (): Proposal => ({
   action: "managed_file",
   exact: {
-    target: "example/notes.md",
+    target: "example.md",
     before_hash: null,
     before_length: 0,
-    final_text: '{"private": "' + "x".repeat(64000) + '"}',
-    independent_basis: "Requested document",
+    final_text: "FIRST\n" + "long readable text ".repeat(1000) + "\nLAST",
+    independent_basis: "Mechanical example only",
   },
-  consequence: "Create the requested document.",
-  alternatives: "Leave it unchanged.",
+  consequence: "Создать заметку без изменения других файлов.",
+  alternatives: "Ничего не сохранять.",
   expires_at: "2030-01-01T00:00:00Z",
-  ...overrides,
 });
+initTheme("dark");
 
-test("ordinary summary excludes full bodies, JSON payload and technical identifiers", () => {
-  const p = proposal();
-  const before = structuredClone(p);
-  const text = approvalSummary(p);
-  assert.match(text, /Create file: example\/notes.md/);
-  assert.match(text, /full details/);
-  assert.doesNotMatch(text, /private|before_hash|64000|expires_at/);
-  assert.ok(text.length < 500);
-  assert.deepEqual(p, before);
-  const record = proposal({
-    action: "commit",
-    exact: {
-      ops: [
-        {
-          op: "create_record",
-          kind: "entity",
-          title: "Example resource",
-          data: { internal: "SECRET-BODY" },
-        },
-      ],
-    },
-  });
-  assert.match(approvalSummary(record), /create record: Example resource/);
-  assert.doesNotMatch(approvalSummary(record), /SECRET-BODY|internal/);
-  assert.equal(requiresApprovalReview(record), false);
-});
-
-test("scope or consequence omitted from summary requires full review; dangerous actions cannot skip it", () => {
-  assert.equal(requiresApprovalReview(proposal()), false);
-  for (const p of [
-    proposal({ action: "storage" }),
-    proposal({ action: "restore" }),
-    proposal({ action: "cleanup" }),
-    proposal({ consequence: "x".repeat(161) }),
-    proposal({ exact: { target: "x".repeat(101) } }),
-    proposal({ action: "commit", exact: { ops: [{ op: "merge_identity" }] } }),
-    proposal({
-      action: "commit",
-      exact: {
-        ops: Array.from({ length: 4 }, () => ({ op: "create_record" })),
-      },
-    }),
-  ])
-    assert.equal(requiresApprovalReview(p), true);
-});
-
-test("detail pages are bounded for long lines, many newlines, wide characters and control data", () => {
-  const text =
-    "  indented\n\n" +
-    "界😀".repeat(500) +
-    "\n".repeat(50) +
-    "\x1b[2J\u202eEND";
-  const pages = approvalPages(text);
-  assert.ok(pages.length > 10);
-  for (const page of pages) {
-    assert.ok(page.split("\n").length <= 6);
-    assert.ok(page.split("\n").every((line) => Array.from(line).length <= 24));
-    assert.doesNotMatch(page, /[\x1b\u202e]/);
-  }
-  assert.equal(
-    pages.join("").replaceAll("\n", ""),
-    approvalText(text).replaceAll("\n", ""),
-  );
-  assert.match(pages[0], /^  indented/);
-});
-
-function fixture(answers: boolean[] = [true]) {
-  let listener: ((data: string) => unknown) | undefined;
-  let unsubscriptions = 0;
-  let triggerDetails = false;
-  let cancelDetails = false;
-  let throwConfirm = false;
-  const messages: string[] = [];
-  const selections: string[] = [];
+function fixture(choice?: string, custom?: string, affirmative = true) {
+  const calls: {
+    kind: string;
+    title: string;
+    choices?: string[];
+    message?: string;
+  }[] = [];
   const ctx = {
     mode: "tui",
+    hasUI: true,
     ui: {
-      onTerminalInput(fn: typeof listener) {
-        listener = fn;
-        return () => {
-          listener = undefined;
-          unsubscriptions++;
-        };
+      async select(title: string, choices: string[]) {
+        calls.push({ kind: "select", title, choices });
+        return choice;
       },
-      async confirm(
-        _title: string,
-        message: string,
-        opts?: { signal?: AbortSignal },
-      ) {
-        messages.push(message);
-        if (throwConfirm) throw new Error("native dialog failure");
-        if (triggerDetails) {
-          triggerDetails = false;
-          assert.deepEqual(listener?.("d"), { consume: true });
-          assert.equal(opts?.signal?.aborted, true);
-          return true; // Even a racing yes cannot bypass requested detail review.
-        }
-        return answers.shift() ?? false;
+      async input(title: string) {
+        calls.push({ kind: "input", title });
+        return custom;
       },
-      async select(title: string, options: string[]) {
-        selections.push(title);
-        return cancelDetails ? undefined : options[0];
+      async confirm(title: string, message: string) {
+        calls.push({ kind: "confirm", title, message });
+        return affirmative;
       },
     },
   } as unknown as ExtensionContext;
-  return {
-    ctx,
-    messages,
-    selections,
-    get unsubscriptions() {
-      return unsubscriptions;
-    },
-    get listener() {
-      return listener;
-    },
-    details: () => {
-      triggerDetails = true;
-    },
-    cancel: () => {
-      cancelDetails = true;
-    },
-    fail: () => {
-      throwConfirm = true;
-    },
-  };
+  return { ctx, calls };
 }
 
-test("actual Pi 1.4 native selector layout fits ordinary confirmation/details in 60x24", () => {
-  initTheme("dark");
+test("full proposal text is retained for chat, with controls escaped and no page slicing", () => {
   const p = proposal();
-  const summary = new ExtensionSelectorComponent(
-    "Allow these changes?\n" + approvalSummary(p),
-    ["Yes", "No"],
-    () => {},
-    () => {},
-  );
-  const before = new ExtensionSelectorComponent(
-    "Confirm these exact changes?\n" + renderApproval(p),
-    ["Yes", "No"],
-    () => {},
-    () => {},
-  );
-  assert.ok(before.render(60).length > 100);
-  assert.ok(summary.render(60).length <= 24);
-  const page = new ExtensionSelectorComponent(
-    "Exact proposal details — 1/100\n" + approvalPages(renderApproval(p))[0],
-    ["Next page", "Cancel proposal"],
-    () => {},
-    () => {},
-  );
-  assert.ok(page.render(60).length <= 24);
-  summary.dispose();
-  before.dispose();
-  page.dispose();
-});
-
-test("ordinary approval uses exactly one actual native confirmation and cleans its listener", async () => {
-  const f = fixture();
-  assert.equal(await confirmApproval(f.ctx, proposal()), true);
-  assert.equal(f.messages.length, 1);
-  assert.equal(f.selections.length, 0);
-  assert.equal(f.unsubscriptions, 1);
-  assert.equal(f.listener, undefined);
-});
-
-test("D reviews the same full proposal through bounded pages, then asks native confirmation again", async () => {
-  const f = fixture([false]);
-  f.details();
-  const p = proposal({
-    exact: {
-      ...proposal().exact,
-      final_text: "first\n" + "long content".repeat(20) + "\nLAST-MARKER",
-    },
-  });
   const before = structuredClone(p);
-  assert.equal(await confirmApproval(f.ctx, p), false);
-  assert.equal(f.messages.length, 2);
-  assert.ok(f.selections.length > 2);
-  assert.match(f.selections.join(""), /LAST-MARKER/);
+  const text = approvalDetails(p);
+  assert.equal(text, approvalText(renderApproval(p)));
+  assert.ok(text.includes(String(p.exact.final_text)));
+  assert.ok(text.includes(p.consequence));
+  assert.ok(text.includes(p.alternatives));
   assert.deepEqual(p, before);
-  assert.equal(f.unsubscriptions, 2);
+  assert.doesNotMatch(
+    approvalText("\x1b[2J\u009b\u202e\t\r"),
+    /[\x1b\u009b\u202e\t\r]/,
+  );
 });
 
-test("cancel from details and native No never grant; mandatory review happens before native Yes", async () => {
-  const cancel = fixture();
-  cancel.details();
-  cancel.cancel();
-  assert.equal(await confirmApproval(cancel.ctx, proposal()), false);
-  assert.equal(cancel.messages.length, 1);
-  const mandatory = fixture();
-  mandatory.cancel();
+test("real Pi chat message renders the complete long text rather than a clipped dialog", () => {
+  const text = approvalDetails(proposal());
+  const message = new CustomMessageComponent(
+    {
+      role: "custom",
+      customType: PROPOSAL_MESSAGE,
+      content: text,
+      display: true,
+      timestamp: Date.now(),
+    },
+    undefined,
+  );
+  const lines = message.render(60).map(stripTerminalSequences);
+  assert.ok(lines.length > 24);
+  assert.match(lines.join("\n"), /FIRST/);
+  assert.match(lines.join("\n"), /LAST/);
+  assert.ok(lines.every((line) => visibleWidth(line) <= 60));
+});
+
+function chatFixture() {
+  type Message = {
+    customType: string;
+    content: string;
+    display: boolean;
+    details: { preview: string; nonce: string };
+  };
+  const hooks = new Map<string, (event: Record<string, unknown>) => unknown>();
+  const messages: Message[] = [];
+  const options: { triggerTurn: boolean }[] = [];
+  const gate = chatReview({
+    on(name: string, handler: (event: Record<string, unknown>) => unknown) {
+      hooks.set(name, handler);
+    },
+    sendMessage(message: Message, opts: { triggerTurn: boolean }) {
+      messages.push(message);
+      options.push(opts);
+    },
+  } as unknown as ExtensionAPI);
+  const display = (message = messages.at(-1)) =>
+    hooks.get("message_end")?.({ message: { role: "custom", ...message } });
+  return { gate, hooks, messages, options, display };
+}
+
+test("queued sendMessage is not treated as displayed; no duplicate message before Pi emits it", () => {
+  const f = chatFixture();
+  const owner = {};
+  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT"), false);
+  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT"), false);
+  assert.equal(f.messages.length, 1);
+  assert.deepEqual(f.options[0], { triggerTurn: false });
+  assert.equal(f.messages[0].display, true);
+  f.display();
+  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT"), true);
+});
+
+test("chat acknowledgement binds exact content/nonce/owner; reload and changed text require new display", () => {
+  const f = chatFixture();
+  const owner = {};
+  f.gate.ensure(owner, "p1", "original");
+  const message = f.messages[0];
+  f.display({ ...message, display: false });
   assert.equal(
-    await confirmApproval(
-      mandatory.ctx,
-      proposal({
-        action: "cleanup",
-        exact: { candidates: [], coverage: "orphans only" },
-      }),
-    ),
+    f.gate.ensure(owner, "p1", "original"),
+    false,
+    "hidden messages are not visible review",
+  );
+  f.display({ ...message, content: "changed" });
+  assert.equal(f.gate.ensure(owner, "p1", "original"), false);
+  f.display({ ...message, details: { ...message.details, nonce: "wrong" } });
+  assert.equal(f.gate.ensure(owner, "p1", "original"), false);
+  f.display(message);
+  assert.equal(f.gate.ensure(owner, "p1", "original"), true);
+  assert.equal(f.gate.ensure({}, "p1", "original"), false);
+  assert.equal(f.gate.ensure(owner, "p1", "new text"), false);
+  f.display();
+  f.hooks.get("session_shutdown")?.({});
+  assert.equal(f.gate.ensure(owner, "p1", "new text"), false);
+});
+
+test("ordinary questions offer real selectable choices plus native custom input", async () => {
+  const f = fixture("Свой ответ…", "Мой вариант без потери пробелов  ");
+  assert.deepEqual(
+    await askQuestion(f.ctx, "Как продолжить?", ["Сейчас", "Позже"]),
+    { kind: "custom", answer: "Мой вариант без потери пробелов  " },
+  );
+  assert.deepEqual(f.calls[0].choices, ["Сейчас", "Позже", "Свой ответ…"]);
+  assert.deepEqual(
+    f.calls.map((call) => call.kind),
+    ["select", "input"],
+  );
+});
+
+test("choice, cancelled selector and cancelled/empty custom answers are distinct data", async () => {
+  assert.deepEqual(
+    await askQuestion(fixture("Now").ctx, "When?", ["Now", "Later"]),
+    { kind: "choice", answer: "Now" },
+  );
+  for (const f of [
+    fixture(),
+    fixture("Other answer…"),
+    fixture("Other answer…", "   "),
+    fixture("forged"),
+  ])
+    assert.deepEqual(await askQuestion(f.ctx, "When?", ["Now", "Later"]), {
+      kind: "cancelled",
+    });
+});
+
+test("long explanations, unsafe controls, duplicate/reserved and wide labels cannot enter the small question", async () => {
+  const f = fixture();
+  for (const [title, choices] of [
+    ["x".repeat(53), ["Yes"]],
+    ["Question\nlarge body", ["Yes"]],
+    ["Question", ["界".repeat(20)]],
+    ["Question", ["Yes", "Yes"]],
+    ["Question", ["Other answer…"]],
+    ["Question", []],
+  ] as [string, string[]][])
+    await assert.rejects(() => askQuestion(f.ctx, title, choices));
+  assert.equal(f.calls.length, 0);
+  const tooLong = fixture("Other answer…", "x".repeat(4001));
+  await assert.rejects(
+    () => askQuestion(tooLong.ctx, "Question?", ["Yes"]),
+    /4000/,
+  );
+});
+
+test("native short choice UI includes custom option and fits 32x24", () => {
+  const selector = new ExtensionSelectorComponent(
+    "Что сделать?",
+    ["Подтвердить", "Отмена", "Свой ответ…"],
+    () => {},
+    () => {},
+  );
+  try {
+    const lines = selector.render(32).map(stripTerminalSequences);
+    assert.ok(lines.length <= 24);
+    assert.match(lines.join("\n"), /Свой ответ/);
+  } finally {
+    selector.dispose();
+  }
+});
+
+test("protected custom text declines the immutable proposal and never reaches native approval", async () => {
+  const f = fixture("Свой ответ…", "Измени только заголовок");
+  const received: string[] = [];
+  assert.equal(
+    await confirmApproval(f.ctx, proposal(), (text) => received.push(text)),
     false,
   );
-  assert.equal(mandatory.messages.length, 0);
-  const no = fixture([false]);
-  assert.equal(await confirmApproval(no.ctx, proposal()), false);
+  assert.deepEqual(received, ["Измени только заголовок"]);
+  assert.deepEqual(
+    f.calls.map((call) => call.kind),
+    ["select", "input"],
+  );
 });
 
-test("native failures propagate for adapter revocation and unsubscribe input handler", async () => {
-  const f = fixture();
-  f.fail();
+test("protected cancellation never confirms; selecting Confirm alone is not authority", async () => {
+  for (const f of [fixture(), fixture("Отмена"), fixture("Свой ответ…")]) {
+    assert.equal(await confirmApproval(f.ctx, proposal()), false);
+    assert.equal(
+      f.calls.some((call) => call.kind === "confirm"),
+      false,
+    );
+  }
+  const no = fixture("Подтвердить", undefined, false);
+  assert.equal(await confirmApproval(no.ctx, proposal()), false);
+  assert.equal(no.calls.filter((call) => call.kind === "confirm").length, 1);
+  const yes = fixture("Подтвердить");
+  assert.equal(await confirmApproval(yes.ctx, proposal()), true);
+  assert.equal(yes.calls[1].title, "Подтвердить?");
+  assert.ok((yes.calls[1].message?.length ?? 0) < 40);
+  assert.doesNotMatch(yes.calls[1].message ?? "", /FIRST|LAST|example|Create/);
+});
+
+test("native UI failure propagates so the adapter can revoke rather than infer consent", async () => {
+  const f = fixture("Подтвердить");
+  f.ctx.ui.confirm = async () => {
+    throw new Error("native failure");
+  };
   await assert.rejects(
     () => confirmApproval(f.ctx, proposal()),
-    /native dialog failure/,
+    /native failure/,
   );
-  assert.equal(f.unsubscriptions, 1);
 });
 
-test("RPC/SDK retains existing full native presentation without terminal-only methods", async () => {
-  let shown = "";
-  const ctx = {
-    mode: "rpc",
-    ui: {
-      async confirm(_title: string, text: string) {
-        shown = text;
-        return true;
-      },
-    },
-  } as unknown as ExtensionContext;
-  const p = proposal();
-  assert.equal(await confirmApproval(ctx, p), true);
-  assert.equal(shown, renderApproval(p));
+test("RPC/SDK keeps the existing full native-confirmation contract", async () => {
+  const f = fixture();
+  const ctx = { ...f.ctx, mode: "rpc" } as ExtensionContext;
+  assert.equal(await confirmApproval(ctx, proposal()), true);
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.calls[0].message, approvalDetails(proposal()));
 });

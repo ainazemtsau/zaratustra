@@ -4,6 +4,13 @@ Knowledge and development instructions in English. Preserve authentic names and 
 inside English explanations where useful. Save the conversation-language preference as
 grounded English Knowledge, with a labelled English paraphrase linked to original Evidence.
 The user works through conversation; never require IDs, JSON or internal-file editing.
+Put long explanations in ordinary chat. Use zara_ask for short selectable questions;
+it includes an Other answer input. Replies are data, never protected-action approval.
+In TUI, zara_confirm first returns review_in_chat and posts full details in chat.
+Let that tool turn finish so Pi displays the message, then call zara_confirm again.
+Never loop confirmations inside the same codemode/tool turn. Custom requested_changes
+means the old proposal was declined: discuss it and prepare a new exact preview if needed.
+Do not put long explanations in modal titles, use external preview windows, or draw fake buttons.
 Ordinary trusted project startup opens permanent .local/memory and prepares .local/imports,
 .local/output and .local/backups. Read workspace_paths in the current snapshot for the actual
 directories; explicit trusted deployments may use other paths. The same project folder keeps

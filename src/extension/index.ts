@@ -43,7 +43,9 @@ import {
   sameNative,
   nativeTarget,
 } from "./managed.ts";
-import { confirmApproval } from "./confirmation.ts";
+import { approvalDetails, confirmApproval } from "./confirmation.ts";
+import { chatReview } from "./chat-review.ts";
+import { askQuestion } from "./questions.ts";
 import { dialogAuthority } from "./authority.ts";
 
 export const SNAPSHOT_TYPE = "zaratustra.snapshot.v1";
@@ -89,6 +91,8 @@ const productInputs = [
   "src/extension/managed.ts",
   "src/extension/preview.ts",
   "src/extension/confirmation.ts",
+  "src/extension/questions.ts",
+  "src/extension/chat-review.ts",
   "src/extension/authority.ts",
   "src/extension/workspace.ts",
   "src/storage/index.ts",
@@ -116,6 +120,7 @@ const packageInfo = JSON.parse(
   readFileSync(resolve(root, "package.json"), "utf8"),
 );
 export default function extension(pi: ExtensionAPI) {
+  const proposalChat = chatReview(pi);
   let disk: DiskStorage | undefined;
   let core: Core | undefined;
   let administration: Administration | undefined;
@@ -992,6 +997,47 @@ export default function extension(pi: ExtensionAPI) {
     withOperation,
     reopen: openWorkspace,
   });
+  registerOrchestrator(
+    "zara_ask",
+    "Ask a short native choice question with an Other answer option. Put the full explanation in ordinary chat BEFORE this call. Choices and custom text are answers only, never action approval. No writes or model calls.",
+    z.strictObject({
+      question: z.string().min(1).max(80),
+      choices: z.array(z.string().min(1).max(80)).min(1).max(5),
+    }),
+    async (p, ctx) => {
+      const c = core;
+      await withOperation("mutate", () => {
+        get().authorizeImport();
+        requireThat(
+          ctx.hasUI,
+          "APPROVAL_REQUIRED",
+          "A native question UI is required.",
+        );
+        requireThat(
+          nativeDialogs === 0,
+          "APPROVAL_PENDING",
+          "Resolve the existing native question first.",
+        );
+        nativeDialogs++;
+      });
+      try {
+        const answer = await askQuestion(
+          ctx,
+          p.question as string,
+          p.choices as string[],
+        );
+        requireThat(
+          core === c && recipientAllowed,
+          "APPROVAL_STALE",
+          "Runtime or recipient replaced during question.",
+        );
+        return { ...answer, permission_granted: false };
+      } finally {
+        nativeDialogs--;
+        changed();
+      }
+    },
+  );
   register(
     "zara_preview",
     "Prepare an immutable exact commit proposal. Explain consequences and alternatives in the user's language; this creates no permission. Use zara_confirm for the actual native yes/no/cancel dialog, then commit the identical request plus preview_ref.",
@@ -1009,7 +1055,7 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_confirm",
-    "Present one exact immutable proposal through Pi's native confirmation dialog. No approved flag or source-handle argument. Only that actual dialog response is bound. Clarify ambiguous chat before using the dialog. Refusal/cancel never dispatches. Registered synthetic UI is never owner authority.",
+    "Review one exact immutable proposal in chat, then ask a short native question. In TUI the first call queues full chat text and returns review_in_chat; call again only after that tool turn finishes and Pi displays it. Options include Other answer; custom text declines the old proposal and returns requested_changes, never permission. Only actual native confirmation can approve. No approved flag; refusal/cancel never dispatches. RPC/SDK retain full native presentation.",
     z.strictObject({ preview_ref: z.string(), revoke: z.boolean().optional() }),
     async (p, ctx) => {
       const c = core,
@@ -1040,15 +1086,45 @@ export default function extension(pi: ExtensionAPI) {
           ctx,
           process.env.ZARATUSTRA_TEST_CONTROLLER,
         );
+        if (ctx.mode === "tui") {
+          const review = approvals.review(p.preview_ref as string);
+          if (
+            !proposalChat.ensure(
+              approvals,
+              review.request_id,
+              approvalDetails(review.payload),
+            )
+          )
+            return {
+              revoked: false as const,
+              reviewPending: true as const,
+              result: {
+                status: "review_in_chat",
+                preview_ref: review.request_id,
+                permission_granted: false,
+                next_action:
+                  "Read the full visible proposal in chat after this turn, then call zara_confirm again. Do not call again in the same tool turn.",
+              },
+            };
+        }
         const shown = approvals.present(p.preview_ref as string);
         nativeDialogs++;
-        return { revoked: false as const, approvals, shown, authority };
+        return {
+          revoked: false as const,
+          reviewPending: false as const,
+          approvals,
+          shown,
+          authority,
+        };
       });
-      if (prepared.revoked) return prepared.result;
+      if (prepared.revoked || prepared.reviewPending) return prepared.result;
       const { approvals, shown, authority } = prepared;
       let yes = false;
+      let requestedChanges: string | undefined;
       try {
-        yes = await confirmApproval(ctx, shown.preview.payload);
+        yes = await confirmApproval(ctx, shown.preview.payload, (text) => {
+          requestedChanges = text;
+        });
       } catch {
         await withOperation("settle", () =>
           approvals.revoke(shown.preview.request_id),
@@ -1088,7 +1164,15 @@ export default function extension(pi: ExtensionAPI) {
             effect: fileFromPreview(shown.preview.payload.exact),
             preview: shown.preview.request_id,
           };
-        return answer;
+        return requestedChanges === undefined
+          ? answer
+          : {
+              ...answer,
+              requested_changes: requestedChanges,
+              permission_granted: false,
+              next_action:
+                "Discuss the custom answer in chat. This proposal was declined; material changes require a new exact preview and confirmation.",
+            };
       });
     },
   );

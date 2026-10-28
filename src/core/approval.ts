@@ -180,9 +180,16 @@ export class Approvals {
         "A material preview premise changed; present a new proposal.",
       );
   }
-  present(ref: string) {
+  /** Validate a finite proposal for chat review without reserving a native
+   * decision or granting any authority. present still revalidates afterward.
+   */
+  review(ref: string) {
     const p = this.read(ref);
     this.valid(p);
+    return structuredClone(p);
+  }
+  present(ref: string) {
+    const p = this.review(ref);
     requireThat(
       !this.pending,
       "APPROVAL_PENDING",
