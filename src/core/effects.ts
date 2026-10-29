@@ -1,3 +1,4 @@
+import { assertSleepDocumentAllowed, sleepDelegationRef } from "./sleep-v2.ts";
 import { DocumentBinding } from "./documents.ts";
 import { z } from "zod";
 import { createHash, randomUUID } from "node:crypto";
@@ -176,12 +177,14 @@ export class Effects {
         "UNKNOWN_EFFECT",
         "Unresolved prior attempt requires current inspection and a separately approved linked risky repeat; a new ID is not authority.",
       );
-      this.approvals.consume(
-        previewRef,
-        "managed_file",
-        effect,
-        effect.request_id,
-      );
+      const delegated = assertSleepDocumentAllowed(this.db, this.ctx, effect);
+      if (!delegated)
+        this.approvals.consume(
+          previewRef,
+          "managed_file",
+          effect,
+          effect.request_id,
+        );
       const e: EffectRow = {
         request_id: effect.request_id,
         kind: "managed_file",
@@ -189,7 +192,7 @@ export class Effects {
         operation_digest: hash(effect),
         payload: effect,
         epoch: this.ctx.epoch,
-        preview_ref: previewRef,
+        preview_ref: delegated ? sleepDelegationRef()! : previewRef,
         tool_call_id: callId,
         runtime_id: this.ctx.runtime_id,
         observations: [],

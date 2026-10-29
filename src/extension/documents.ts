@@ -13,7 +13,14 @@ import {
   canonical,
   digest,
 } from "../core/index.ts";
-import type { FileEffect, RecordRow } from "../core/index.ts";
+import type {
+  FileEffect,
+  RecordRow,
+  SleepDocumentChange,
+  SleepProposal,
+  SleepState,
+  SleepRef,
+} from "../core/index.ts";
 import { DiskStorage, DocumentFiles } from "../storage/index.ts";
 
 type Register = (
@@ -38,7 +45,15 @@ type State = {
 };
 
 /** Coordination only: native Pi owns text writes; Core owns versions and receipts. */
-export function registerDocuments(register: Register, state: State) {
+export function registerDocuments(registerTool: Register, state: State) {
+  const handlers = new Map<
+    string,
+    { schema: z.ZodType; action: Parameters<Register>[3] }
+  >();
+  const register: Register = (name, description, schema, action) => {
+    handlers.set(name, { schema, action });
+    registerTool(name, description, schema, action);
+  };
   const inFlight = new Set<string>();
   const operationId = (requestId: string) => "file:" + requestId;
   const pathResource = (path: string) =>
@@ -780,4 +795,51 @@ export function registerDocuments(register: Register, state: State) {
       );
     },
   );
+  return {
+    async applySleep(
+      change: SleepDocumentChange,
+      proposal: SleepProposal,
+      cycle: SleepState,
+      ctx: ExtensionContext,
+    ): Promise<SleepRef[]> {
+      const preview = handlers.get("zara_document_preview")!;
+      const apply = handlers.get("zara_document_apply")!;
+      const head = await state.disk().withOperation("read", () => {
+        const document = state.core().read(change.ref.id, change.ref.revision)
+          .data as RecordRow;
+        const metadata = managedDocument(document);
+        return state
+          .core()
+          .read(metadata.head_ref.id, metadata.head_ref.revision)
+          .data as RecordRow;
+      });
+      const result = (await preview.action(
+        preview.schema.parse({
+          request_id: `sleep-doc:${digest(canonical([cycle.id, proposal.id]))}`,
+          ref: change.ref,
+          action: "write",
+          path: change.path,
+          content: change.content,
+          title: change.title,
+          source_language: head.data.source_language ?? "en",
+          consequence: proposal.expected_benefit,
+          alternatives: "Keep the previous retained document version.",
+        }) as Record<string, unknown>,
+        ctx,
+      )) as { request_id: string };
+      const applied = (await apply.action(
+        apply.schema.parse({ preview_ref: result.request_id }) as Record<
+          string,
+          unknown
+        >,
+        ctx,
+      )) as {
+        receipt: { new_revisions: Record<string, number> };
+        document_ref: SleepRef;
+      };
+      return Object.entries(applied.receipt.new_revisions).map(
+        ([id, revision]) => ({ id, revision }),
+      );
+    },
+  };
 }

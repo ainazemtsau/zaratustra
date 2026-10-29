@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0 — file-primary memory and bounded improvement reviews
+
+- Durable memory moves to a versioned, hash-checked file corpus. SQLite is a rebuildable projection; recovery journals and file commit markers decide durable success. Preserve IDs, exact selected versions, pending effects and lossless predecessor history in an explicit legacy contour.
+- Add purpose-based retention, exact minimal source fragments, typed references, a short Activity contract and bounded temporary candidates. Ordinary successful tool calls and unselected imports do not create portable long-term memory.
+- Add `zara_sleep`, `/zara-sleep`, phased exact application and later grounded benefit checks. One cycle: ten cases, three improvements, twenty logical model generations and fifteen minutes. Restart does not reset limits; native SDK execution excludes unrelated tools/extensions and checks admission before the stream delegate.
+- Add `zara_sync`: trusted private-repository/main binding, whole-working-project checkpoints, precise runtime exclusions, offline retry, manual-stage preservation and remote coverage confirmation. Canonical files require portable no-transform attributes. Hooks, signing and external filters/fsmonitor defer to a manual checkpoint instead of bypassing owner configuration.
+- Upgrade corpus1 / projection10 / control3 explicitly through verified quarantine. Preserve old stores and cold backups. Reject mixed old writers, recover pre/post-marker crashes, and preserve UNKNOWN operation barriers across the two databases. Legacy SQLite bundles require explicit quarantine conversion before restoring into file-primary memory.
+- Integrate the already prepared dependency-security patch: Zod4.6.7 and fast-uri3.1.9; no unrelated dependency sweep. Require Node24.22.1 and Pi1.4.0.
+
+Verification: targeted mechanical suites, actual two/ten-process profiles, native Pi writes/document registration/restore, real SDK construction without dispatch, fault/restart/clone tests, dependency regressions, types, lint, boundaries and build. See [scope and attempts](docs/MEMORY-V2-VALIDATION.md). Public fixtures are synthetic; no model API calls or real ZT migration are claimed by these checks.
+
+Limits: scope is Windows x64 / one local shared project; no 100-process guarantee or automatic multi-computer merge. Canonical physical garbage collection is conservative: managed tombstones/cache cleanup do not erase every canonical/Git/backup copy. A real personal installation needs closed Pi sessions, a full verified cold copy, quarantine comparison and its first verified private checkpoint. Source publication alone does not perform or certify that update. Full R1/T31 and long-term usefulness remain separate.
+
 ## 0.6.1 — chat-first explanations and native choices
 
 - Long proposal details are ordinary scrollable chat messages, not a pager, overlay or separate preview window. TUI confirmation is two-phase: first `review_in_chat` queues the complete finite message; only after Pi emits that exact message can a later call open a short question. Same-turn retries neither duplicate the message nor open a dialog. Revalidation occurs before review and again before the actual decision.

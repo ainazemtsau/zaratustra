@@ -132,11 +132,26 @@ Full retained-version body deletion also requires fixed full-read/write administ
 setup before dependency analysis: the complete reverse graph/technical-copy coverage
 cannot be exposed or modified by a lower-scope observer. Archive/retain remain per-record.
 
-For an explicitly requested review of accumulated experience use zaratustra-sleep in this same
-extension/Core. Discover prepared batches with zara_sleep_batch; commit start_sleep and
-sleep_checkpoint through zara_commit. Reviews are finite by frozen initial input, with no total
-resource budget and no automatic new cycle. Review/bookkeeping is not a Method application or
-independent success. Activity origin does not make shared Knowledge/Methods locally writable.
+For an explicit accumulated-experience review use zaratustra-sleep and zara_sleep. The bounded
+native controller selects meaningful cases and enforces phases and budgets. Legacy batches are
+historical lookup only. Review/bookkeeping is not application or proven benefit; a scope label
+never grants write rights.
 
 For independently reusable Activity files, read zaratustra-documents. Keep small results in Core;
 use managed document operations for persistent working files and pinned external views.
+
+## Selective file-primary memory
+
+The current corpus is authoritative; SQLite is a derived query projection. IDs and exact
+selected revisions remain readable after restart. Default search excludes the legacy contour;
+use include_legacy:true or browse mode:legacy only when old material is actually needed.
+Do not persist routine tool success or copy every user message. For import_evidence supply
+one durable_purpose: continuation, obligation, constraint, decision, reusable_experience,
+selected_source. Use source_fragment:{start,end} to retain the smallest sufficient exact
+Unicode-code-point excerpt. A full-source hash does not make omitted content available.
+Keep facts/reported observations/inference distinct and preserve current conditions.
+Open obligations, actual unknown effects and selected originals do not expire by log TTL.
+Deferred candidates/diagnostics have seven-day/20MiB limits; do not invent a candidate for
+nothing. New useful work is the goal, not more Notes, Evidence or invocation records.
+Use zara_sync to distinguish local save/local commit/confirmed GitHub save. Do not stage a
+live SQLite, bypass sync conflicts or introduce broad ignores for memory/Activity data.

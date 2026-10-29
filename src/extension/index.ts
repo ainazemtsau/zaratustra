@@ -1,3 +1,6 @@
+import { registerSleep } from "./sleep.ts";
+import { createGitAutosave, SyncToolSchema, publicSyncStatus } from "./sync.ts";
+import type { GitAutosave } from "./sync.ts";
 import { registerDocuments } from "./documents.ts";
 import { registerAdministration } from "./administration.ts";
 import { workspacePaths } from "./workspace.ts";
@@ -11,7 +14,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { readFileSync, realpathSync } from "node:fs";
-import { dirname, isAbsolute, resolve } from "node:path";
+import { dirname, isAbsolute, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   Core,
@@ -24,10 +27,12 @@ import {
   NativeArguments,
   MethodData,
   requireThat,
+  CandidateInputSchema,
 } from "../core/index.ts";
 import type { CallContext, FileEffect, RecordRow } from "../core/index.ts";
 import {
   DiskStorage,
+  DEFAULT_SYNC_EXCLUSIONS,
   Coordination,
   verifyRuntime,
   recoverMaintenance,
@@ -107,6 +112,14 @@ const productInputs = [
   "skills/zaratustra-sleep/SKILL.md",
   "skills/zaratustra-documents/SKILL.md",
 
+  "src/core/memory-policy.ts",
+  "src/core/sleep-v2.ts",
+  "src/extension/sleep.ts",
+  "src/extension/sync.ts",
+  "src/storage/git-sync.ts",
+  "src/storage/corpus.ts",
+  "src/storage/projection.ts",
+  "src/storage/migration.ts",
   "src/core/memory-index.ts",
   "src/storage/schema.ts",
 ];
@@ -121,6 +134,8 @@ const packageInfo = JSON.parse(
 );
 export default function extension(pi: ExtensionAPI) {
   const proposalChat = chatReview(pi);
+  let autosave: GitAutosave | undefined;
+  let workspaceContext: ExtensionContext | undefined;
   let disk: DiskStorage | undefined;
   let core: Core | undefined;
   let administration: Administration | undefined;
@@ -292,7 +307,10 @@ export default function extension(pi: ExtensionAPI) {
   const closeWorkspace = async (except?: symbol) => {
     closing = true;
     importAbort.abort();
+    await sleepRuntime.shutdown();
     await drain(except);
+    await autosave?.close();
+    autosave = undefined;
     const previousCore = core,
       previousDisk = disk,
       previousCoordination = coordination;
@@ -431,6 +449,7 @@ export default function extension(pi: ExtensionAPI) {
             new DiskStorage(canonicalHome, undefined, {
               coordination,
               runtimeId,
+              projectRoot: ctx.cwd,
             }),
         );
         if (administration)
@@ -522,6 +541,65 @@ export default function extension(pi: ExtensionAPI) {
               }),
             ),
         );
+        if (core.context.can_write && core.context.processing_allowed)
+          await currentDisk.withOperation("mutate", () =>
+            core!.sweepTemporaryMemory(),
+          );
+        workspaceContext = ctx;
+        sleepRuntime.open();
+        autosave = createGitAutosave({
+          projectRoot: ctx.cwd,
+          runtimeRoot: canonicalHome,
+          exclusions: [
+            ...DEFAULT_SYNC_EXCLUSIONS,
+            ...currentDisk.runtimeGitExclusions(ctx.cwd),
+          ],
+          getRevision: () => {
+            const status = currentDisk.corpusStatus();
+            requireThat(
+              status,
+              "STORE_UNAVAILABLE",
+              "Portable corpus is not initialized.",
+            );
+            return {
+              workspaceId: status.workspace_id,
+              epoch: status.epoch,
+              revision: status.revision,
+            };
+          },
+          requiredPaths: () => {
+            const checkpoint = currentDisk.corpusCheckpoint();
+            requireThat(
+              checkpoint,
+              "STORE_UNAVAILABLE",
+              "Portable corpus inventory unavailable.",
+            );
+            return checkpoint.files.map((file) =>
+              relative(ctx.cwd, resolve(checkpoint.root, file.path)).replaceAll(
+                "\\",
+                "/",
+              ),
+            );
+          },
+          withSnapshot: (callback) =>
+            currentDisk.withOperation("read", callback),
+          notify: (status) => {
+            if (disk !== currentDisk || closing) return;
+            pi.sendMessage(
+              {
+                customType: "zaratustra.sync.status",
+                display: true,
+                content:
+                  status.code === "REMOTE_CONFIRMED"
+                    ? `Zaratustra: saved to private GitHub (${status.commit?.slice(0, 12)}).`
+                    : `Zaratustra sync: ${status.code}${status.message ? " — " + status.message : ""}`,
+                details: { owner: "zaratustra", ...publicSyncStatus(status) },
+              },
+              { triggerTurn: false },
+            );
+          },
+        });
+        autosave.request("workspace opened");
       } catch (e) {
         unavailable = e;
         if (disk && coordination)
@@ -851,6 +929,10 @@ export default function extension(pi: ExtensionAPI) {
             };
           return {
             ...get().snapshot(),
+            sleep_pending_checks: sleepRuntime.pendingCheckHints(
+              (get().focus()?.activity_ref as { id?: string } | null)?.id ??
+                null,
+            ),
             captured_sources: currentSources,
             provider_model: selected,
             recipient_authority: recipientAuthority,
@@ -937,6 +1019,7 @@ export default function extension(pi: ExtensionAPI) {
                   signal: _signal,
                 }),
           );
+          autosave?.request("tool settled");
           return {
             content: [{ type: "text", text: JSON.stringify(result) }],
             details: result,
@@ -954,7 +1037,7 @@ export default function extension(pi: ExtensionAPI) {
   }
   const registerOrchestrator = (...args: Parameters<typeof register>) =>
     register(args[0], args[1], args[2], args[3], true);
-  registerDocuments(registerOrchestrator, {
+  const documents = registerDocuments(registerOrchestrator, {
     core: get,
     begin: () => {
       activeDocumentActions++;
@@ -970,6 +1053,64 @@ export default function extension(pi: ExtensionAPI) {
       if (readyFile?.effect.request_id === requestId) readyFile = undefined;
     },
   });
+  const sleepRuntime = registerSleep(registerOrchestrator, pi, {
+    track: (callback) => tracked(callback),
+    core: get,
+    isProcessingAllowed: () => recipientAllowed,
+    currentModel: () => ({
+      provider: selected.split("/")[0],
+      id: selected.slice(selected.indexOf("/") + 1),
+      thinking: pi.getThinkingLevel(),
+    }),
+    withOperation: (kind, callback) => withOperation(kind, callback),
+    runtimeState: (id) => {
+      requireThat(
+        coordination,
+        "STORE_UNAVAILABLE",
+        "Coordination unavailable.",
+      );
+      return coordination.runtimeStatus(id);
+    },
+    applyDocument: (change, proposal, cycle) => {
+      requireThat(
+        workspaceContext,
+        "STORE_UNAVAILABLE",
+        "Document context unavailable.",
+      );
+      return documents.applySleep(change, proposal, cycle, workspaceContext);
+    },
+    onState: () => autosave?.request("Sleep state saved"),
+  });
+  registerOrchestrator(
+    "zara_sync",
+    "Inspect local/commit/private-GitHub checkpoint status or retry pending synchronization. Never changes the bound repository or branch.",
+    SyncToolSchema,
+    (input) => {
+      requireThat(autosave, "STORE_UNAVAILABLE", "Workspace unavailable.");
+      return autosave.action(input);
+    },
+  );
+  register(
+    "zara_candidate",
+    "Keep an explicit short-lived unverified question or selected diagnostic (7 days / 20 MiB); open obligations pin necessary grounds. Ordinary successful tools are not logged.",
+    z.strictObject({
+      action: z.enum(["put", "list", "read", "remove"]),
+      id: z.string().optional(),
+      candidate: CandidateInputSchema.optional(),
+    }),
+    (p) =>
+      get().temporaryMemory(
+        p.action as "put" | "list" | "read" | "remove",
+        p.action === "put" ? p.candidate : p.id,
+      ),
+  );
+  pi.on("agent_end", () =>
+    tracked(async () => {
+      if (core?.context.can_write && core.context.processing_allowed)
+        await withOperation("mutate", () => core!.sweepTemporaryMemory());
+      autosave?.request("agent finished");
+    }),
+  );
   registerAdministration(registerOrchestrator, {
     core: get,
     admin: () => {
@@ -1544,7 +1685,7 @@ export default function extension(pi: ExtensionAPI) {
       limit: z.number().int().min(1).max(50).optional(),
       cursor: z.string().optional(),
       mode: z
-        .enum(["children", "records", "relations", "current_claims"])
+        .enum(["children", "records", "relations", "current_claims", "legacy"])
         .optional(),
     }),
     (p) =>

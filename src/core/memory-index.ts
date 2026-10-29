@@ -5,7 +5,7 @@ import { sleepAccessRefs } from "./sleep.ts";
 
 export const MemoryIndexSchemaSQL = `
 CREATE TABLE memory_index_meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1),format INTEGER NOT NULL,incarnation TEXT NOT NULL,ready INTEGER NOT NULL,public_generation INTEGER NOT NULL,all_generation INTEGER NOT NULL);
-INSERT INTO memory_index_meta VALUES(1,1,'',0,0,0);
+INSERT INTO memory_index_meta VALUES(1,2,'',0,0,0);
 CREATE TABLE memory_ordinals(ordinal INTEGER PRIMARY KEY AUTOINCREMENT,collection TEXT NOT NULL,identity TEXT NOT NULL,UNIQUE(collection,identity));
 CREATE INDEX memory_ordinal_window ON memory_ordinals(collection,ordinal);
 CREATE INDEX memory_access_restricted ON memory_docs(restricted,id,revision);
@@ -31,23 +31,89 @@ const bkey = (collection: string, id: string) =>
 export const historyIdentity = (id: string, revision: number) =>
   canonical([id, revision]);
 
+const refKeys = new Set(["id", "revision", "content_version"]);
+const recordKinds = new Set([
+  "activity",
+  "work",
+  "knowledge",
+  "evidence",
+  "concept",
+  "entity",
+  "method",
+  "run",
+  "evaluation",
+  "signal",
+  "signal_review",
+  "invocation",
+  "environment",
+]);
+const validId = (v: unknown): v is string =>
+  typeof v === "string" && v.length > 0 && v.length <= 4000;
+const revisionNumber = (v: unknown): v is number =>
+  typeof v === "number" && Number.isSafeInteger(v) && v > 0;
+const objectValue = (v: unknown): JsonObject | undefined =>
+  v && typeof v === "object" && !Array.isArray(v)
+    ? (v as JsonObject)
+    : undefined;
+const pureRef = (v: JsonObject): boolean =>
+  validId(v.id) &&
+  Object.keys(v).every((k) => refKeys.has(k)) &&
+  (v.revision === undefined || revisionNumber(v.revision)) &&
+  (v.content_version === undefined || revisionNumber(v.content_version));
+const changedRef = (v: JsonObject): boolean =>
+  validId(v.id) &&
+  Object.keys(v).every((k) =>
+    ["id", "before_revision", "after_revision"].includes(k),
+  ) &&
+  (v.before_revision === null || revisionNumber(v.before_revision)) &&
+  revisionNumber(v.after_revision);
+const recordIdentity = (v: JsonObject): boolean =>
+  validId(v.id) &&
+  typeof v.kind === "string" &&
+  recordKinds.has(v.kind) &&
+  revisionNumber(v.revision);
+const revisionPair = (v: unknown): boolean => {
+  const o = objectValue(v);
+  return (
+    !!o &&
+    Object.keys(o).every((k) => ["before", "after"].includes(k)) &&
+    (o.before === null || revisionNumber(o.before)) &&
+    revisionNumber(o.after)
+  );
+};
+
+/** Only declared reference shapes participate in access/retention. Prose is never an ID. */
 export function addressedIds(value: unknown, technicalKeys = false): string[] {
   const found = new Set<string>();
-  const walk = (v: unknown) => {
-    if (typeof v === "string") found.add(v);
-    else if (Array.isArray(v)) v.forEach(walk);
-    else if (v && typeof v === "object") {
-      const o = v as JsonObject;
-      if (technicalKeys) Object.keys(o).forEach((id) => found.add(id));
-      if (typeof o.id === "string") found.add(o.id);
-      if (
-        o.changed &&
-        typeof o.changed === "object" &&
-        !Array.isArray(o.changed)
-      )
-        Object.keys(o.changed).forEach((id) => found.add(id));
-      Object.values(o).forEach(walk);
+  const add = (v: unknown) => {
+    if (validId(v)) found.add(v);
+  };
+  const walk = (v: unknown, field?: string) => {
+    if (Array.isArray(v)) {
+      if (technicalKeys && field === "affected_ids") v.forEach(add);
+      else v.forEach((item) => walk(item, field));
+      return;
     }
+    const o = objectValue(v);
+    if (!o) return;
+    if (
+      pureRef(o) ||
+      recordIdentity(o) ||
+      (technicalKeys && field === "changed_refs" && changedRef(o))
+    )
+      add(o.id);
+    if (technicalKeys) {
+      if (field === "changed")
+        for (const [key, item] of Object.entries(o))
+          if (revisionPair(item)) add(key);
+      if (["new_revisions", "guards"].includes(field ?? ""))
+        for (const [key, item] of Object.entries(o))
+          if (revisionNumber(item)) add(key);
+      if (field === "created") Object.values(o).forEach(add);
+      if (typeof o.token === "string" && validId(o.work_id)) add(o.work_id);
+      if (o.kind === "library" && validId(o.record_id)) add(o.record_id);
+    }
+    for (const [key, item] of Object.entries(o)) walk(item, key);
   };
   walk(value);
   return [...found];
@@ -56,20 +122,35 @@ export function addressedRefs(value: unknown): Ref[] {
   const refs: Ref[] = [];
   const walk = (v: unknown) => {
     if (Array.isArray(v)) v.forEach(walk);
-    else if (v && typeof v === "object") {
-      const o = v as JsonObject;
-      if (
-        typeof o.id === "string" &&
-        Object.keys(o).every((k) =>
-          ["id", "revision", "content_version"].includes(k),
-        )
-      )
-        refs.push(o as Ref);
+    else {
+      const o = objectValue(v);
+      if (!o) return;
+      if (pureRef(o)) refs.push(o as Ref);
       Object.values(o).forEach(walk);
     }
   };
   walk(value);
   return refs;
+}
+
+/** SQL equivalent for legacy/read-only technical filtering; same declared shapes as JS. */
+export function addressedIdsSQL(json: string): string {
+  const o = "(CASE WHEN ref.type='object' THEN ref.value ELSE '{}' END)";
+  const id = `json_extract(${o},'$.id')`;
+  const positive = (p: string) =>
+    `(json_type(${o},'$.${p}')='integer' AND json_extract(${o},'$.${p}') BETWEEN 1 AND 9007199254740991)`;
+  const pure = `NOT EXISTS(SELECT 1 FROM json_each(${o}) k WHERE k.key NOT IN ('id','revision','content_version')) AND (json_type(${o},'$.revision') IS NULL OR ${positive("revision")}) AND (json_type(${o},'$.content_version') IS NULL OR ${positive("content_version")})`;
+  const changed = `(ref.path LIKE '%.changed_refs' OR ref.path LIKE '%."changed_refs"') AND NOT EXISTS(SELECT 1 FROM json_each(${o}) k WHERE k.key NOT IN ('id','before_revision','after_revision')) AND (json_type(${o},'$.before_revision')='null' OR ${positive("before_revision")}) AND ${positive("after_revision")}`;
+  const record = `json_extract(${o},'$.kind') IN (${[...recordKinds].map((k) => "'" + k + "'").join(",")}) AND ${positive("revision")}`;
+  const map = "(CASE WHEN map.type='object' THEN map.value ELSE '{}' END)";
+  const pair = "(CASE WHEN item.type='object' THEN item.value ELSE '{}' END)";
+  const pairRevision = (p: string) =>
+    `(json_type(${pair},'$.${p}')='integer' AND json_extract(${pair},'$.${p}') BETWEEN 1 AND 9007199254740991)`;
+  return `SELECT ${id} AS id FROM json_tree(${json}) ref WHERE ref.type='object' AND json_type(${o},'$.id')='text' AND length(${id}) BETWEEN 1 AND 4000 AND ((${pure}) OR (${changed}) OR (${record}))
+    UNION SELECT item.key AS id FROM json_tree(${json}) map JOIN json_each(${map}) item WHERE map.type='object' AND length(item.key) BETWEEN 1 AND 4000 AND ((map.key IN ('new_revisions','guards') AND item.type='integer' AND item.value BETWEEN 1 AND 9007199254740991) OR (map.key='changed' AND item.type='object' AND NOT EXISTS(SELECT 1 FROM json_each(${pair}) k WHERE k.key NOT IN ('before','after')) AND (json_type(${pair},'$.before')='null' OR ${pairRevision("before")}) AND ${pairRevision("after")}))
+    UNION SELECT item.value AS id FROM json_tree(${json}) map JOIN json_each(CASE WHEN map.type='object' OR map.type='array' THEN map.value ELSE '{}' END) item WHERE ((map.type='object' AND map.key='created') OR (map.type='array' AND map.key='affected_ids')) AND item.type='text' AND length(item.value) BETWEEN 1 AND 4000
+    UNION SELECT json_extract(${o},'$.work_id') AS id FROM json_tree(${json}) ref WHERE ref.type='object' AND json_type(${o},'$.token')='text' AND json_type(${o},'$.work_id')='text' AND length(json_extract(${o},'$.work_id')) BETWEEN 1 AND 4000
+    UNION SELECT json_extract(${o},'$.record_id') AS id FROM json_tree(${json}) ref WHERE ref.type='object' AND json_extract(${o},'$.kind')='library' AND json_type(${o},'$.record_id')='text' AND length(json_extract(${o},'$.record_id')) BETWEEN 1 AND 4000`;
 }
 const sleepOperations = (json: string, path: string) =>
   `EXISTS(SELECT 1 FROM json_each(${json},'${path}') op WHERE json_extract(op.value,'$.op') IN ('start_sleep','sleep_checkpoint'))`;
@@ -89,7 +170,7 @@ export function memoryIndexReady(db: StoragePort) {
   const state = db.get<{ ready: number; format: number }>(
     "SELECT ready,format FROM memory_index_meta WHERE singleton=1",
   );
-  return state?.ready === 1 && state.format === 1;
+  return state?.ready === 1 && state.format === 2;
 }
 export function memoryIndexIdentity(db: StoragePort) {
   return db.get("SELECT name FROM sqlite_schema WHERE name='memory_index_meta'")
@@ -118,13 +199,22 @@ export function initializeMemoryIndex(db: StoragePort) {
     db.exec(
       "CREATE INDEX IF NOT EXISTS sleep_prior_item ON sleep_items(json_extract(json,'$.prior_item_id'));",
     );
+  const format = db.get<{ format: number }>(
+    "SELECT format FROM memory_index_meta WHERE singleton=1",
+  )?.format;
   requireThat(
-    db.get<{ format: number }>(
-      "SELECT format FROM memory_index_meta WHERE singleton=1",
-    )?.format === 1,
+    format === 1 || format === 2,
     "INDEX_UNAVAILABLE",
     "Unsupported derived access format; preserve the store.",
   );
+  if (format === 1) {
+    requireThat(
+      !db.readonly,
+      "INDEX_UNAVAILABLE",
+      "Typed access index needs a writable rebuild.",
+    );
+    db.run("UPDATE memory_index_meta SET format=2,ready=0 WHERE singleton=1");
+  }
   if (
     db.get(
       "SELECT name FROM sqlite_schema WHERE type='trigger' AND name='memory_dirty_sleep_reviews_delete'",

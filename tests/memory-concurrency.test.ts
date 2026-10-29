@@ -145,7 +145,7 @@ test("incremental access equals full oracle through cycles, removal, current/his
     "INSERT INTO intents VALUES('legacy','hash',?)",
     JSON.stringify({
       request_id: "legacy",
-      payload: { nested: { a: "value" } },
+      payload: { guards: { a: 1 } },
     }),
   );
   f.run(

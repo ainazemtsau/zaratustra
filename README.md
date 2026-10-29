@@ -1,104 +1,113 @@
-# Zaratustra — durable work, memory and textual Methods
+# Zaratustra
 
-Current concurrency delivery requires Pi 1.4.x and Node 24.16+ in the 24.x LTS line
-(qualified: Pi 1.4.0, Node 24.22.1, SQLite 3.53.4). Shared local sessions coordinate
-short operations; opening another chat no longer makes its memory read-only. Before
-upgrading schema 8 to 9, close old Pi sessions once. Existing Activities and history
-remain. See [concurrency and upgrade](docs/CONCURRENCY.md). Verification is bounded
-to ten processes after the owner stopped larger qualification; 100-process support
-is not claimed. No server or launcher is added.
+Persistent Activity, work, selected memory and bounded improvement reviews for Pi.
+The owner works through chat; agents use typed operations and exact sources.
 
-A development Pi package with one extension, English bootstrap and four small skills.
-Through conversation, the model saves Activity/Work, exact original Evidence and
-English Knowledge; a fresh process can discover the continuation from disk.
-Nested Work and addressed steps preserve dependencies, partial waits, results and lifecycle
-history. Manual handoffs retain the original request and useful late/partial replies.
-TXT/Markdown, text PDF and unencrypted EPUB keep immutable originals plus separately
-addressed extracted text. New processes continue through chat without old transcripts.
-Shared Concepts/Entities, English lexical/typed discovery and versioned corrections now
-connect memory across activities. Full claims retain sources, states, conditions and times.
-Textual Methods retain applicability, contracts and exact dependency versions; addressed
-Runs keep meaningful episodes and real results. Evaluations separate technical/model/
-reported feedback, and Signals retain unresolved problems plus independent reviews.
-Reading, reported application, observed execution, ended episodes and usefulness are
-different events. E1 does not finish full E/R1 or claim owner trial T31.
+The file-primary generation requires **Pi 1.4.0 and Node 24.22.1** on Windows x64.
+It preserves the existing product rather than introducing a second planner, server,
+launcher or model. Parallel qualification is limited to ten local processes.
 
-E3 adds verified SQLite/JSON bundles with raw managed materials, quarantine restore,
-an external active epoch, restored-action reconciliation, archive, body deletion and
-bounded cleanup. Restore remains available when the current database cannot open.
-Every restored Work requires current-world reconciliation before effectful continuation,
-including when the backup predates all action receipts. Archive is not deletion;
-external backups, exports and Pi transcripts remain separate copies.
+## Where data lives
 
-E3 design and scoped executor evidence: [design](docs/E3-DESIGN.md),
-[validation](docs/E3-VALIDATION.md), [reproduce](docs/E3-REPRODUCE.md),
-[actual chat demo](docs/E3-HUMAN-DEMO.md). Accepted E2 evidence is preserved in
-[E2 validation](docs/E2-VALIDATION-094c0df4.md).
-Accepted D evidence remains [here](docs/D-VALIDATION.md). Accepted C predecessor
-and remaining release obligations: [R1 status](docs/R1-STATUS.md).
-Full target: [specification 1.1](docs/specification-v1.1.html).
+- `memory/corpus.json` identifies the portable corpus, its format and committed revision.
+- `memory/objects/` contains small versioned typed entries and retained legacy information.
+- The corpus includes the hashed parts needed to restore selected originals and versions.
+- `activities/` contains optional working Markdown documents at their existing paths.
+- `.local/memory/` contains the rebuildable SQLite projection, local coordination and caches.
 
-Install once in the project root, then start ordinary Pi there:
+Canonical files are durable truth. A SQLite file alone is not the memory backup.
+The projection can be rebuilt from a verified corpus without its old SQLite database.
+Externally editing canonical envelopes is unsupported; drift is an error to inspect,
+not permission to overwrite. Ordinary managed documents remain editable through Pi.
+
+The semantic names map onto compatible existing types: Note → Knowledge,
+Episode → meaningful Run, Procedure → Method, Source → retained Evidence,
+Document → managed-document Entity. Existing IDs, exact revisions and links survive.
+No separate schema or SQL table is created for each Activity.
+
+Each Activity has a short contract: purpose, boundaries, current context, open work,
+documents and applicable procedures. It grows subject-specific documents only when
+needed. Structured content and exact versions can support other readers without
+requiring ChatGPT Web to understand SQLite. The agent maintains this structure.
+
+## Ordinary use
+
+Install the exact published commit, accept native Pi project trust, and run Pi in
+the project root. Existing schema-9 workspaces require the explicit safe migration;
+installing new code must not silently migrate a live personal database.
 
 ```powershell
 pi install --local git:github.com/ainazemtsau/zaratustra@<exact-public-commit>
 pi
 ```
 
-Accept native Pi project trust after reviewing the package. No launcher, additional
-AGENTS file or per-launch environment setup is required. With directory overrides
-absent, Zaratustra creates `.local/memory`, `.local/imports`, `.local/output` and
-`.local/backups` in Pi's current project directory. A fresh process in the same
-folder reopens that memory; a different project has separate state. The snapshot
-reports the actual paths. `.local` is permanent work data, not a disposable cache.
-Memory, plans/history, retained originals and generated results are available to
-ordinary Git versioning. You decide what to exclude and where to push. Zaratustra
-does not create, edit or remove ignore rules, or automatically commit/push your data.
-Existing manual ignore rules remain yours to change.
+Ask to continue an Activity, save a useful constraint, correct an interpretation,
+prepare a document, or read its exact source. Conversation and originals keep the
+user's language; canonical working formulations remain English.
 
-Use Pi's normal authentication and deliberately selected model. Never copy
-credentials into this repository. Advanced explicit `ZARATUSTRA_HOME` deployments
-keep their existing optional directory behavior and authority settings. Partial
-directory overrides without a home fail rather than opening different memory.
-See [startup behavior and reproducibility](docs/PROJECT-STARTUP.md) for limits,
-native verification and explicit configuration.
-This change makes saved files available to your own private Git workflow. It does
-not add synchronization, multi-computer recovery or a running-system restore promise.
-Daily use is conversation only: ask to create an area, send a material, recall useful
-resources, plan using their current conditions, correct a record, or continue.
-Ask to save a useful approach; a later suitable task can discover and reuse it without
-a manual reminder. Correct it through conversation while keeping old applications exact.
-The user does not enter internal identifiers or edit service files.
-Full backup/export requires trusted setup with restricted:read; restore, full retained-
-version body deletion and cleanup require restricted:read plus restricted:write.
-An operator may preconfigure ZARATUSTRA_SCOPES as a JSON array containing those
-scopes. Defaults remain empty. This administrative policy is fixed before bundle
-inspection, independent of whether the database actually contains protected records.
+Successful reads and ordinary tool calls do not automatically create permanent
+Evidence. A durable source has a purpose: continuation, obligation, constraint,
+important decision, reusable experience or an explicitly selected original.
+Short exact fragments may be retained instead of full output; omitted text is never
+presented as available merely because its hash is retained.
 
-`pi update --extensions` reconciles the configured pin. Bare `pi update` updates
-the host instead. Explicit upgrade selects a different real public commit with
-`pi install --local`; no mutable-branch assumption. `pi remove --local <same-source>` removes
-project package configuration/resources while `.local` memory remains. Native
-package filters `extensions:[]` and `skills:[]` disable both resources.
+Explicit temporary candidates/selected diagnostics last at most seven days within
+20 MiB. Necessary grounds of open obligations and UNKNOWN effects are protected.
+Migration preserves previous durable data losslessly; it does not model-delete it.
+Legacy history stays explicitly addressable and is excluded from ordinary discovery.
 
-Developer commands: `npm ci`, `npm run check`, `npm run deliver`. See `AGENTS.md`
-and `docs/DEVELOPMENT.md`. Incremental maintenance releases follow
-[the release workflow](docs/RELEASING.md); [release notes](CHANGELOG.md) distinguish
-publication, installation and later real-use confirmation. Source tests use synthetic directories outside checkout.
-E2 supplies exact confirmations, managed actions/recovery and SKILL.md export/drift.
-Sleep adds an explicitly requested finite review of accumulated cases and open problems.
-Ask “Review accumulated experience” or request one Activity. The same model reviews exact
-sources, saves grounded small corrections and addressed later checks, and resumes after an
-interruption without the old transcript. Shared Knowledge/Methods require exact confirmation
-in Activity-only reviews. Initial inputs are frozen; new arrivals wait for another explicit
-request. There are no total resource budgets and no self-starting next review. An edit is not
-proven improvement. See [current Sleep contract](docs/SLEEP-CONTRACT.md).
-Full F/R1/T31, independent Sleep review, owner usefulness and Codex remain separate.
+## Sleep
 
-Managed documents add a fourth skill: `zaratustra-documents`. Optional working Markdown
-lives under `activities/`; SQLite keeps registry, exact retained versions and links.
-Create/update/lifecycle uses native Pi writes plus existing approvals and recovery.
-External edits are inspected; publication remains explicit. See [document contract](docs/DOCUMENTS.md).
-The owner requested focused mechanical verification only; no live model qualification is claimed.
+Ask for a review or use `/zara-sleep start`. `zara_sleep` also supports `resume`,
+`status` and `cancel`. One review is active per workspace; ordinary agents continue.
+It selects at most ten meaningful cases, permits at most three improvements, and
+admits at most twenty logical model generations within fifteen minutes. The first
+limit wins; restart does not reset the budget.
 
-END_OF_FILE: README.md
+The controller enforces reading, analysis, proposal, validation, application,
+future check and registered completion. Its isolated in-memory SDK session uses
+the selected model, thinking level and Pi authentication, without unrelated
+extensions, shell, recursive Sleep, warming, compaction or automatic retries.
+A limit refusal happens before the native stream delegate. Logical generations
+are different from transport-level HTTP/WebSocket exchanges.
+
+Reversible duplicate corrections, bounded organization and explicitly local
+procedure/document changes may be delegated. Goals, important commitments,
+permissions, identity merges and irreversible removal need appropriate authority.
+Observation, hypothesis, applied change and later demonstrated usefulness remain
+separate. A future observation can support or refute a recorded benefit check.
+
+## Private Git checkpoint
+
+Trusted setup binds one private repository and `main`; tool arguments cannot change
+that destination. `zara_sync` reports status or retries pending delivery. With a
+binding, changes across the working repository are coalesced after two seconds;
+startup, agent completion and orderly shutdown also request a checkpoint.
+
+The checkpoint includes canonical memory, documents, selected sources and other
+working files. Dependencies, derived databases, OS leases and temporary caches are
+excluded precisely. Existing staging, unresolved Git operations, branch changes,
+remote divergence or oversized outgoing blobs stop automatic publication with a
+reason. Staging is not reset; there is no force push or automatic rebase. Active hooks, signing
+and external clean/process filters defer to a manual checkpoint; owner checks are not bypassed.
+
+`LOCAL_SAVED`, `LOCAL_COMMITTED` and `REMOTE_CONFIRMED` mean different things.
+An offline push leaves local data safe and retries the existing commit. Only a
+verified remote commit covering the actual checkpoint confirms GitHub delivery;
+late callbacks cannot confirm a newer epoch or unsaved subsequent edits.
+
+See [file-primary design and upgrade](docs/MEMORY-V2.md). Public publication and a
+personal installation are separate. A personal update needs closed old sessions,
+a verified full cold copy, quarantine migration and an independent corpus rebuild.
+
+## Development and limits
+
+Use `npm ci`, `npm run types`, `npm run lint`, `npm run boundary`, `npm run build`
+and the focused suites declared for the change. Synthetic test workspaces must
+stay outside real ZT/Health. No personal sources or credentials belong in this
+public repository. Historical qualification reports remain evidence of their
+specified versions, not automatic acceptance of this one.
+
+This release does not add Codex integration, a standalone server, weight training,
+concurrent multi-computer merge or proof of usefulness over years. Local scopes
+are managed API permissions within a trusted personal process, not OS isolation.

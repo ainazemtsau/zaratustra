@@ -16,23 +16,29 @@ Ordinary trusted project startup opens permanent .local/memory and prepares .loc
 directories; explicit trusted deployments may use other paths. The same project folder keeps
 its memory across processes; another folder has its own default memory. No launcher or
 additional AGENTS file is needed. Never suggest resetting/moving memory to hide a store error.
-.local contains permanent work data: memory, plans/history, retained originals and generated
-results are available to the owner's ordinary Git versioning. Its name does not mean ignored
-or disposable. Git exclusions belong to the owner: never automatically create, modify or
-remove ignore rules, or commit/push user data. Respect existing rules; explain their effect
-when asked. Synchronization, multi-computer recovery and restoring a running system are not
-promised by this startup change. A closed-session Git file check does not prove live SQLite
-commit safety or a working-system restore. Do not introduce a new daily launch ceremony.
+File-primary workspaces keep their authoritative small files in the corpus reported by
+workspace_paths/corpus; SQLite is a rebuildable working projection. Never delete runtime
+coordination while sessions are alive. Necessary historical sources and unknown external
+actions survive recovery. A legacy workspace needs verified explicit migration, never reset.
+The owner's trusted Git binding may enable automatic saving of the whole working repository.
+Use zara_sync status/retry; local durability, local Git commit and confirmed remote saving
+are different. Never claim GitHub saving without REMOTE_CONFIRMED for the relevant revision.
+Respect staging/conflict/offline warnings; do not bypass them with shell reset/force/rebase.
+Runtime-only Git exclusions are installed only through the explicit owner-approved migration.
+No provider change, launcher, background server or per-launch environment ceremony is needed.
 Default scopes remain workspace-only. A backup directory does not grant full backup/restore
 rights. Ordinary interactive input is an observed stage; do not claim original keystrokes,
 direct owner feedback or stronger authority without the existing explicit ingress contract.
 
-For a durable goal, read the zaratustra-work skill. For memory/materials or recovery, read
-zaratustra-memory. Inspect current catalog/records before creating replacements. Missing
-material is a concrete wait, not evidence that the material was read. Save useful partial
-input without inventing missing content. Save original observed input with import_evidence
-using its exact captured_sources source_handle from the current snapshot. Core supplies
-original bytes and technical provenance; never describe programmatic input as owner approval.
+For a durable goal, read zaratustra-work; for useful memory/materials read zaratustra-memory.
+Inspect current Activity/Work before creating replacements. Activity.contract keeps its short
+purpose/context/document/procedure map; create only the structure needed for useful work.
+Routine conversation and successful tool calls remain transient. Retain a source only for a
+concrete future purpose: continuation, obligation, constraint, decision, reusable_experience
+or selected_source. import_evidence accepts durable_purpose and an exact source_fragment
+{start,end} in Unicode code points; retain sufficient original context, not every raw output.
+Long non-selected sources need an explicit minimal fragment. Selected originals remain exact.
+Missing material is a concrete wait. Source provenance never becomes owner approval.
 
 Only claim persistence after zara_commit returns committed:true. On a lost/uncertain reply,
 read operations, Changes and actual targets; discover the structurally anchored receipt
@@ -172,3 +178,11 @@ Use zaratustra-documents when work needs durable Markdown files or an external G
 Discover existing documents; use document previews/confirmation/apply for managed changes.
 Files hold content; Core keeps registry, exact sources, history and links. Small tasks need no folder.
 External changes require inspection; never silently overwrite drift. Publication is explicit, not automatic Git.
+
+File-primary Sleep uses zara_sleep start/resume/status/cancel or /zara-sleep. Read its skill.
+Do not invoke legacy start_sleep/sleep_checkpoint for schema10. A native bounded SDK session
+uses the same approved model/auth and temporary transcript; normal work keeps running.
+It selects meaningful cases, not every revision. Up to10 cases/3 changes/20 logical model
+generations/15 minutes; restart preserves budget. No-change/insufficient-evidence is valid.
+Only runtime state proves phases/application. A hypothesis or applied edit is not proven
+benefit. Never fabricate owner feedback or overwrite goals/ACL/obligations under reflection.

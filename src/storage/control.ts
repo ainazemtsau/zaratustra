@@ -22,7 +22,8 @@ export const bytesHash = (b: Uint8Array | string) =>
   createHash("sha256").update(b).digest("hex");
 export const ControlSchema = z
   .strictObject({
-    format: z.union([z.literal(1), z.literal(2)]),
+    format: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    corpus_root: z.string().min(1).optional(),
     coordination_id: z.string().min(1).optional(),
     coordination_protocol: z.literal(1).optional(),
     workspace_id: z.string().min(1),
@@ -31,7 +32,7 @@ export const ControlSchema = z
     restoration: z.record(z.string(), z.unknown()).nullable(),
   })
   .refine(
-    (c) => c.format !== 2 || !!c.coordination_id,
+    (c) => c.format === 1 || !!c.coordination_id,
     "Coordinated control requires a stable coordination identity.",
   );
 export type Control = z.infer<typeof ControlSchema>;
@@ -138,6 +139,52 @@ export function removeOwned(root: string, path: string) {
   rmSync(path);
 }
 
+/** Adopt only a named, durable file-initialization intention. Keep its fence
+ * until the constructor has completed file recovery and the control3 switch. */
+export function adoptInitializationMaintenance(
+  home: string,
+  coordination: Coordination,
+) {
+  const state = coordination.maintenanceInfo();
+  if (
+    state.mode === "normal" ||
+    !["corpus-clone", "file-migration"].includes(state.kind ?? "")
+  )
+    return undefined;
+  requireThat(
+    state.token,
+    "STORE_UNAVAILABLE",
+    "Initialization fence lacks its token.",
+  );
+  const path = join(
+    home,
+    state.kind === "corpus-clone"
+      ? "corpus-bootstrap.json"
+      : "corpus-activation.json",
+  );
+  requireThat(
+    existsSync(path),
+    "STORE_UNAVAILABLE",
+    "Interrupted initialization lacks its exact descriptor; preserve the fence.",
+  );
+  const intent = JSON.parse(readFileSync(safePath(home, path), "utf8"));
+  const previous =
+    state.kind === "corpus-clone"
+      ? intent.previous_epoch
+      : intent.before?.epoch;
+  requireThat(
+    intent.format === 1 &&
+      intent.coordination_id === coordination.identity &&
+      previous === state.expected_epoch &&
+      typeof intent.corpus_root === "string" &&
+      isAbsolute(intent.corpus_root),
+    "STORE_UNAVAILABLE",
+    "Initialization descriptor and stable fence disagree.",
+  );
+  coordination.adoptMaintenance(state.token);
+  return state.token;
+}
+
 /** Recover only a proven-dead administrator at the atomic generation-pointer boundary.
  * Never resumes an external action or releases uncertain resource reservations.
  */
@@ -155,13 +202,17 @@ export async function recoverMaintenance(
         "STORE_UNAVAILABLE",
         "Unrecognized maintenance fence; preserve control data.",
       );
+      if (["corpus-clone", "file-migration"].includes(state.kind ?? "")) {
+        adoptInitializationMaintenance(home, coordination);
+        return true;
+      }
       coordination.adoptMaintenance(state.token);
       return await coordination.run(
         "maintenance",
         () => {
           const current = readControl(home);
           requireThat(
-            current?.format === 2 &&
+            (current?.format === 2 || current?.format === 3) &&
               current.coordination_id === coordination.identity,
             "STORE_UNAVAILABLE",
             "Dead maintenance has an unrecognized control identity; preserve the fence.",

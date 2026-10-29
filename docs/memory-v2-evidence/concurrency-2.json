@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "synthetic": true,
+  "passed": true,
+  "model_calls": 0,
+  "processes": 2,
+  "distinct_child_processes_verified": 2,
+  "activities": 2,
+  "work_per_activity": 1,
+  "max_meaningful_saves_per_child": 2,
+  "expected_counts": {
+    "records": 5,
+    "revisions": 6,
+    "receipts": 4,
+    "changes": 4
+  },
+  "actual_counts": {
+    "records": 5,
+    "revisions": 6,
+    "receipts": 4,
+    "changes": 4
+  },
+  "ready_ms": 5650.4097,
+  "total_ms": 11854.445,
+  "timing_scope": "Phase times include coordination waiting and durable publication; waiting was not separately measured. RSS is the maximum of samples, not a continuous peak.",
+  "source_sha256": "e76c3026319e5fc3f9b7d392b90384d111b096fb3377193d9d9ff5e59c36077c",
+  "export_transform": "Removed host PIDs and temporary fixture paths; renamed rss_peak_bytes to rss_sampled_max_bytes; numerical measurements preserved.",
+  "workers": [
+    {
+      "index": 0,
+      "open_ms": 952.3248,
+      "create_ms": 2030.6279000000004,
+      "conflict_ms": 1122.6512000000002,
+      "total_ms": 4968.6359999999995,
+      "created": "work-0fcfd0ac-600d-4230-bf2b-ee41c4c1fb75",
+      "replay_identical": true,
+      "changed_payload_rejected": true,
+      "conflict": "committed",
+      "activity_group": 0,
+      "rss_sampled_max_bytes": 111333376
+    },
+    {
+      "index": 1,
+      "open_ms": 1775.7215999999999,
+      "create_ms": 943.7664999999997,
+      "conflict_ms": 2690.8201,
+      "total_ms": 6541.3134,
+      "created": "work-779bccd1-d849-4e95-a157-9db8a56872bd",
+      "replay_identical": true,
+      "changed_payload_rejected": true,
+      "conflict": "REVISION_CONFLICT",
+      "activity_group": 1,
+      "rss_sampled_max_bytes": 111333376
+    }
+  ]
+}

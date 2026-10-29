@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "check": "old-9ccf36-writer-refuses-control3",
+  "runtime": "v24.22.1",
+  "schema": 10,
+  "refused": true,
+  "code": null,
+  "name": "ZodError",
+  "canonical_and_runtime_files_unchanged": true,
+  "models": 0
+}

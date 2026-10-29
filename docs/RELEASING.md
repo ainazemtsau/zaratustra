@@ -10,7 +10,7 @@ Agreed maintenance workflow, 26 October 2026. Pi 1.4 only. Ordinary releases use
 6. Installation in a personal workspace is a SEPARATE explicit owner-authorized action, pinned to the exact public commit. Source publication is not deployment. Preserve memory and Git policy. Before a schema/control change assess compatibility and verified backup needs; follow CONCURRENCY.md upgrade instructions. Rolling old code back over a newer schema may be unsafe.
 7. Report: changed behavior; checks actually performed; public commit/tag; installed-package update status; ordinary-use checks still needed. Keep the issue open for real-use confirmation; synthetic checks or editing instructions/code do not establish usefulness.
 
-Personal context persistence and its private Git commit/push remain separate from public product release. Do not automatically stage live memory files, change ignore rules, copy only an active SQLite main file or promise cross-device merging/working-system restoration.
+Personal activation remains separate from public source publication. The approved schema-10 upgrade explicitly adds automatic private Git checkpoints only after trusted repository binding and a verified safe migration. Apply its precise runtime-only index/ignore policy; never stage live SQLite/WAL/leases as portable memory. Preserve owner staging, and never copy only an active SQLite main file or promise automatic cross-device merging. See [file-primary upgrade](MEMORY-V2.md).
 
 ## Approval UI maintenance
 

@@ -17,6 +17,7 @@ import type {
   AddressedRow,
 } from "./contracts.ts";
 import { sleepAccessRefs } from "./sleep.ts";
+import { activeCorpusSQL, ActivityContractSchema } from "./memory-policy.ts";
 
 const hash = (v: unknown) =>
   createHash("sha256").update(canonical(v)).digest("hex");
@@ -24,6 +25,7 @@ import {
   MemoryIndexSchemaSQL,
   assertMemoryIndexReadable,
   addressedIds,
+  addressedIdsSQL,
   addressedRefs,
   memoryIndexIdentity,
   memoryIndexReady,
@@ -101,6 +103,13 @@ export function validateMemory(
           if (d.format_ref) get(d.format_ref, "evidence");
           for (const link of d.links) get(link);
         }
+      }
+      if (r.kind === "activity" && r.data.contract) {
+        const contract = ActivityContractSchema.parse(r.data.contract);
+        for (const ref of contract.context_refs) get(ref);
+        for (const ref of contract.document_refs)
+          managedDocument(get(ref, "entity"));
+        for (const ref of contract.procedure_refs) get(ref, "method");
       }
       requireThat(
         (r.data.status === "merged") === !!r.data.redirect_to,
@@ -339,6 +348,7 @@ export const SearchSchema = z.strictObject({
     .optional(),
   storage: z.enum(["live", "archive", "tombstone"]).optional(),
   history: z.boolean().optional(),
+  include_legacy: z.boolean().optional(),
   valid_at: z.iso.datetime({ offset: true }).optional(),
   observed_after: z.iso.datetime({ offset: true }).optional(),
   source_kind: z
@@ -505,16 +515,16 @@ export class Memory {
     )?.n;
   }
   visibleSQL(alias: string) {
-    return `EXISTS(SELECT 1 FROM ${this.accessDocsSQL()} access JOIN records ar ON ar.id=access.id WHERE access.id=${alias}.id AND access.revision=json_extract(ar.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1))`;
+    return `(${activeCorpusSQL(this.db, alias + ".id", "json_extract(" + alias + ".json,'$.revision')")} AND EXISTS(SELECT 1 FROM ${this.accessDocsSQL()} access JOIN records ar ON ar.id=access.id WHERE access.id=${alias}.id AND access.revision=json_extract(ar.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1)))`;
   }
   technicalSQL(alias: string) {
     if (this.restricted) return "1";
-    const denied = `(secret.key='visibility' AND secret.atom='restricted') OR secret.atom IN (SELECT d.id FROM ${this.accessDocsSQL()} d WHERE d.restricted=1) OR secret.key IN (SELECT d.id FROM ${this.accessDocsSQL()} d WHERE d.restricted=1)`;
-    // Legacy lifecycle Changes can have an empty changed map. Their existing
-    // transaction intent still carries exact targets; retain that classification
-    // without rewriting historical rows or exposing a protected-only count.
-    return `NOT ${unknownSleepPreparation(`${alias}.json`)} AND NOT EXISTS(SELECT 1 FROM json_tree(${alias}.json) secret WHERE ${denied}) AND NOT EXISTS(SELECT 1 FROM intents linked WHERE linked.request_id IN (json_extract(${alias}.json,'$.request_id'),json_extract(${alias}.json,'$.transaction_id')) AND (${unknownSleepPreparation("linked.json")} OR EXISTS(SELECT 1 FROM json_tree(linked.json) secret WHERE ${denied})))`;
+    const denied = (json: string) =>
+      `(EXISTS(SELECT 1 FROM json_tree(${json}) secret WHERE secret.key='visibility' AND secret.atom='restricted') OR EXISTS(SELECT 1 FROM (${addressedIdsSQL(json)}) refs JOIN ${this.accessDocsSQL()} d ON d.id=refs.id WHERE d.restricted=1))`;
+    // Only one linked-intent hop; request IDs are not domain-record IDs.
+    return `NOT ${unknownSleepPreparation(`${alias}.json`)} AND NOT ${denied(`${alias}.json`)} AND NOT EXISTS(SELECT 1 FROM intents linked WHERE linked.request_id IN (json_extract(${alias}.json,'$.request_id'),json_extract(${alias}.json,'$.transaction_id')) AND (${unknownSleepPreparation("linked.json")} OR ${denied("linked.json")}))`;
   }
+
   technical(value: unknown) {
     if (this.restricted) return true;
     const identifiers =
@@ -767,7 +777,20 @@ export class Memory {
         environments: "environment",
       };
       const kindFilter = supportKinds[view]
-        ? ` AND t.kind='${supportKinds[view]}'`
+        ? ` AND t.kind='${supportKinds[view]}'` +
+          (mode === "legacy"
+            ? " AND NOT " +
+              activeCorpusSQL(
+                this.db,
+                "t.id",
+                "json_extract(t.json,'$.revision')",
+              )
+            : " AND " +
+              activeCorpusSQL(
+                this.db,
+                "t.id",
+                "json_extract(t.json,'$.revision')",
+              ))
         : "";
       const indexed = memoryIndexReady(this.db);
       const identity =
@@ -870,7 +893,13 @@ export class Memory {
       ordinalJoin = indexed
         ? " JOIN memory_ordinals o ON o.collection='current' AND o.identity=r.id"
         : "",
-      where = [pageKey + ">?", pageKey + "<=?", this.visibleSQL("r")],
+      where = [
+        pageKey + ">?",
+        pageKey + "<=?",
+        mode === "legacy"
+          ? `(NOT ${activeCorpusSQL(this.db, "r.id", "json_extract(r.json,'$.revision')")} AND EXISTS(SELECT 1 FROM ${this.accessDocsSQL()} access WHERE access.id=r.id AND access.revision=json_extract(r.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1)))`
+          : this.visibleSQL("r"),
+      ],
       params: (string | number | null)[] = [last, this.windowHigh];
     const kind: Record<string, string> = {
       activities: "activity",
@@ -1091,6 +1120,9 @@ export class Memory {
         pageKey + "<=?",
         "(d.restricted=0 OR ?=1)",
         p.history ? "1" : "d.revision=json_extract(r.json,'$.revision')",
+        p.history || p.include_legacy
+          ? "1"
+          : activeCorpusSQL(this.db, "d.id", "d.revision"),
       ],
       params: (string | number | null)[] = [
         last,

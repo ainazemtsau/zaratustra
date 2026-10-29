@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  ActivityContractSchema,
+  DurablePurposeSchema,
+  SourceFragmentSchema,
+} from "./memory-policy.ts";
 
 export const text = z.string().min(1).max(4000);
 export const Ref = z.union([
@@ -73,6 +78,7 @@ const wait = z.strictObject({
 });
 export const ActivityData = z.strictObject({
   purpose: text,
+  contract: ActivityContractSchema.optional(),
   status: z.enum(["active", "paused", "closed", "merged"]),
   redirect_to: Ref.optional(),
   aliases: z.array(text).max(30).optional(),
@@ -563,6 +569,8 @@ export const CommitSchema = z.strictObject({
         }),
         z.strictObject({
           op: z.literal("import_evidence"),
+          durable_purpose: DurablePurposeSchema.optional(),
+          source_fragment: SourceFragmentSchema.optional(),
           client_ref: text,
           source_handle: text,
           title: text,
@@ -602,6 +610,7 @@ export const CommitSchema = z.strictObject({
         z.strictObject({ op: z.literal("remove_relation"), relation_id: text }),
         z.strictObject({
           op: z.literal("record_result"),
+          durable_purpose: DurablePurposeSchema.optional(),
           client_ref: text,
           work_ref: Ref.optional(),
           run_ref: Ref.optional(),
@@ -795,6 +804,21 @@ export type AddressedRow = RecordRow | SupportingRow;
 export interface StoragePort {
   workspace: { workspace_id: string; epoch: string; schema_version: number };
   readonly: boolean;
+  /** Portable modules declare durable collections without importing a storage backend. */
+  registerCanonicalCollection?(table: string, keyColumns: string[]): void;
+  corpusStatus?():
+    | {
+        format: 1;
+        authority: "files";
+        root: string;
+        workspace_id: string;
+        epoch: string;
+        revision: number;
+        schema: 10;
+        complete: true;
+        last_transaction: string | null;
+      }
+    | undefined;
   /** Whole synchronous command; nested calls reuse the current storage capability. */
   withCommandSync?<T>(
     callback: () => T,

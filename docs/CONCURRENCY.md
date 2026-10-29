@@ -1,3 +1,5 @@
+> Schema-10 notice: this is the predecessor contract. Current file-primary storage, bounded Sleep and upgrade requirements are in [MEMORY-V2.md](MEMORY-V2.md). Historical qualification below is not new-format acceptance.
+
 # Concurrent local workspace
 
 ## Current delivery

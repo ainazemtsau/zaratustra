@@ -107,6 +107,7 @@ function fixture() {
       registerTool(tool: Tool) {
         tools.set(tool.name, tool);
       },
+      registerCommand() {},
       sendMessage(message: Parameters<ExtensionAPI["sendMessage"]>[0]) {
         messages.push(message);
       },
@@ -831,10 +832,10 @@ test("Pi restore closes the old generation and reopens with a fresh runtime leas
     });
     assert.equal(preview.code, undefined, JSON.stringify(preview));
     const draft = preview.preview as { request_id: string };
-    assert.equal(
-      (await a.call("zara_confirm", { preview_ref: draft.request_id })).code,
-      undefined,
-    );
+    const confirmation = await a.call("zara_confirm", {
+      preview_ref: draft.request_id,
+    });
+    assert.equal(confirmation.code, undefined, JSON.stringify(confirmation));
     const restored = await a.call("zara_restore", {
       preview_ref: draft.request_id,
     });

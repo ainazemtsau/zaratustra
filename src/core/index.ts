@@ -1,3 +1,35 @@
+import { assertSleepMutationAllowed } from "./sleep-v2.ts";
+export {
+  isSleepNotDispatched,
+  SleepV2,
+  SleepV2SchemaSQL,
+  SleepV2Collections,
+  SleepProposalSchema,
+  SleepDocumentChangeSchema,
+  SLEEP_LIMITS,
+  assertSleepMutationAllowed,
+  selectSleepCases,
+  defaultSleepProposalPolicy,
+} from "./sleep-v2.ts";
+export type {
+  SleepState,
+  SleepRef,
+  SleepProposal,
+  SleepDocumentChange,
+} from "./sleep-v2.ts";
+import {
+  memoryRetention,
+  retainedSourceText,
+  TransientMemory,
+  MemoryPolicyError,
+} from "./memory-policy.ts";
+export {
+  ActivityContractSchema,
+  DurablePurposeSchema,
+  RetentionSchema,
+  SourceFragmentSchema,
+  CandidateInputSchema,
+} from "./memory-policy.ts";
 import {
   managedDocument,
   DocumentMetadata,
@@ -100,6 +132,47 @@ export const mergedAliases = (from: RecordRow, to: RecordRow) => [
   ]),
 ];
 export class Core {
+  private publicCorpusStatus() {
+    const status = this.storage.corpusStatus?.();
+    return status
+      ? {
+          format: status.format,
+          authority: status.authority,
+          root: status.root,
+          schema: status.schema,
+          complete: status.complete,
+        }
+      : null;
+  }
+  private get candidates() {
+    return new TransientMemory(this.storage, {
+      authorize: (write) => this.authorize(write),
+      canReadRef: (ref) => this.memory.allowed(ref.id, ref.revision),
+      isRestrictedRef: (ref) => this.memory.isRestricted(ref.id, ref.revision),
+      canReadRestricted: () =>
+        !!this.context.scopes?.includes("restricted:read"),
+      canWriteRestricted: () =>
+        !!this.context.scopes?.includes("restricted:write"),
+    });
+  }
+  sweepTemporaryMemory() {
+    return this.candidates.sweep();
+  }
+  temporaryMemory(action: "put" | "list" | "read" | "remove", input?: unknown) {
+    try {
+      if (action === "put")
+        return this.candidates.put(
+          input as Parameters<TransientMemory["put"]>[0],
+        );
+      if (action === "list") return this.candidates.list();
+      if (action === "read") return this.candidates.read(String(input));
+      return this.candidates.remove(String(input));
+    } catch (error) {
+      if (error instanceof MemoryPolicyError)
+        throw new CoreError(error.code, error.message);
+      throw error;
+    }
+  }
   private documentFinalization: string | null = null;
   private sources = new Map<string, Source>();
   private _approvals?: Approvals;
@@ -703,6 +776,8 @@ export class Core {
     }
   }
   private requiresApproval(request: ReturnType<typeof CommitSchema.parse>) {
+    if (assertSleepMutationAllowed(this.storage, this.context, request))
+      return false;
     // These rows only finalize an already exactly approved, observed file operation.
     if (request.ops.length === 1 && request.ops[0].op === "commit_document")
       return false;
@@ -734,7 +809,11 @@ export class Core {
       if (op.op === "update_record") {
         const r = this.record(op.ref.id);
         if (r.kind === "activity")
-          return canonical(r.data) !== canonical(op.data);
+          return ["purpose", "status", "redirect_to"].some(
+            (key) =>
+              canonical(r.data[key] ?? null) !==
+              canonical((op.data as JsonObject)[key] ?? null),
+          );
         if (r.kind === "work")
           return [
             "objective",
@@ -1225,6 +1304,7 @@ export class Core {
       index,
       retrieval_trace: traces,
       trace_bound: 512,
+      corpus: this.publicCorpusStatus(),
       managed_access: "Trusted personal process; not OS isolation",
     });
   }
@@ -1624,7 +1704,20 @@ export class Core {
       (id) => this.memory.isRestricted(id),
     ).apply(ref);
     if (result.action === "tombstone") this.expireSources();
-    return this.envelope(this.memory.sanitizeTechnical(result));
+    return this.envelope(
+      this.memory.sanitizeTechnical({
+        ...result,
+        ...(this.storage.workspace.schema_version >= 10 &&
+        result.action === "tombstone"
+          ? {
+              erasure_scope: "managed_views",
+              canonical_copies_retained: true,
+              warning:
+                "Body access is removed from managed views; canonical unreferenced material, Git history and backups can still contain prior bytes. This is not physical erasure.",
+            }
+          : {}),
+      }),
+    );
   }
   private recovery(workId: string, stepId: string | null = null) {
     if (this.storage.workspace.schema_version < 6) return undefined;
@@ -2037,6 +2130,12 @@ export class Core {
       available: true,
       workspace_id: this.context.workspace_id,
       active_epoch: this.context.epoch,
+      corpus: this.publicCorpusStatus(),
+      memory_policy: {
+        routine_tools: "transient",
+        source_fragment_unit: "unicode_code_points",
+        legacy: "explicit lookup only",
+      },
       snapshot_seq: this.visibleSequence(),
       generation: this.memory.generation(),
       focus: this.focus(),
@@ -2093,6 +2192,7 @@ export class Core {
     this.authorize(true);
     this.memory.barrier();
     const request = CommitSchema.parse(input);
+    assertSleepMutationAllowed(this.storage, this.context, request);
     const documentOp = request.ops.find((op) => op.op === "commit_document");
     if (documentOp)
       requireThat(
@@ -3176,6 +3276,14 @@ export class Core {
             );
             data = {
               source_kind: "generated_artifact",
+              ...(this.storage.workspace.schema_version >= 10
+                ? {
+                    retention: memoryRetention({
+                      purpose: op.durable_purpose ?? "continuation",
+                      class: "working",
+                    }),
+                  }
+                : {}),
               source_locator: "core-model-result",
               captured_at: now,
               content_hash: digest(op.content),
@@ -3211,7 +3319,35 @@ export class Core {
               "Declare the imported source handle in source_handles.",
             );
             const s = this.sources.get(op.source_handle)!;
+            const durablePurpose =
+              op.op === "receive_handoff"
+                ? "continuation"
+                : (op.durable_purpose ??
+                  (s.blob_ref ? "selected_source" : "continuation"));
+            requireThat(
+              this.storage.workspace.schema_version < 10 ||
+                !s.observation ||
+                op.op === "receive_handoff" ||
+                !!op.durable_purpose,
+              "DURABLE_PURPOSE_REQUIRED",
+              "Keep ordinary tool results transient; retaining an observation needs a concrete future purpose.",
+            );
+            const retained =
+              !s.blob_ref && this.storage.workspace.schema_version >= 10
+                ? retainedSourceText(s.text, {
+                    purpose: durablePurpose,
+                    ...(op.op === "import_evidence" && op.source_fragment
+                      ? { fragment: op.source_fragment }
+                      : {}),
+                  })
+                : undefined;
             data = {
+              ...(this.storage.workspace.schema_version >= 10
+                ? { retention: memoryRetention({ purpose: durablePurpose }) }
+                : {}),
+              ...(retained
+                ? { retained_capture: { ...retained, text: undefined } }
+                : {}),
               source_kind:
                 op.op === "receive_handoff" ||
                 op.semantic_source_kind === "external_reply"
@@ -3225,8 +3361,8 @@ export class Core {
                         : "observed_input",
               source_locator: s.locator ?? s.source_ref,
               captured_at: s.captured_at,
-              content_hash: s.content_hash,
-              retained_excerpt: s.blob_ref ? null : s.text,
+              content_hash: retained?.fragment_hash ?? s.content_hash,
+              retained_excerpt: s.blob_ref ? null : (retained?.text ?? s.text),
               blob_ref: s.blob_ref ?? null,
               byte_length: s.byte_length,
               availability: "retained",
@@ -3383,7 +3519,17 @@ export class Core {
         if (before[recordId] !== null) guarded(recordId);
       };
       for (const r of changed.values()) {
-        if (r.kind === "activity") ActivityData.parse(r.data);
+        if (r.kind === "activity") {
+          if (this.storage.workspace.schema_version >= 10 && !r.data.contract)
+            r.data.contract = {
+              summary: r.data.purpose,
+              context_refs: [],
+              document_refs: [],
+              procedure_refs: [],
+              memory_scope: "activity",
+            };
+          ActivityData.parse(r.data);
+        }
         if (r.kind === "work") {
           const w = WorkData.parse(r.data);
           // Pin technical completion grounds to the exact final addressed revision.
@@ -3865,9 +4011,27 @@ export class Core {
       intent.receipt = receipt;
       if (protectedSleepPreparation)
         intent.visibility = restrictedSource ? "restricted" : undefined;
+      const durableIntent =
+        this.storage.workspace.schema_version >= 10
+          ? {
+              ...intent,
+              visibility: restrictedSource ? "restricted" : "workspace",
+              payload_not_retained: true,
+              payload: {
+                operation_kinds: request.ops.map((op) => op.op),
+                changed_refs: [
+                  ...changed.values(),
+                  ...experience.changed.values(),
+                ].map((row) => ({ id: row.id, revision: row.revision })),
+                result_refs: Object.values(created).map((recordId) => ({
+                  id: recordId,
+                })),
+              },
+            }
+          : intent;
       this.storage.run(
         "UPDATE intents SET json=? WHERE request_id=?",
-        JSON.stringify(intent),
+        JSON.stringify(durableIntent),
         request.request_id,
       );
       for (const handle of request.source_handles) {
@@ -3885,6 +4049,7 @@ export class Core {
         }
       }
       refreshMemory(this.storage, false, [], []);
+      if (this.storage.workspace.schema_version >= 10) this.candidates.sweep();
       this.fault?.("before_commit");
       this.storage.exec("COMMIT");
       this.fault?.("after_commit");

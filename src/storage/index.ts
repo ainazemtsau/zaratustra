@@ -1,4 +1,15 @@
 import {
+  FileCorpus,
+  CorpusMetadataSQL,
+  SleepCycleSQL,
+  registerCorpusCollection,
+} from "./corpus.ts";
+import type { CorpusStatus } from "./corpus.ts";
+import { createProjectionSchema } from "./projection.ts";
+import { validateProjection } from "./administration.ts";
+export { FileCorpus, registerCorpusCollection } from "./corpus.ts";
+export type { CorpusStatus } from "./corpus.ts";
+import {
   Coordination,
   type CommandKind,
   type OperationOptions,
@@ -11,6 +22,8 @@ export { verifyRuntime } from "./runtime.ts";
 export { DocumentFiles } from "./documents.ts";
 import {
   activeLocation,
+  adoptInitializationMaintenance,
+  atomicJSON,
   readControl,
   writeControl,
   safePath,
@@ -33,6 +46,7 @@ import {
   mkdirSync,
   openSync,
   readFileSync,
+  readdirSync,
   realpathSync,
   renameSync,
   statSync,
@@ -57,6 +71,7 @@ import {
   LifecycleSchemaSQL,
   SleepSchemaSQL,
   refreshMemory,
+  addressedRefs,
   MemoryIndexSchemaSQL,
   validateMemory,
   validateWorks,
@@ -101,6 +116,16 @@ export class DiskStorage implements StoragePort {
   private initializing = true;
   private administrative = false;
   readonly controlHome: string;
+  readonly projectRoot: string;
+  private corpus?: FileCorpus;
+  private corpusMode: "create" | "require" | "legacy";
+  private corpusRoot: string;
+  private corpusPublishing = false;
+  private projectionInstance?: string;
+  private corpusFault?: (point: string) => void;
+  private transientCleanupDeferred = false;
+  private transientCleanupRetry = 0;
+  private initializationFence?: string;
   constructor(
     public home: string,
     private migrationFault?: (point: string) => void,
@@ -108,6 +133,9 @@ export class DiskStorage implements StoragePort {
       coordination?: Coordination;
       runtimeId?: string;
       readOnly?: boolean;
+      projectRoot?: string;
+      corpus?: "create" | "require" | "legacy";
+      corpusFault?: (point: string) => void;
     } = {},
   ) {
     verifyRuntime();
@@ -117,6 +145,10 @@ export class DiskStorage implements StoragePort {
       "Memory home must be absolute.",
     );
     this.controlHome = resolve(home);
+    this.projectRoot = resolve(options.projectRoot ?? home);
+    this.corpusRoot = join(this.projectRoot, "memory");
+    this.corpusMode = options.corpus ?? "create";
+    this.corpusFault = options.corpusFault;
     this.readonly = options.readOnly ?? false;
     const control = readControl(this.controlHome);
     this.ownsCoordination = !options.coordination;
@@ -127,7 +159,36 @@ export class DiskStorage implements StoragePort {
         create: !control || control.format === 1,
       });
     try {
-      this.coordination.sync("maintenance", () => this.initialize(home));
+      this.initializationFence = adoptInitializationMaintenance(
+        this.controlHome,
+        this.coordination,
+      );
+      this.coordination.sync("maintenance", () => {
+        this.initialize(home);
+        this.commandResult(() => this.maybeReclaimTransientImports());
+        if (this.initializationFence) {
+          requireThat(
+            readControl(this.controlHome)?.format === 3,
+            "STORE_UNAVAILABLE",
+            "Initialization did not reach file authority; retain its fence.",
+          );
+          const state = this.coordination.maintenanceInfo();
+          if (state.mode !== "normal")
+            this.coordination.endMaintenance(this.initializationFence);
+          this.initializationFence = undefined;
+        }
+      });
+      const bootstrap = join(this.controlHome, "corpus-bootstrap.json");
+      if (existsSync(bootstrap))
+        this.coordination.sync("maintenance", () => {
+          const intention = JSON.parse(readFileSync(bootstrap, "utf8"));
+          requireThat(
+            readControl(this.controlHome)?.epoch === intention.epoch,
+            "STORE_UNAVAILABLE",
+            "Clone control did not commit.",
+          );
+          unlinkSync(bootstrap);
+        });
     } catch (error) {
       try {
         this.close();
@@ -151,6 +212,36 @@ export class DiskStorage implements StoragePort {
     const dbPath = join(home, "zara.sqlite");
     const hadManifest = existsSync(manifest);
     const hadDb = existsSync(dbPath);
+    const initialControl = readControl(this.controlHome);
+    this.resumeCorpusRestore();
+    if (existsSync(this.activationPath())) {
+      this.resumeCorpusActivation();
+      this.initializing = false;
+      return;
+    }
+    if (FileCorpus.exists(this.corpusRoot) || initialControl?.format === 3) {
+      requireThat(
+        FileCorpus.exists(this.corpusRoot),
+        "STORE_UNAVAILABLE",
+        "Known canonical corpus is missing; never create replacement memory.",
+      );
+      this.corpus = new FileCorpus(this.corpusRoot, this.corpusFault);
+      if (this.readonly)
+        requireThat(
+          !this.corpus.recoveryNeeded(),
+          "INDEX_UNAVAILABLE",
+          "Read-only memory requires writable filesystem recovery.",
+        );
+      else this.corpus.recover();
+      this.openFileProjection();
+      this.initializing = false;
+      return;
+    }
+    requireThat(
+      !hadDb || this.corpusMode === "legacy",
+      "MIGRATION_REQUIRED",
+      "Existing SQLite memory requires verified quarantine migration to the file corpus; preserve it.",
+    );
     requireThat(
       !readControl(this.controlHome) || (hadManifest && hadDb),
       "STORE_UNAVAILABLE",
@@ -163,7 +254,7 @@ export class DiskStorage implements StoragePort {
     );
     try {
       // Only the one-time legacy transition takes the old lifetime lease.
-      if (readControl(this.controlHome)?.format !== 2) {
+      if ((readControl(this.controlHome)?.format ?? 1) < 2) {
         const lock = join(this.controlHome, "writer.lock");
         if (existsSync(lock)) {
           const owner = JSON.parse(readFileSync(lock, "utf8")) as {
@@ -421,7 +512,7 @@ export class DiskStorage implements StoragePort {
           "SELECT format FROM memory_index_meta WHERE singleton=1",
         );
         requireThat(
-          index?.format === 1,
+          [1, 2].includes(index?.format ?? 0),
           "STORE_UNAVAILABLE",
           "Unknown access-index format; preserve this store for recovery.",
         );
@@ -442,7 +533,7 @@ export class DiskStorage implements StoragePort {
           "STORE_UNAVAILABLE",
           "Active control identity mismatch; no replacement.",
         );
-      if (!control || control.format !== 2)
+      if (!control || control.format < 2)
         writeControl(this.controlHome, {
           ...(control ?? { generation: ".", restoration: null }),
           format: 2,
@@ -460,6 +551,7 @@ export class DiskStorage implements StoragePort {
           unlinkSync(legacy);
         this.ownsLock = false;
       }
+      if (!hadDb && this.corpusMode !== "legacy") this.activateCorpus(false);
       this.initializing = false;
       if (!this.readonly) {
         mkdirSync(join(home, "materials"), { recursive: true });
@@ -489,6 +581,699 @@ export class DiskStorage implements StoragePort {
       }
       throw e;
     }
+  }
+  registerCanonicalCollection(table: string, keyColumns: string[]) {
+    return this.withCommandSync(() => {
+      registerCorpusCollection({ table, keyColumns });
+      if (this.corpus && !this.readonly) this.corpus.installCapture(this.db);
+    });
+  }
+  runtimeGitExclusions(projectRoot = this.projectRoot): string[] {
+    const roots = new Set([this.controlHome, this.home]);
+    const generations = join(this.controlHome, "generations");
+    if (existsSync(generations))
+      for (const name of readdirSync(generations))
+        if (/^[a-f0-9-]{36}$/.test(name)) roots.add(join(generations, name));
+    const paths: string[] = [];
+    const add = (path: string) => {
+      if (within(projectRoot, path) && resolve(path) !== resolve(projectRoot))
+        paths.push(
+          relative(projectRoot, path).replaceAll("\\", "/") +
+            ([
+              "runtimes",
+              "staging",
+              "materials",
+              "administration",
+              ".pending",
+              ".garbage",
+              "transient-imports",
+            ].includes(path.split(/[\\/]/).at(-1)!)
+              ? "/"
+              : ""),
+        );
+    };
+    for (const root of roots) {
+      for (const name of [
+        "active.json",
+        "workspace.json",
+        "projection.instance",
+        "coordination.sqlite",
+        "coordination.sqlite-journal",
+        "coordination.sqlite-wal",
+        "coordination.sqlite-shm",
+        "writer.lock",
+        "corpus-activation.json",
+        "corpus-restore.json",
+        "transient-materials.json",
+        "corpus-bootstrap.json",
+        "transient-imports",
+        "runtimes",
+        "staging",
+        "materials",
+        "administration",
+      ])
+        add(join(root, name));
+      if (existsSync(root))
+        for (const name of readdirSync(root))
+          if (
+            /^(zara\.sqlite(?:-wal|-shm|\.preserved-[a-f0-9-]+)?|(?:pre-[a-z0-9-]+|projection-build-[a-f0-9-]+)\.sqlite(?:-wal|-shm)?)$/.test(
+              name,
+            )
+          )
+            add(join(root, name));
+    }
+    add(join(this.corpusRoot, ".pending"));
+    add(join(this.corpusRoot, ".garbage"));
+    return [...new Set(paths)].sort();
+  }
+  corpusStatus(): CorpusStatus | undefined {
+    return this.withCommandSync(() => this.corpus?.status(), "read");
+  }
+  corpusCheckpoint() {
+    return this.withCommandSync(() => this.corpus?.checkpoint(), "read");
+  }
+  private projectionPath() {
+    return join(this.home, "zara.sqlite");
+  }
+  private projectionTokenPath() {
+    return join(this.home, "projection.instance");
+  }
+  private openFileProjection() {
+    try {
+      this.db?.close();
+    } catch {
+      /* A stale projection handle is disposable. */
+    }
+    let state = this.corpus!.status();
+    this.workspace = {
+      workspace_id: state.workspace_id,
+      epoch: state.epoch,
+      schema_version: 10,
+    };
+    const control = readControl(this.controlHome);
+    requireThat(
+      !control ||
+        (control.workspace_id === state.workspace_id &&
+          control.epoch === state.epoch),
+      "STORE_UNAVAILABLE",
+      "Corpus/control identity differs; preserve both.",
+    );
+    this.corpus!.checkpoint();
+    let rebuild = !existsSync(this.projectionPath());
+    if (!rebuild)
+      try {
+        this.db = new DatabaseSync(this.projectionPath(), {
+          readOnly: this.readonly,
+        });
+        const value = this.db
+          .prepare("SELECT revision FROM corpus_projection WHERE singleton=1")
+          .get();
+        const projectionWorkspace = JSON.parse(
+          String(this.db.prepare("SELECT json FROM meta").get()?.json),
+        );
+        rebuild =
+          JSON.stringify(projectionWorkspace) !==
+            JSON.stringify(this.workspace) ||
+          !!this.db.prepare("SELECT 1 FROM corpus_dirty LIMIT 1").get() ||
+          Number(value?.revision) !== state.revision ||
+          Number(this.db.prepare("PRAGMA user_version").get()!.user_version) !==
+            10;
+      } catch {
+        rebuild = true;
+      }
+    if (rebuild) {
+      requireThat(
+        !this.readonly,
+        "INDEX_UNAVAILABLE",
+        "File corpus requires a writable projection rebuild.",
+      );
+      this.rebuildFileProjection();
+    } else this.configureFileConnection();
+    this.corpus!.restoreMaterials(this.home, this.readonly);
+    this.rehydratePortableOperations();
+    if (
+      !control ||
+      existsSync(join(this.controlHome, "corpus-bootstrap.json"))
+    ) {
+      requireThat(
+        !this.readonly,
+        "INDEX_UNAVAILABLE",
+        "Fresh clone requires a writable reconciliation epoch.",
+      );
+      this.initializeCloneEpoch();
+      state = this.corpus!.status();
+    }
+    if (
+      !existsSync(join(this.home, "workspace.json")) ||
+      readFileSync(join(this.home, "workspace.json"), "utf8") !==
+        JSON.stringify(this.workspace, null, 2)
+    ) {
+      requireThat(
+        !this.readonly,
+        "INDEX_UNAVAILABLE",
+        "Projection metadata requires repair.",
+      );
+      atomicJSON(join(this.home, "workspace.json"), this.workspace);
+    }
+    if (!control || control.format !== 3) {
+      requireThat(
+        !this.readonly,
+        "INDEX_UNAVAILABLE",
+        "File control requires a writable transition.",
+      );
+      writeControl(this.controlHome, {
+        ...(control ?? { generation: ".", restoration: null }),
+        format: 3,
+        corpus_root: this.corpusRoot,
+        coordination_id: this.coordination.identity,
+        coordination_protocol: 1,
+        workspace_id: state.workspace_id,
+        epoch: state.epoch,
+      });
+    }
+    const bootstrap = join(this.controlHome, "corpus-bootstrap.json");
+    if (existsSync(bootstrap)) {
+      const intention = JSON.parse(readFileSync(bootstrap, "utf8"));
+      requireThat(
+        intention.epoch === state.epoch &&
+          intention.workspace_id === state.workspace_id,
+        "STORE_UNAVAILABLE",
+        "Clone completion does not match its descriptor.",
+      );
+    }
+    if (existsSync(this.projectionTokenPath()))
+      this.projectionInstance = readFileSync(
+        this.projectionTokenPath(),
+        "utf8",
+      );
+  }
+  private configureFileConnection() {
+    this.connectionClosed = false;
+    this.db.exec("PRAGMA foreign_keys=ON; PRAGMA busy_timeout=0;");
+    if (!this.readonly) {
+      this.db.exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;");
+      this.corpus!.installCapture(this.db);
+    }
+  }
+  private rebuildFileProjection() {
+    requireThat(
+      this.corpus && !this.readonly,
+      "INDEX_UNAVAILABLE",
+      "A writable file projection is required.",
+    );
+    const state = this.corpus.status();
+    this.workspace = {
+      workspace_id: state.workspace_id,
+      epoch: state.epoch,
+      schema_version: 10,
+    };
+    const path = join(
+      this.home,
+      "projection-build-" + randomUUID() + ".sqlite",
+    );
+    const next = new DatabaseSync(path);
+    try {
+      createProjectionSchema(next, this.workspace);
+      this.corpus.restoreRows(next);
+      const projection: StoragePort = {
+        workspace: this.workspace,
+        readonly: false,
+        exec: (sql) => next.exec(sql),
+        get: <T>(sql: string, ...p: (string | number | null)[]) =>
+          next.prepare(sql).get(...p) as T | undefined,
+        all: <T>(sql: string, ...p: (string | number | null)[]) =>
+          next.prepare(sql).all(...p) as T[],
+        run: (sql, ...p) => {
+          next.prepare(sql).run(...p);
+        },
+        readMaterial: (hash) => this.corpus!.material(hash).toString("utf8"),
+      };
+      initializeConcurrencyState(projection);
+      refreshMemory(projection, true);
+      next.exec("DELETE FROM corpus_dirty; PRAGMA foreign_keys=ON;");
+      requireThat(
+        next.prepare("PRAGMA integrity_check").get()!.integrity_check ===
+          "ok" && next.prepare("PRAGMA foreign_key_check").all().length === 0,
+        "STORE_UNAVAILABLE",
+        "Canonical projection rebuild failed integrity.",
+      );
+      validateProjection(next, this.home, false);
+      next
+        .prepare("UPDATE corpus_projection SET revision=? WHERE singleton=1")
+        .run(state.revision);
+    } finally {
+      next.close();
+    }
+    try {
+      this.db?.close();
+    } catch {
+      /* Corrupt projection is not authority. */
+    }
+    const suffix = ".preserved-" + randomUUID();
+    for (const ext of ["", "-wal", "-shm"]) {
+      const old = this.projectionPath() + ext;
+      if (existsSync(old))
+        renameSync(safePath(this.home, old), safePath(this.home, old + suffix));
+    }
+    renameSync(
+      safePath(this.home, path),
+      safePath(this.home, this.projectionPath()),
+    );
+    this.db = new DatabaseSync(this.projectionPath());
+    this.configureFileConnection();
+    const token = randomUUID();
+    atomicJSON(this.projectionTokenPath(), { token });
+    this.projectionInstance = readFileSync(this.projectionTokenPath(), "utf8");
+  }
+  private ensureFileProjection() {
+    if (this.readonly)
+      requireThat(
+        !this.corpus!.recoveryNeeded(),
+        "INDEX_UNAVAILABLE",
+        "Read-only memory requires writable filesystem recovery.",
+      );
+    else this.corpus!.recover();
+    const token = existsSync(this.projectionTokenPath())
+      ? readFileSync(this.projectionTokenPath(), "utf8")
+      : undefined;
+    if (token !== this.projectionInstance) {
+      try {
+        this.db.close();
+      } catch {
+        /* Reopen known replacement. */
+      }
+      this.db = new DatabaseSync(this.projectionPath(), {
+        readOnly: this.readonly,
+      });
+      this.configureFileConnection();
+      this.projectionInstance = token;
+    }
+    const revision = Number(
+      this.db
+        .prepare("SELECT revision FROM corpus_projection WHERE singleton=1")
+        .get()?.revision,
+    );
+    const state = this.corpus!.status();
+    const projectionWorkspace = JSON.parse(
+      String(this.db.prepare("SELECT json FROM meta").get()?.json),
+    );
+    if (
+      !!this.db.prepare("SELECT 1 FROM corpus_dirty LIMIT 1").get() ||
+      revision !== state.revision ||
+      JSON.stringify(projectionWorkspace) !==
+        JSON.stringify({
+          workspace_id: state.workspace_id,
+          epoch: state.epoch,
+          schema_version: 10,
+        })
+    ) {
+      requireThat(
+        !this.readonly,
+        "INDEX_UNAVAILABLE",
+        "File projection is stale.",
+      );
+      this.rebuildFileProjection();
+    }
+    this.corpus!.acceptPublishedRevision(state.revision, this.db);
+    this.corpus!.assertNoDrift();
+  }
+  private rehydratePortableOperations() {
+    if (!this.corpus || !this.db || this.connectionClosed) return;
+    this.coordination.importMissingUnknown(
+      this.db
+        .prepare("SELECT json FROM corpus_operations")
+        .all()
+        .map((row) => JSON.parse(String(row.json))),
+    );
+  }
+  private captureRuntimeOperations() {
+    this.rehydratePortableOperations();
+    const pending = this.coordination.pending();
+    const ids = new Set(pending.map((o) => o.operation_id));
+    for (const old of this.db
+      .prepare("SELECT operation_id FROM corpus_operations")
+      .all())
+      if (!ids.has(String(old.operation_id)))
+        this.db
+          .prepare("DELETE FROM corpus_operations WHERE operation_id=?")
+          .run(String(old.operation_id));
+    for (const op of pending) {
+      const json = JSON.stringify(op);
+      const prior = this.db
+        .prepare("SELECT json FROM corpus_operations WHERE operation_id=?")
+        .get(op.operation_id);
+      if (prior?.json !== json)
+        this.db
+          .prepare(
+            "INSERT INTO corpus_operations VALUES(?,?) ON CONFLICT(operation_id) DO UPDATE SET json=excluded.json",
+          )
+          .run(op.operation_id, json);
+    }
+  }
+  private initializeCloneEpoch() {
+    const descriptor = join(this.controlHome, "corpus-bootstrap.json");
+    let intention: {
+      format: number;
+      kind: string;
+      coordination_id: string;
+      corpus_root: string;
+      workspace_id: string;
+      previous_epoch: string;
+      epoch: string;
+      restoration_id: string;
+    };
+    if (existsSync(descriptor))
+      intention = JSON.parse(readFileSync(descriptor, "utf8"));
+    else {
+      intention = {
+        format: 1,
+        kind: "corpus-clone",
+        coordination_id: this.coordination.identity,
+        corpus_root: this.corpusRoot,
+        workspace_id: this.workspace.workspace_id,
+        previous_epoch: this.workspace.epoch,
+        epoch: randomUUID(),
+        restoration_id: "clone-" + randomUUID(),
+      };
+      atomicJSON(descriptor, intention);
+    }
+    requireThat(
+      intention.format === 1 &&
+        intention.kind === "corpus-clone" &&
+        intention.coordination_id === this.coordination.identity &&
+        intention.corpus_root === this.corpusRoot &&
+        intention.workspace_id === this.workspace.workspace_id &&
+        [intention.previous_epoch, intention.epoch].includes(
+          this.workspace.epoch,
+        ),
+      "STORE_UNAVAILABLE",
+      "Clone descriptor and canonical identity disagree.",
+    );
+    const oldEpoch = intention.previous_epoch,
+      epoch = intention.epoch,
+      restoration_id = intention.restoration_id;
+    const token = this.coordination.beginMaintenance("corpus-clone", oldEpoch);
+    this.initializationFence = token;
+    this.corpusFault?.("corpus_clone_fenced");
+    try {
+      this.coordination.exclusiveMaintenance(token);
+      const pending = this.db
+        .prepare("SELECT json FROM corpus_operations")
+        .all()
+        .map((r) => ({
+          ...JSON.parse(String(r.json)),
+          status: "unknown" as const,
+        }));
+      this.coordination.importUnknown(pending);
+      if (this.workspace.epoch === epoch) return;
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.workspace = { ...this.workspace, epoch };
+        this.db
+          .prepare("UPDATE meta SET json=?")
+          .run(JSON.stringify(this.workspace));
+        for (const row of this.db
+          .prepare("SELECT json FROM records WHERE kind='work'")
+          .all()) {
+          const work = JSON.parse(String(row.json));
+          if (work.storage === "tombstone") continue;
+          for (const step of [
+            "",
+            ...(work.data.steps ?? []).map(
+              (s: { step_id: string }) => s.step_id,
+            ),
+          ])
+            this.db
+              .prepare(
+                "INSERT INTO recovery_barriers VALUES(?,?,?) ON CONFLICT(work_id,step_id) DO UPDATE SET json=excluded.json",
+              )
+              .run(
+                work.id,
+                step,
+                JSON.stringify({
+                  epoch,
+                  restoration_id,
+                  status: "required",
+                  reason:
+                    "Cloned corpus can predate external effects; inspect current-world postconditions before effectful continuation.",
+                }),
+              );
+        }
+        this.db.prepare("INSERT INTO lifecycle_events VALUES(?,?)").run(
+          restoration_id,
+          JSON.stringify({
+            kind: "restoration",
+            epoch,
+            previous_epoch: oldEpoch,
+            barrier:
+              "all restored Work and steps; imported pending operations unknown",
+            authority: "historical claims/approvals are not runnable",
+          }),
+        );
+        this.db.exec("COMMIT");
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+      this.captureRuntimeOperations();
+      this.corpus!.publish(this.db, this.home);
+    } finally {
+      // The fence remains through local control publication; constructor completes it.
+    }
+  }
+  /** Explicit operator migration entry. Call only on an isolated, verified quarantine copy. */
+  enableFileAuthority() {
+    return this.coordination.sync("maintenance", () =>
+      this.activateCorpus(true),
+    );
+  }
+  private resumeCorpusRestore() {
+    const path = join(this.controlHome, "corpus-restore.json");
+    if (!existsSync(path)) return;
+    requireThat(
+      !this.readonly,
+      "STORE_UNAVAILABLE",
+      "Interrupted canonical restore requires recovery.",
+    );
+    const intention = JSON.parse(readFileSync(path, "utf8"));
+    requireThat(
+      intention.format === 1 &&
+        intention.corpus_root === this.corpusRoot &&
+        intention.previous_epoch &&
+        intention.next_control?.format === 3,
+      "STORE_UNAVAILABLE",
+      "Unknown canonical restore intention.",
+    );
+    const corpus = new FileCorpus(this.corpusRoot);
+    try {
+      corpus.recover();
+      const state = corpus.status();
+      if (state.epoch === intention.next_control.epoch)
+        writeControl(this.controlHome, intention.next_control);
+      else
+        requireThat(
+          state.epoch === intention.previous_epoch,
+          "STORE_UNAVAILABLE",
+          "Canonical restore outcome is unknown; preserve its fence.",
+        );
+      unlinkSync(path);
+    } finally {
+      corpus.close();
+    }
+    this.home = activeLocation(this.controlHome);
+    mkdirSync(this.home, { recursive: true });
+  }
+  private activationPath() {
+    return join(this.controlHome, "corpus-activation.json");
+  }
+  private finishCorpusActivation() {
+    this.replaceManifest(JSON.stringify(this.workspace));
+    const control = readControl(this.controlHome);
+    writeControl(this.controlHome, {
+      ...(control ?? { generation: ".", restoration: null }),
+      format: 3,
+      corpus_root: this.corpusRoot,
+      coordination_id: this.coordination.identity,
+      coordination_protocol: 1,
+      workspace_id: this.workspace.workspace_id,
+      epoch: this.workspace.epoch,
+    });
+    atomicJSON(this.projectionTokenPath(), { token: randomUUID() });
+    this.projectionInstance = readFileSync(this.projectionTokenPath(), "utf8");
+    if (existsSync(this.activationPath())) unlinkSync(this.activationPath());
+  }
+  private resumeCorpusActivation() {
+    requireThat(
+      !this.readonly,
+      "MIGRATION_REQUIRED",
+      "Interrupted file activation requires writable recovery.",
+    );
+    const intent = JSON.parse(readFileSync(this.activationPath(), "utf8"));
+    requireThat(
+      intent.format === 1 &&
+        intent.corpus_root === this.corpusRoot &&
+        intent.home === this.home &&
+        intent.after?.schema_version === 10 &&
+        intent.before?.workspace_id === intent.after.workspace_id &&
+        intent.before?.epoch === intent.after.epoch,
+      "STORE_UNAVAILABLE",
+      "Unknown file activation intention; preserve all files.",
+    );
+    this.db = new DatabaseSync(this.projectionPath());
+    this.db.exec(
+      "PRAGMA foreign_keys=ON; PRAGMA busy_timeout=0; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;",
+    );
+    const meta = JSON.parse(
+      String(this.db.prepare("SELECT json FROM meta").get()!.json),
+    );
+    const version = Number(
+      this.db.prepare("PRAGMA user_version").get()!.user_version,
+    );
+    requireThat(
+      (version === 9 &&
+        JSON.stringify(meta) === JSON.stringify(intent.before)) ||
+        (version === 10 &&
+          JSON.stringify(meta) === JSON.stringify(intent.after)),
+      "STORE_UNAVAILABLE",
+      "File activation projection differs from its exact intention.",
+    );
+    this.workspace = meta;
+    this.corpus = new FileCorpus(this.corpusRoot, this.corpusFault);
+    this.corpus.recover();
+    if (version === 9) {
+      this.corpus = undefined;
+      this.activateCorpus(Boolean(intent.legacy));
+    } else {
+      if (!FileCorpus.exists(this.corpusRoot)) {
+        this.captureRuntimeOperations();
+        this.corpus.publish(this.db, this.home, true);
+      } else this.openFileProjection();
+      this.finishCorpusActivation();
+    }
+  }
+  private activateCorpus(legacy: boolean) {
+    requireThat(
+      !this.readonly && !this.db.isTransaction,
+      "READ_ONLY",
+      "Cannot migrate an active/read-only transaction.",
+    );
+    if (this.corpus) return this.corpus.status();
+    const before = { ...this.workspace },
+      after = { ...this.workspace, schema_version: 10 };
+    let maintenance: string | undefined;
+    try {
+      if (legacy) {
+        maintenance = this.coordination.beginMaintenance(
+          "file-migration",
+          this.workspace.epoch,
+        );
+        requireThat(
+          this.coordination.drainMaintenance().pending === 0,
+          "STORE_BUSY",
+          "Let admitted operations settle before file migration.",
+        );
+        this.coordination.exclusiveMaintenance(maintenance);
+        const backup = join(
+          this.home,
+          "pre-file-corpus-" + randomUUID() + ".sqlite",
+        );
+        this.db.prepare("VACUUM INTO ?").run(backup);
+        const check = new DatabaseSync(backup, { readOnly: true });
+        try {
+          requireThat(
+            check.prepare("PRAGMA integrity_check").get()!.integrity_check ===
+              "ok",
+            "STORE_UNAVAILABLE",
+            "Pre-file backup verification failed.",
+          );
+        } finally {
+          check.close();
+        }
+      }
+      if (!existsSync(this.activationPath()))
+        atomicJSON(this.activationPath(), {
+          format: 1,
+          before,
+          after,
+          legacy,
+          coordination_id: this.coordination.identity,
+          home: this.home,
+          corpus_root: this.corpusRoot,
+        });
+      this.corpusFault?.("corpus_activation_prepared");
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(CorpusMetadataSQL + SleepCycleSQL);
+        if (legacy) this.classifyLegacyCorpus();
+        this.workspace = after;
+        this.db.prepare("UPDATE meta SET json=?").run(JSON.stringify(after));
+        this.db.exec("PRAGMA user_version=10; COMMIT");
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        this.workspace = before;
+        throw error;
+      }
+      this.corpusFault?.("corpus_activation_sql_committed");
+      this.corpus = new FileCorpus(this.corpusRoot, this.corpusFault);
+      this.captureRuntimeOperations();
+      const state = this.corpus.publish(this.db, this.home, true);
+      this.finishCorpusActivation();
+      return state;
+    } finally {
+      if (maintenance) this.coordination.endMaintenance(maintenance);
+    }
+  }
+  private classifyLegacyCorpus() {
+    const all = this.db
+      .prepare("SELECT json FROM addressed_versions")
+      .all()
+      .map((r) => JSON.parse(String(r.json)) as RecordRow);
+    const current = this.db
+      .prepare("SELECT json FROM addressed_current")
+      .all()
+      .map((r) => JSON.parse(String(r.json)) as RecordRow);
+    const active = new Set<string>();
+    for (const r of current)
+      if (
+        [
+          "activity",
+          "work",
+          "knowledge",
+          "entity",
+          "method",
+          "concept",
+        ].includes(r.kind) ||
+        (r.kind === "run" && r.data.execution === "running") ||
+        (String(r.kind) === "signal" &&
+          ["open", "observing"].includes(String(r.data.problem_state)))
+      )
+        active.add(r.id + ":" + r.revision);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const r of all)
+        if (active.has(r.id + ":" + r.revision))
+          for (const ref of addressedRefs(r)) {
+            const target =
+              ref.revision === undefined
+                ? current.find((x) => x.id === ref.id)
+                : all.find(
+                    (x) => x.id === ref.id && x.revision === ref.revision,
+                  );
+            if (target && !active.has(target.id + ":" + target.revision)) {
+              active.add(target.id + ":" + target.revision);
+              changed = true;
+            }
+          }
+    }
+    for (const r of all)
+      this.db
+        .prepare("INSERT OR REPLACE INTO corpus_entries VALUES(?,?,?)")
+        .run(
+          r.id,
+          r.revision,
+          active.has(r.id + ":" + r.revision) ? "active" : "legacy",
+        );
   }
   private replaceManifest(json: string) {
     const temp = join(
@@ -826,6 +1611,10 @@ export class DiskStorage implements StoragePort {
     }
   }
   private commandResult<T>(callback: () => T): T {
+    if (this.corpus && !this.initializing) {
+      this.ensureFileProjection();
+      this.rehydratePortableOperations();
+    }
     this.flushMemory();
     let failed = false;
     try {
@@ -835,9 +1624,33 @@ export class DiskStorage implements StoragePort {
       throw error;
     } finally {
       try {
+        this.maybeReclaimTransientImports();
         this.flushMemory();
+        if (
+          this.corpus &&
+          !this.initializing &&
+          !this.connectionClosed &&
+          !this.closed &&
+          !this.readonly &&
+          !this.db.isTransaction &&
+          !this.corpusPublishing
+        ) {
+          this.corpusPublishing = true;
+          try {
+            this.captureRuntimeOperations();
+            this.corpus.publish(this.db, this.home);
+          } catch (error) {
+            // File commit point owns the outcome, even if SQLite already committed.
+            this.corpus.recover();
+            this.rebuildFileProjection();
+            throw error;
+          } finally {
+            this.corpusPublishing = false;
+          }
+        }
       } catch (error) {
-        if (!failed) throw error;
+        // A durability failure is never hidden behind a prior validation error.
+        if (!failed || this.corpus) throw error;
       }
     }
   }
@@ -914,18 +1727,26 @@ export class DiskStorage implements StoragePort {
     return this.withCommandSync(() => {
       this.assertActive(this.workspace?.epoch, true);
       this.db.exec(sql);
+      if (this.corpus && !this.readonly && /\b(CREATE|ALTER|DROP)\b/i.test(sql))
+        this.corpus.installCapture(this.db);
     });
   }
   get<T>(sql: string, ...params: (string | number | null)[]) {
     return this.withCommandSync(() => {
       this.assertActive(this.workspace?.epoch);
-      return this.db.prepare(sql).get(...params) as T | undefined;
+      const result = this.db.prepare(sql).get(...params) as T | undefined;
+      if (this.corpus && !this.initializing && result)
+        this.corpus.verifyReadRows(sql, [result]);
+      return result;
     }, "read");
   }
   all<T>(sql: string, ...params: (string | number | null)[]) {
     return this.withCommandSync(() => {
       this.assertActive(this.workspace?.epoch);
-      return this.db.prepare(sql).all(...params) as T[];
+      const result = this.db.prepare(sql).all(...params) as T[];
+      if (this.corpus && !this.initializing)
+        this.corpus.verifyReadRows(sql, result);
+      return result;
     }, "read");
   }
   run(sql: string, ...params: (string | number | null)[]) {
@@ -981,6 +1802,7 @@ export class DiskStorage implements StoragePort {
     this.pinSource(pending_key, [hash]);
     const stage = join(this.home, "staging", randomUUID());
     const target = join(this.home, "materials", hash);
+    this.trackTransientMaterial(hash, stage);
     durableWrite(stage, bytes);
     fault?.("after_stage");
     if (existsSync(target)) {
@@ -1172,10 +1994,149 @@ export class DiskStorage implements StoragePort {
       throw error;
     }
   }
+  private trackTransientMaterial(hash: string, stage: string) {
+    if (
+      !this.corpus ||
+      existsSync(join(this.corpus.root, "materials", hash + ".json"))
+    )
+      return;
+    const folder = join(this.home, "transient-imports");
+    mkdirSync(folder, { recursive: true });
+    const path = safePath(this.home, join(folder, hash + ".json"));
+    const previous = existsSync(path)
+      ? JSON.parse(readFileSync(path, "utf8"))
+      : undefined;
+    atomicJSON(path, {
+      format: 1,
+      hash,
+      created_at: previous?.created_at ?? Date.now(),
+      expires_at: previous?.expires_at ?? Date.now() + 1800000,
+      stages: [...new Set([...(previous?.stages ?? []), stage])].slice(-8),
+    });
+  }
+  private maybeReclaimTransientImports() {
+    if (Date.now() < this.transientCleanupRetry) return;
+    try {
+      this.reclaimTransientImports();
+      this.transientCleanupDeferred = false;
+    } catch {
+      this.transientCleanupDeferred = true;
+      this.transientCleanupRetry = Date.now() + 300000;
+    }
+  }
+  /** Runtime-only cache reclamation. Selected canonical bytes are never candidates. */
+  reclaimTransientImports(now = Date.now()) {
+    if (this.readonly || !this.corpus || this.closed || this.connectionClosed)
+      return { checked: 0, removed: 0, protected: 0 };
+    this.coordination.assertHeld();
+    const folder = join(this.home, "transient-imports"),
+      statePath = join(this.home, "transient-materials.json");
+    if (!existsSync(folder)) return { checked: 0, removed: 0, protected: 0 };
+    const state = existsSync(statePath)
+      ? JSON.parse(readFileSync(statePath, "utf8"))
+      : { last: 0, cursor: "" };
+    if (now - state.last < 300000)
+      return { checked: 0, removed: 0, protected: 0 };
+    const pending = this.coordination.pending(),
+      pendingIds = new Set(pending.map((row) => row.operation_id));
+    const protectedHashes = new Set(
+      pending
+        .map((row) => row.digest)
+        .filter((hash) => /^[a-f0-9]{64}$/.test(hash)),
+    );
+    let allPinned = false;
+    for (const row of this.db
+      .prepare("SELECT key,json FROM lifecycle_pins")
+      .all()) {
+      const pin = JSON.parse(String(row.json));
+      if (
+        pin.expires_at === null ||
+        Number(pin.expires_at) > now ||
+        pendingIds.has(String(row.key))
+      ) {
+        if (pin.kind === "backup-all") allPinned = true;
+        for (const hash of pin.hashes ?? []) protectedHashes.add(hash);
+      }
+    }
+    const names = readdirSync(folder)
+        .filter((name) => /^[a-f0-9]{64}\.json$/.test(name))
+        .sort(),
+      later = names.filter((name) => name > state.cursor),
+      selected = (later.length ? later : names).slice(0, 64);
+    let checked = 0,
+      removed = 0,
+      protectedCount = 0,
+      bytesRead = 0;
+    for (const name of selected) {
+      const index = safePath(this.home, join(folder, name)),
+        entry = JSON.parse(readFileSync(index, "utf8"));
+      requireThat(
+        entry.format === 1 &&
+          entry.hash + ".json" === name &&
+          Array.isArray(entry.stages),
+        "STORE_UNAVAILABLE",
+        "Invalid transient import cache index; preserve it.",
+      );
+      checked++;
+      if (
+        existsSync(join(this.corpus.root, "materials", entry.hash + ".json"))
+      ) {
+        unlinkSync(index);
+        continue;
+      }
+      if (
+        entry.expires_at > now ||
+        allPinned ||
+        protectedHashes.has(entry.hash)
+      ) {
+        protectedCount++;
+        continue;
+      }
+      const material = join(this.home, "materials", entry.hash),
+        paths = [material, ...entry.stages];
+      let finished = true;
+      for (const candidate of paths) {
+        const allowed =
+          candidate === material ||
+          within(join(this.home, "staging"), candidate);
+        requireThat(
+          allowed,
+          "PERMISSION_DENIED",
+          "Transient import stage escaped its runtime root.",
+        );
+        const path = safePath(this.home, candidate);
+        if (!existsSync(path)) continue;
+        const info = statSync(path, { bigint: true });
+        requireThat(
+          info.isFile() && info.nlink === 1n,
+          "PERMISSION_DENIED",
+          "Transient cleanup refuses linked/nonregular bytes.",
+        );
+        if (bytesRead + Number(info.size) > 134217728) {
+          finished = false;
+          break;
+        }
+        const bytes = readFileSync(path);
+        bytesRead += bytes.length;
+        requireThat(
+          bytesHash(bytes) === entry.hash,
+          "STORE_UNAVAILABLE",
+          "Transient import changed; preserve its bytes.",
+        );
+        unlinkSync(path);
+        removed++;
+      }
+      if (finished) unlinkSync(index);
+      if (bytesRead >= 134217728) break;
+    }
+    atomicJSON(statePath, { last: now, cursor: selected.at(-1) ?? "" });
+    return { checked, removed, protected: protectedCount };
+  }
   private retain(bytes: Uint8Array, fault?: (point: string) => void) {
     const hash = sha(bytes),
       stage = join(this.home, "staging", randomUUID()),
       target = join(this.home, "materials", hash);
+    this.trackTransientMaterial(hash, stage);
     durableWrite(stage, bytes);
     fault?.("after_stage");
     if (existsSync(target)) {
@@ -1246,6 +2207,11 @@ export class DiskStorage implements StoragePort {
       schema_version: this.get("PRAGMA user_version"),
       read_only: this.readonly,
       concurrency: this.coordination.describe(),
+      ...(this.transientCleanupDeferred
+        ? {
+            temporary_cleanup: "deferred; cache bytes preserved for inspection",
+          }
+        : {}),
     };
   }
   closeConnection() {
@@ -1258,6 +2224,7 @@ export class DiskStorage implements StoragePort {
     else this.coordination.sync("maintenance", close);
   }
   close() {
+    this.corpus?.close();
     if (this.closed) return;
     // A busy close remains retryable; never strand an open DB/OS lease behind a closed flag.
     this.closeConnection();
@@ -1278,3 +2245,24 @@ export { CoreError };
 export { OutputBoundary } from "./output.ts";
 
 export { Administration, fullAccess } from "./administration.ts";
+
+export {
+  GitSynchronizer,
+  loadSyncBinding,
+  saveSyncBinding,
+  syncBindingPath,
+  DEFAULT_SYNC_EXCLUSIONS,
+  GIT_BLOB_LIMIT,
+  validateSyncBinding,
+} from "./git-sync.ts";
+export type {
+  SyncBinding,
+  SyncRevision,
+  SyncOptions,
+  SyncStatus,
+  RemoteIdentity,
+  SyncCode,
+} from "./git-sync.ts";
+
+export { migrateQuarantinedStore } from "./migration.ts";
+export type { MigrationReport } from "./migration.ts";

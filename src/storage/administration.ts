@@ -7,6 +7,7 @@ import {
   readdirSync,
   statSync,
   lstatSync,
+  unlinkSync,
 } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { z } from "zod";
@@ -14,6 +15,8 @@ import { checkIndexes } from "./indexes.ts";
 import { Coordination } from "./coordination.ts";
 import type { Operation } from "./coordination.ts";
 import { initializeConcurrencyState } from "./schema.ts";
+import { FileCorpus } from "./corpus.ts";
+import { createProjectionSchema } from "./projection.ts";
 import {
   Approvals,
   addressedRefs,
@@ -132,10 +135,49 @@ const Manifest = z
   .refine((m) => m.schema < 9 || m.coordination !== undefined, {
     message: "Schema-9 bundles require immutable pending-operation metadata.",
   });
-export type BundleManifest = z.infer<typeof Manifest>;
+const CorpusBundleManifest = z.strictObject({
+  workspace_id: z.string(),
+  captured_epoch: z.string(),
+  captured_seq: z.number().int().nonnegative(),
+  captured_at: z.iso.datetime(),
+  complete: z.literal(true),
+  coverage: z.literal(
+    "full current and retained historical/deleted metadata; historical authority is not runnable",
+  ),
+  coordination: CoordinationSnapshot,
+  format: z.literal("zaratustra.corpus.bundle.v1"),
+  schema: z.literal(10),
+  components: z
+    .array(
+      z.strictObject({
+        path: z.string().regex(/^corpus\/[a-zA-Z0-9_.\/-]+$/),
+        length: z
+          .number()
+          .int()
+          .min(0)
+          .max(8 * 1024 * 1024),
+        sha256: z.string().regex(/^[0-9a-f]{64}$/),
+      }),
+    )
+    .min(1)
+    .max(100000),
+});
+export type BundleManifest =
+  | z.infer<typeof Manifest>
+  | z.infer<typeof CorpusBundleManifest>;
 type Disk = StoragePort & {
   home: string;
   controlHome: string;
+  corpusStatus?(): { root: string } | undefined;
+  corpusCheckpoint?():
+    | {
+        root: string;
+        workspace_id: string;
+        epoch: string;
+        revision: number;
+        files: { path: string; sha256: string; length: number }[];
+      }
+    | undefined;
   backupTo(path: string, operationId?: string): Promise<void>;
   readBlob(hash: string): Buffer;
   close(): void;
@@ -205,14 +247,14 @@ function blobs(db: DatabaseSync) {
   }
   return [...set].sort();
 }
-function validate(
+export function validateProjection(
   db: DatabaseSync,
   home: string,
   materials = true,
   allowDerivedIndexRepair = false,
 ) {
   requireThat(
-    [6, 7, 8, 9].includes(
+    [6, 7, 8, 9, 10].includes(
       Number(db.prepare("PRAGMA user_version").get()!.user_version),
     ),
     "STORE_UNAVAILABLE",
@@ -416,6 +458,7 @@ function validate(
 export class Administration {
   readonly approvals: Approvals;
   private drafts = new Set<string>();
+  private currentCoordinator?: Coordination;
   private listCursors = new Map<string, { generation: string; last: number }>();
   constructor(
     readonly home: string,
@@ -442,19 +485,67 @@ export class Administration {
       },
       readPreview: (ref) => {
         this.authorize(true);
-        const p = join(home, "administration", ref + ".json");
-        if (!/^preview-[a-f0-9-]+$/.test(ref) || !existsSync(p))
-          return undefined;
-        return JSON.parse(readFileSync(safePath(home, p), "utf8"));
+        if (!/^preview-[a-f0-9-]+$/.test(ref)) return undefined;
+        const path = join(home, "administration", ref + ".json");
+        if (existsSync(path)) {
+          const local = JSON.parse(readFileSync(safePath(home, path), "utf8"));
+          if (local.format === "zara.local-recovery-preview.v1") {
+            requireThat(
+              local.workspace_id === context.workspace_id &&
+                local.epoch === context.epoch &&
+                local.preview?.request_id === ref,
+              "RESTORE_RECONCILIATION_REQUIRED",
+              "Local recovery preview belongs to another exact context.",
+            );
+            return local.preview;
+          }
+        }
+        const corpus = this.fileCorpus();
+        if (corpus) {
+          try {
+            return corpus.readAuxiliary(ref + ".json");
+          } finally {
+            corpus.close();
+          }
+        }
+        if (!existsSync(path)) return undefined;
+        return JSON.parse(readFileSync(safePath(home, path), "utf8"));
       },
       writePreview: (p, create) => {
         this.authorize(true);
         const dir = join(home, "administration");
         mkdirSync(dir, { recursive: true });
         safePath(home, dir);
-        const path = join(dir, p.request_id + ".json");
-        if (create) durableNew(path, JSON.stringify(p));
-        else atomicJSON(path, p);
+        const path = join(dir, p.request_id + ".json"),
+          local = existsSync(path)
+            ? JSON.parse(readFileSync(path, "utf8"))
+            : undefined;
+        const recovery =
+          p.payload.exact.damaged_canonical === true ||
+          local?.format === "zara.local-recovery-preview.v1";
+        const corpus = this.fileCorpus();
+        if (corpus && !recovery) {
+          try {
+            this.withCoordinator(undefined, (c) =>
+              c.sync("mutate", () =>
+                corpus.writeAuxiliary(p.request_id + ".json", p),
+              ),
+            );
+          } finally {
+            corpus.close();
+          }
+        } else corpus?.close();
+        const value = recovery
+          ? {
+              format: "zara.local-recovery-preview.v1",
+              workspace_id: context.workspace_id,
+              epoch: context.epoch,
+              authority_fingerprint: p.payload.exact.current_fingerprint,
+              preview: p,
+            }
+          : p;
+        if (create) durableNew(path, JSON.stringify(value));
+        else atomicJSON(path, value);
       },
     };
     this.approvals = new Approvals(
@@ -468,9 +559,36 @@ export class Administration {
       },
     );
   }
+  private fileCorpus(): FileCorpus | undefined {
+    const control = readControl(this.home);
+    if (control?.format !== 3) return undefined;
+    requireThat(
+      control.corpus_root &&
+        resolve(control.corpus_root) === control.corpus_root,
+      "STORE_UNAVAILABLE",
+      "Canonical root identity unavailable.",
+    );
+    return new FileCorpus(control.corpus_root);
+  }
   private authorize(write = false) {
     fullAccess(this.context, write);
     const control = readControl(this.home);
+    if (control?.format === 3 && control.corpus_root) {
+      let epoch: string | undefined;
+      const corpus = new FileCorpus(control.corpus_root);
+      try {
+        epoch = corpus.status().epoch;
+      } catch {
+        /* Recovery inspection remains available when canonical metadata is damaged. */
+      } finally {
+        corpus.close();
+      }
+      requireThat(
+        !epoch || epoch === this.context.epoch,
+        "RESTORE_RECONCILIATION_REQUIRED",
+        "Canonical epoch changed; finish recovery and reload before administration.",
+      );
+    }
     requireThat(
       !control ||
         (control.epoch === this.context.epoch &&
@@ -495,22 +613,80 @@ export class Administration {
     disk: Disk | undefined,
     action: (c: Coordination) => T,
   ): T {
-    const shared = disk?.coordination ?? this.coordination;
+    const shared =
+      disk?.coordination ?? this.currentCoordinator ?? this.coordination;
     if (shared) return action(shared);
     const control = readControl(this.home);
     const c = new Coordination(this.home, "administration-" + randomUUID(), {
-      ...(control?.format === 2 ? { expectedId: control.coordination_id } : {}),
-      create: control?.format !== 2,
+      ...(control && control.format >= 2
+        ? { expectedId: control.coordination_id }
+        : {}),
+      create: !control || control.format < 2,
     });
+    this.currentCoordinator = c;
     try {
       return action(c);
     } finally {
+      this.currentCoordinator = undefined;
       c.close();
     }
   }
-  private fingerprint() {
+  private damagedCanonical() {
+    const corpus = this.fileCorpus();
+    if (!corpus) return false;
+    try {
+      corpus.checkpoint();
+      return false;
+    } catch {
+      return true;
+    } finally {
+      corpus.close();
+    }
+  }
+  private physicalCorpusFingerprint(root: string) {
+    const files: unknown[] = [];
+    const walk = (dir: string) => {
+      if (!existsSync(dir)) return;
+      for (const name of readdirSync(dir).sort()) {
+        const path = safePath(root, join(dir, name)),
+          info = lstatSync(path);
+        if (info.isDirectory()) walk(path);
+        else {
+          requireThat(
+            info.isFile() && info.size <= 134217728,
+            "STORE_UNAVAILABLE",
+            "Damaged canonical component cannot be bounded safely; preserve it for manual recovery.",
+          );
+          files.push([path, info.size, bytesHash(readFileSync(path))]);
+        }
+      }
+    };
+    walk(root);
+    return (
+      "physical:" +
+      bytesHash(
+        canonical({
+          root,
+          workspace_id: this.context.workspace_id,
+          epoch: this.context.epoch,
+          control: readControl(this.home),
+          files,
+        }),
+      )
+    );
+  }
+  private fingerprint(forcePhysical = false) {
     const data = activeLocation(this.home),
       control = readControl(this.home);
+    const corpus = this.fileCorpus();
+    if (corpus) {
+      try {
+        if (forcePhysical) return this.physicalCorpusFingerprint(corpus.root);
+        return corpus.contentFingerprint();
+      } finally {
+        corpus.close();
+      }
+    }
     // A healthy store binds approval to meaningful committed state. Retrieval
     // traces, WAL checkpoints and other physical rewrites do not change this.
     let db: DatabaseSync | undefined;
@@ -576,7 +752,10 @@ export class Administration {
       "VALIDATION_ERROR",
       "Bundle manifest exceeds bound.",
     );
-    const manifest = Manifest.parse(JSON.parse(manifestBytes.toString("utf8")));
+    const raw = JSON.parse(manifestBytes.toString("utf8"));
+    if (raw.format === "zaratustra.corpus.bundle.v1")
+      return this.verifyCorpusBundle(path, manifestBytes, raw);
+    const manifest = Manifest.parse(raw);
     requireThat(
       new Set(manifest.components.map((c) => c.path)).size ===
         manifest.components.length &&
@@ -603,7 +782,7 @@ export class Administration {
     });
     let index_repairs_required: string[] = [];
     try {
-      const checked = validate(db, path, true, true),
+      const checked = validateProjection(db, path, true, true),
         { storage } = checked;
       index_repairs_required = checked.index_repairs_required;
       requireThat(
@@ -650,7 +829,136 @@ export class Administration {
       schema_ready: index_repairs_required.length === 0,
     };
   }
+  private verifyCorpusBundle(
+    path: string,
+    manifestBytes: Buffer,
+    raw: unknown,
+  ) {
+    const manifest = CorpusBundleManifest.parse(raw);
+    requireThat(
+      new Set(manifest.components.map((c) => c.path)).size ===
+        manifest.components.length,
+      "STORE_UNAVAILABLE",
+      "Duplicate canonical bundle component.",
+    );
+    for (const file of manifest.components) {
+      requireThat(
+        !file.path.split("/").includes(".."),
+        "STORE_UNAVAILABLE",
+        "Unsafe bundle path.",
+      );
+      const bytes = readFileSync(safePath(path, join(path, file.path)));
+      requireThat(
+        bytes.length === file.length && bytesHash(bytes) === file.sha256,
+        "STORE_UNAVAILABLE",
+        "Canonical bundle component differs.",
+      );
+    }
+    const corpus = new FileCorpus(join(path, "corpus"));
+    try {
+      const checkpoint = corpus.checkpoint();
+      requireThat(
+        checkpoint.workspace_id === manifest.workspace_id &&
+          checkpoint.epoch === manifest.captured_epoch &&
+          canonical(
+            checkpoint.files.map((f) => ({ ...f, path: "corpus/" + f.path })),
+          ) ===
+            canonical(
+              [...manifest.components].sort((a, b) =>
+                a.path.localeCompare(b.path),
+              ),
+            ),
+        "STORE_UNAVAILABLE",
+        "Canonical bundle inventory/identity differs.",
+      );
+    } finally {
+      corpus.close();
+    }
+    return {
+      path,
+      manifest,
+      identity: bytesHash(manifestBytes),
+      index_repairs_required: [] as string[],
+      schema_ready: true,
+    };
+  }
+  private async backupCorpus(disk: Disk) {
+    let bundle = "";
+    try {
+      await disk.coordination.run("read", () => {
+        this.authorize();
+        disk.assertActive?.(this.context.epoch);
+        const snapshot = disk.corpusCheckpoint?.();
+        requireThat(
+          snapshot,
+          "STORE_UNAVAILABLE",
+          "Canonical checkpoint unavailable.",
+        );
+        bundle = newDirectory(this.backupRoot, "backup-");
+        const components = snapshot.files.map((file) => {
+          const bytes = readFileSync(
+            safePath(snapshot.root, join(snapshot.root, file.path)),
+          );
+          requireThat(
+            bytes.length === file.length && bytesHash(bytes) === file.sha256,
+            "STORE_UNAVAILABLE",
+            "Canonical checkpoint changed during capture.",
+          );
+          const dest = join(bundle, "corpus", file.path);
+          mkdirSync(resolve(dest, ".."), { recursive: true });
+          durableNew(dest, bytes);
+          return { ...file, path: "corpus/" + file.path };
+        });
+        const manifest: z.infer<typeof CorpusBundleManifest> = {
+          format: "zaratustra.corpus.bundle.v1",
+          schema: 10,
+          workspace_id: snapshot.workspace_id,
+          captured_epoch: snapshot.epoch,
+          captured_seq: Number(
+            disk.get<{ seq: number }>(
+              "SELECT coalesce(max(seq),0) AS seq FROM changes",
+            )!.seq,
+          ),
+          captured_at: new Date().toISOString(),
+          complete: true,
+          coverage:
+            "full current and retained historical/deleted metadata; historical authority is not runnable",
+          coordination: {
+            format: 1,
+            pending: disk.coordination.pending(),
+            coverage:
+              "pending at capture admission plus operations first admitted during the SQLite snapshot; settled window operations remain conservative restore barriers",
+          },
+          components,
+        };
+        durableNew(
+          join(bundle, "manifest.json"),
+          JSON.stringify(manifest, null, 2),
+        );
+      });
+      const verified = this.verify(bundle);
+      return {
+        backup: bundle,
+        identity: verified.identity,
+        complete: true,
+        captured_seq: verified.manifest.captured_seq,
+        export: "corpus/corpus.json",
+        live_pin: null,
+        coverage: verified.manifest.coverage,
+        index_repairs_required: [],
+        schema_ready: true,
+      };
+    } catch (error) {
+      if (bundle)
+        atomicJSON(join(bundle, "INCOMPLETE.json"), {
+          complete: false,
+          error: error instanceof Error ? error.message : "failed",
+        });
+      throw error;
+    }
+  }
   async backup(disk: Disk, holdLivePin = false) {
+    if (disk.corpusStatus?.()) return this.backupCorpus(disk);
     const c = disk.coordination,
       key = "backup-" + randomUUID();
     let bundle = "",
@@ -832,28 +1140,69 @@ export class Administration {
   }
   restorePreview(backup: string, consequence: string, alternatives: string) {
     this.authorize(true);
-    const b = this.verify(backup),
-      fingerprint = this.withCoordinator(undefined, (c) =>
-        c.sync("read", () => this.fingerprint()),
-      );
+    const b = this.verify(backup);
+    requireThat(
+      readControl(this.home)?.format !== 3 ||
+        b.manifest.format === "zaratustra.corpus.bundle.v1",
+      "MIGRATION_REQUIRED",
+      "Convert this legacy SQLite bundle in a verified quarantine before restoring a file-primary workspace; no source or authority was changed.",
+    );
+    const current = this.withCoordinator(undefined, (c) =>
+        c.sync("read", () => {
+          const damaged = this.damagedCanonical();
+          return { damaged, fingerprint: this.fingerprint(damaged) };
+        }),
+      ),
+      fingerprint = current.fingerprint;
     const generations = join(this.home, "generations");
     const quarantine = newDirectory(generations, "");
     mkdirSync(join(quarantine, "materials"));
-    for (const c of b.manifest.components.filter(
-      (c) => c.path !== "export.json",
-    ))
-      durableNew(
-        join(quarantine, c.path === "database.sqlite" ? "zara.sqlite" : c.path),
-        readFileSync(join(b.path, c.path)),
-      );
+    let quarantineCorpus: FileCorpus | undefined;
+    if (b.manifest.format === "zaratustra.corpus.bundle.v1") {
+      for (const component of b.manifest.components) {
+        const dest = join(quarantine, component.path);
+        mkdirSync(resolve(dest, ".."), { recursive: true });
+        durableNew(dest, readFileSync(join(b.path, component.path)));
+      }
+      quarantineCorpus = new FileCorpus(join(quarantine, "corpus"));
+      quarantineCorpus.restoreMaterials(quarantine);
+      const projection = new DatabaseSync(join(quarantine, "zara.sqlite"));
+      try {
+        const status = quarantineCorpus.status();
+        createProjectionSchema(projection, {
+          workspace_id: status.workspace_id,
+          epoch: status.epoch,
+          schema_version: 10,
+        });
+        quarantineCorpus.restoreRows(projection);
+        const storage = port(projection, quarantine);
+        initializeConcurrencyState(storage);
+        refreshMemory(storage, true);
+        projection.exec("PRAGMA foreign_keys=ON");
+      } finally {
+        projection.close();
+      }
+    } else {
+      for (const c of b.manifest.components.filter(
+        (c) => c.path !== "export.json",
+      ))
+        durableNew(
+          join(
+            quarantine,
+            c.path === "database.sqlite" ? "zara.sqlite" : c.path,
+          ),
+          readFileSync(join(b.path, c.path)),
+        );
+    }
     this.fault?.("restore_after_copy");
     const epoch = randomUUID(),
       restoration_id = randomUUID();
     const db = new DatabaseSync(join(quarantine, "zara.sqlite"));
     let rebuilt_indexes: string[] = [];
     try {
+      quarantineCorpus?.installCapture(db);
       db.exec("PRAGMA foreign_keys=ON;");
-      const { storage, rows } = validate(db, quarantine, true, true);
+      const { storage, rows } = validateProjection(db, quarantine, true, true);
       let migration:
         | {
             before: string;
@@ -871,7 +1220,7 @@ export class Administration {
         db.prepare("VACUUM INTO ?").run(backup);
         const check = new DatabaseSync(backup, { readOnly: true });
         try {
-          validate(check, quarantine, true, true);
+          validateProjection(check, quarantine, true, true);
         } finally {
           check.close();
         }
@@ -960,15 +1309,22 @@ export class Administration {
       );
       refreshMemory(storage, true);
       db.exec("COMMIT");
-      validate(db, quarantine);
+      validateProjection(db, quarantine);
+      if (quarantineCorpus) quarantineCorpus.publish(db, quarantine);
       durableNew(
         join(quarantine, "workspace.json"),
         JSON.stringify(workspace, null, 2),
       );
     } finally {
       db.close();
+      quarantineCorpus?.close();
     }
     const quarantine_components = [
+      ...(quarantineCorpus
+        ? new FileCorpus(join(quarantine, "corpus"))
+            .checkpoint()
+            .files.map((f) => "corpus/" + f.path)
+        : []),
       "zara.sqlite",
       "workspace.json",
       ...b.manifest.components
@@ -980,6 +1336,7 @@ export class Administration {
     });
     this.fault?.("restore_after_verify");
     const exact = {
+      ...(quarantineCorpus ? { corpus: true } : {}),
       rebuilt_indexes,
       quarantine_components,
       backup: b.path,
@@ -990,6 +1347,7 @@ export class Administration {
       workspace_id: b.manifest.workspace_id,
       captured_seq: b.manifest.captured_seq,
       current_fingerprint: fingerprint,
+      ...(current.damaged ? { damaged_canonical: true } : {}),
       restoration_id,
       coverage: b.manifest.coverage,
       loss: "All current database changes after this snapshot are lost from active memory. External files/effects are NOT rolled back. Every restored potentially effectful Work/step requires current-world reconciliation, including absent receipts.",
@@ -1017,7 +1375,8 @@ export class Administration {
       exact = preview.payload.exact;
     this.approvals.verify(ref, "restore", exact);
     requireThat(
-      this.fingerprint() === exact.current_fingerprint,
+      this.fingerprint(exact.damaged_canonical === true) ===
+        exact.current_fingerprint,
       "APPROVAL_STALE",
       "Current memory changed while restore drained; prepare and confirm a fresh preview.",
     );
@@ -1042,7 +1401,7 @@ export class Administration {
       e = p.payload.exact;
     this.approvals.verify(ref, "restore", e);
     requireThat(
-      this.fingerprint() === e.current_fingerprint,
+      this.fingerprint(e.damaged_canonical === true) === e.current_fingerprint,
       "APPROVAL_STALE",
       "Current memory changed since restore preview; prepare and confirm a fresh preview.",
     );
@@ -1070,7 +1429,7 @@ export class Administration {
       readOnly: true,
     });
     try {
-      validate(db, dest);
+      validateProjection(db, dest);
     } finally {
       db.close();
     }
@@ -1091,20 +1450,53 @@ export class Administration {
           inactive_generation_guard: true,
         }),
       );
-    writeControl(this.home, {
-      format: 2,
+    const nextControl = {
+      format: (e.corpus ? 3 : 2) as 2 | 3,
       coordination_id: c.identity,
-      coordination_protocol: 1,
+      coordination_protocol: 1 as const,
       generation: "generations/" + basename(dest),
       workspace_id: String(e.workspace_id),
       epoch: String(e.new_epoch),
+      ...(e.corpus
+        ? {
+            corpus_root:
+              disk?.corpusStatus?.()?.root ??
+              readControl(this.home)?.corpus_root,
+          }
+        : {}),
       restoration: {
         ...e,
         preview_digest: p.operation_digest,
         decision: p.answer ?? null,
         recorded_at: new Date().toISOString(),
       },
-    });
+    };
+    if (e.corpus) {
+      requireThat(
+        nextControl.corpus_root,
+        "STORE_UNAVAILABLE",
+        "Canonical restore root unavailable.",
+      );
+      const descriptor = join(this.home, "corpus-restore.json");
+      atomicJSON(descriptor, {
+        format: 1,
+        corpus_root: nextControl.corpus_root,
+        previous_epoch: this.context.epoch,
+        next_control: nextControl,
+      });
+      const target = new FileCorpus(nextControl.corpus_root),
+        source = new FileCorpus(join(dest, "corpus"));
+      try {
+        source.writeAuxiliary(ref + ".json", this.approvals.read(ref));
+        target.replaceFrom(source);
+      } finally {
+        target.close();
+        source.close();
+      }
+      this.fault?.("restore_after_corpus_commit");
+      writeControl(this.home, nextControl);
+      unlinkSync(descriptor);
+    } else writeControl(this.home, nextControl);
     this.fault?.("restore_after_switch");
     return {
       switched: true,
@@ -1393,6 +1785,9 @@ export class Administration {
         total += Number(stat.size);
       }
     return {
+      ...(readControl(this.home)?.format === 3
+        ? { runtime_cache_only: true, canonical_materials_retained: true }
+        : {}),
       candidates,
       has_more,
       byte_limit: 134217728,
@@ -1443,6 +1838,9 @@ export class Administration {
           epoch: this.context.epoch,
           removed: [...removed],
           coverage: exact.coverage,
+          ...(readControl(this.home)?.format === 3
+            ? { runtime_cache_only: true, canonical_materials_retained: true }
+            : {}),
         };
         disk.exec("BEGIN IMMEDIATE");
         try {

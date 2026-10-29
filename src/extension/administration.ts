@@ -139,7 +139,7 @@ export function registerAdministration(
   );
   register(
     "zara_storage_apply",
-    "Commit only exact natively confirmed archive/tombstone/retention targets after fresh version/dependency/access checks. No frequency-based forgetting. Tombstones cannot return old body through history/index/technical APIs. Blob cleanup is separately bounded and previewed.",
+    "Commit only exact natively confirmed archive/tombstone/retention targets after fresh version/dependency/access checks. No frequency-based forgetting. Tombstones cannot return old body through history/index/technical APIs. Physical canonical/Git/backup copies may remain; this is managed-view removal, not physical erasure. Runtime-cache cleanup is separately bounded and previewed.",
     z.strictObject({ preview_ref: z.string() }),
     (p) => a.core().applyStorage(p.preview_ref as string),
   );
@@ -150,7 +150,7 @@ export function registerAdministration(
   };
   register(
     "zara_cleanup_preview",
-    "Prepare exact bounded cleanup of unreferenced/unpinned current managed materials and expired staging. Full-read/write setup; honors pending imports, shared blobs, history and held backups. No semantic forgetting or recursive directory removal.",
+    "Prepare exact bounded runtime-cache cleanup of unreferenced/unpinned local material copies and expired staging; canonical selected/history files remain. Full-read/write setup; honors pending imports, shared blobs, history and held backups. No semantic forgetting or recursive directory removal.",
     z.strictObject({
       consequence: z.string().min(1).max(4000),
       alternatives: z.string().min(1).max(4000),
@@ -166,7 +166,7 @@ export function registerAdministration(
   );
   register(
     "zara_cleanup",
-    "Remove only the exactly confirmed cleanup file set after fresh reference/pin/hash/identity checks. Partial failure remains unknown with retained progress.",
+    "Remove only the exactly confirmed runtime-cache file set after fresh reference/pin/hash/identity checks; canonical copies may restore the cache later. Partial failure remains unknown with retained progress.",
     z.strictObject({ preview_ref: z.string() }),
     (p) => a.admin().cleanup(p.preview_ref as string, disk()),
   );

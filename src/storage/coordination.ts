@@ -657,6 +657,14 @@ export class Coordination {
           .get(resource)
       )
         busy("A requested resource is reserved by a pending operation.");
+      if (
+        this.db
+          .prepare(
+            "SELECT 1 FROM operations o,json_each(o.json,'$.resources') resource WHERE o.status='unknown' AND resource.value=? LIMIT 1",
+          )
+          .get(resource)
+      )
+        busy("A requested resource has an unresolved portable operation.");
     }
     const now = new Date().toISOString();
     const operation: Operation = {
@@ -768,6 +776,22 @@ export class Coordination {
     const operation = this.lookup(id);
     if (!operation || operation.status === "settled")
       failure("VALIDATION_ERROR", "There is no pending operation to recover.");
+    for (const resource of operation.resources) {
+      const owner = this.db
+        .prepare(
+          "SELECT 1 FROM resource_reservations WHERE resource=? AND operation_id<>? LIMIT 1",
+        )
+        .get(resource, id);
+      if (owner) busy("Recovery resource is still owned by another operation.");
+      if (
+        this.db
+          .prepare(
+            "SELECT 1 FROM operations o,json_each(o.json,'$.resources') r WHERE o.status='unknown' AND o.operation_id<>? AND r.value=? LIMIT 1",
+          )
+          .get(id, resource)
+      )
+        busy("Another unknown operation also pins this recovery resource.");
+    }
     if (operation.runtime_id === this.runtimeId) {
       if (operation.status === "unknown") {
         operation.status = "active";
@@ -885,6 +909,38 @@ export class Coordination {
         "UPDATE maintenance SET mode='normal',runtime_id=NULL,token=NULL,kind=NULL,expected_epoch=NULL WHERE singleton=1",
       )
       .run();
+  }
+  /** Repair the file-marker/coordination-COMMIT gap. Never alters an existing
+   * live/settled operation. Unknown collision rows remain resource barriers. */
+  importMissingUnknown(operations: readonly Operation[]) {
+    this.assertHeld();
+    for (const source of operations) {
+      assertReservation(source);
+      if (source.status === "settled" || this.lookup(source.operation_id))
+        continue;
+      if (!/^[A-Za-z0-9_-]{1,128}$/.test(source.runtime_id))
+        failure("VALIDATION_ERROR", "Invalid portable runtime identity.");
+      const operation: Operation = {
+        ...source,
+        resources: [...new Set(source.resources)].sort(),
+        status: "unknown",
+        phase: "unknown",
+      };
+      this.save(operation);
+      this.db
+        .prepare(
+          "INSERT OR IGNORE INTO runtimes(runtime_id,lease_name,status,created_at) VALUES(?,?,'unknown',?)",
+        )
+        .run(
+          source.runtime_id,
+          source.runtime_id + ".sqlite",
+          source.created_at,
+        );
+      for (const resource of operation.resources)
+        this.db
+          .prepare("INSERT OR IGNORE INTO resource_reservations VALUES(?,?)")
+          .run(resource, operation.operation_id);
+    }
   }
   importUnknown(operations: readonly Operation[]) {
     this.assertHeld();

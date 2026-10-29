@@ -1,3 +1,5 @@
+> Schema-10 notice: this is the predecessor contract. Current file-primary storage, bounded Sleep and upgrade requirements are in [MEMORY-V2.md](MEMORY-V2.md). Historical qualification below is not new-format acceptance.
+
 # Sleep contract — owner assignment, 22 October 2026
 
 The current authority is the owner-authorized Sleep implementation/qualification assignment,

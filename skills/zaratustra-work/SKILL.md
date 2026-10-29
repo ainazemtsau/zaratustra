@@ -232,11 +232,22 @@ zara_reconcile_preview/confirm/reconcile. Keep unknown honest; explicitly risky 
 are new decisions. Read-only recovery and demonstrably independent new work remain useful.
 Do not bypass through a new operation ID, independent_basis, ordinary shell or old claim.
 
-For an explicitly requested review of accumulated experience use zaratustra-sleep in this same
-extension/Core. Discover prepared batches with zara_sleep_batch; commit start_sleep and
-sleep_checkpoint through zara_commit. Reviews are finite by frozen initial input, with no total
-resource budget and no automatic new cycle. Review/bookkeeping is not a Method application or
-independent success. Activity origin does not make shared Knowledge/Methods locally writable.
+For an explicit accumulated-experience review use zaratustra-sleep and zara_sleep. The bounded
+native controller selects meaningful cases and enforces phases and budgets. Legacy batches are
+historical lookup only. Review/bookkeeping is not application or proven benefit; a scope label
+never grants write rights.
 
 For independently reusable Activity files, read zaratustra-documents. Keep small results in Core;
 use managed document operations for persistent working files and pinned external views.
+
+## Current file-primary Activity and experience policy
+
+For a long-lived Activity maintain its small data.contract: summary, boundaries/current_context,
+context_refs, document_refs, procedure_refs and memory_scope. Reuse existing Activity and IDs;
+create domain documents/schemas only when useful. The human does not design folders or JSON.
+Do not create Run/Invocation/Evaluation for routine replies or successful low-level tools.
+Retain a meaningful result/episode only when it supports continuation, a real commitment,
+a decision, constraint or reusable experience. record_result accepts durable_purpose.
+Relevant captured observations can be saved with minimal exact source_fragment and an
+explicit durable_purpose; never retain every successful tool result merely to show work.
+The new zara_sleep controller supersedes exhaustive legacy Sleep bookkeeping on schema10.

@@ -1,3 +1,30 @@
+# Current assignment — file-primary memory, Activity and bounded Sleep
+
+Owner-approved plan, 29 October 2026, supersedes conflicting older assignment rules below.
+Worktree: C:/projects/zaratustra-memory-sleep-v2; branch codex/memory-activity-sleep-v2.
+Files are durable authority; SQLite is a rebuildable transactional projection. Corpus format1,
+projection schema10, control3. Preserve existing identities, exact selected versions, trust,
+concurrency and unknown-effect recovery. No committed:true before canonical durable commit.
+Implement selective memory, common Activity contract, bounded native SDK Sleep (10 cases,
+3 improvements, 20 logical generations, 15 minutes), and automatic all-working-project
+Git checkpoint/push to approved private main. The owner explicitly authorized that runtime Git
+and precise runtime-only ignore/index changes supersede the earlier prohibitions.
+
+Do not touch private ZT/Health during development. Only root coordinates late cold backup,
+verified quarantine migration, installation and private publication after old sessions close.
+No forced process termination or semantic deletion of legacy data. Global Node/Pi stay as-is.
+Use Pi1.4.0/Node24.22.1. At most ten stress processes and focused tests, not full history sweeps.
+Only one tightly bounded final model check on a private copy when it proves actual behavior;
+no worker may invoke paid models. Public tests/evidence must be synthetic and anonymous.
+
+Ownership: storage worker owns storage/index/control/administration/corpus modules;
+memory worker owns core/memory-index/memory/lifecycle and a separate policy module;
+Sleep worker owns new core/sleep-v2 + extension/sleep modules;
+Git worker owns new storage/git-sync + extension/sync modules. Root alone integrates
+core/contracts.ts, core/index.ts, extension/index.ts, skills, instructions and release docs.
+Do not edit shared files without root handoff; send required changes instead.
+Everyone shares this worktree: preserve others' edits and adjust to their interfaces.
+
 # Zaratustra — concurrent workspace
 
 Current owner assignment, 26 October 2026: implement the approved parallel-agent plan.
