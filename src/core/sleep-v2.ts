@@ -155,7 +155,12 @@ const StateSchema = z.strictObject({
 export type SleepState = z.infer<typeof StateSchema>;
 export interface SleepV2Bindings {
   read(ref: SleepRef | { id: string }): AddressedRow;
-  candidates(activityId: string | null): AddressedRow[];
+  candidates(
+    activityId: string | null,
+    alreadyRead?: readonly SleepRef[],
+  ): AddressedRow[];
+  /** Trusted provider has already applied Activity scope and access before its limit. */
+  candidatesScoped?: boolean;
   runtimeState?(runtimeId: string): "alive" | "dead" | "unknown";
   validateProposal?(
     proposal: SleepProposal,
@@ -682,8 +687,8 @@ export class SleepV2 {
           )
           .flatMap((s) => s.read_refs);
         const cases = selectSleepCases(
-          this.bindings.candidates(activityId),
-          activityId,
+          this.bindings.candidates(activityId, readBefore),
+          this.bindings.candidatesScoped ? null : activityId,
           readBefore,
         );
         const now = this.now();

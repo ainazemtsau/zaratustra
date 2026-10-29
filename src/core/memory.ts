@@ -517,6 +517,28 @@ export class Memory {
   visibleSQL(alias: string) {
     return `(${activeCorpusSQL(this.db, alias + ".id", "json_extract(" + alias + ".json,'$.revision')")} AND EXISTS(SELECT 1 FROM ${this.accessDocsSQL()} access JOIN records ar ON ar.id=access.id WHERE access.id=${alias}.id AND access.revision=json_extract(ar.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1)))`;
   }
+  /** Current, authorized and relevant routing only; exact legacy reads remain explicit. */
+  sleepCandidates(
+    activityId: string | null,
+    alreadyRead: readonly { id: string; revision: number }[] = [],
+  ): AddressedRow[] {
+    const allowed = (alias: string) =>
+      `EXISTS(SELECT 1 FROM ${this.accessDocsSQL()} access WHERE access.id=${alias}.id AND access.revision=json_extract(${alias}.json,'$.revision') AND (access.restricted=0 OR ${this.restricted}=1))`;
+    const belongs = (alias: string) =>
+      `(${alias}.id=? OR json_extract(${alias}.json,'$.data.activity_id.id')=? OR json_extract(${alias}.json,'$.origin_activity_id.id')=?)`;
+    const scope = activityId
+      ? `AND (r.kind='knowledge' OR ${belongs("r")} OR (r.kind='run' AND EXISTS(SELECT 1 FROM addressed_current w WHERE w.id=json_extract(r.json,'$.data.work_ref.id') AND w.kind='work' AND ${allowed("w")} AND ${belongs("w")})) OR (r.kind='signal' AND EXISTS(SELECT 1 FROM json_each(r.json,'$.data.subject_refs') ref JOIN addressed_current subject ON subject.id=json_extract(ref.value,'$.id') WHERE ${allowed("subject")} AND ${belongs("subject")})))`
+      : "";
+    return this.db
+      .all<{
+        json: string;
+      }>(
+        `SELECT r.json FROM addressed_current r WHERE r.kind IN ('signal','work','knowledge','run') AND json_extract(r.json,'$.storage')='live' AND ${activeCorpusSQL(this.db, "r.id", "json_extract(r.json,'$.revision')")} AND ${allowed("r")} AND ((r.kind='signal' AND json_extract(r.json,'$.data.problem_state') IN ('open','observing')) OR (r.kind='work' AND json_extract(r.json,'$.data.status') IN ('blocked','waiting') AND json_type(r.json,'$.data.review_run_ref') IS NULL) OR (r.kind='knowledge' AND json_extract(r.json,'$.data.state') IN ('current','tentative','contested')) OR (r.kind='run' AND coalesce(json_extract(r.json,'$.data.mode'),'')<>'sleep' AND (json_extract(r.json,'$.data.execution')='failed' OR json_extract(r.json,'$.data.memory_purpose')='useful_experience'))) ${scope} AND NOT EXISTS(SELECT 1 FROM json_each(?) prior WHERE json_extract(prior.value,'$.id')=r.id AND json_extract(prior.value,'$.revision')=json_extract(r.json,'$.revision')) ORDER BY CASE r.kind WHEN 'signal' THEN 0 WHEN 'work' THEN 1 WHEN 'run' THEN 2 ELSE 3 END,json_extract(r.json,'$.updated_at') DESC,r.id LIMIT 200`,
+        ...(activityId ? Array(9).fill(activityId) : []),
+        JSON.stringify(alreadyRead),
+      )
+      .map((r) => JSON.parse(r.json) as AddressedRow);
+  }
   technicalSQL(alias: string) {
     if (this.restricted) return "1";
     const denied = (json: string) =>

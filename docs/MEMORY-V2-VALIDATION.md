@@ -56,3 +56,9 @@ power loss, malicious OS filesystem races, unbounded load, complete Pi-host secu
 and usefulness over years are not established by this work. Actual personal migration,
 installed SHA and private GitHub confirmation must be reported by the coordinator after
 its separate safe update window; this public report does not substitute for them.
+
+## 0.7.1 current-case routing correction
+
+Before personal deployment, review found that the adapter's candidate bound preceded current/legacy, access and Activity selection. Core now selects only current live authorized meaningful cases before its 200-row routing bound, including typed Work/Signal routing. Completed exact versions are excluded before the bound; revised versions remain eligible. Legacy history is still explicitly addressable.
+
+Targeted mechanical checks: memory policy 9/9 and bounded Sleep 30/30; types, ESLint, dependency boundaries and build passed. The first new policy fixture failed because its synthetic supporting-row INSERT omitted the owner column; the INSERT was corrected without changing production semantics, then the test passed. No model calls were used for these regressions.

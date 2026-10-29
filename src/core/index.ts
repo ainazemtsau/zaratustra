@@ -905,6 +905,20 @@ export class Core {
       (id, revision) => this.memory.allowed(id, revision),
     );
   }
+  sleepCandidates(
+    activityId: string | null,
+    alreadyRead: readonly { id: string; revision: number }[] = [],
+  ) {
+    this.authorize();
+    this.memory.barrier();
+    if (activityId)
+      requireThat(
+        this.addressed(activityId).kind === "activity",
+        "REFERENCE_NOT_FOUND",
+        "Activity not available.",
+      );
+    return this.memory.sleepCandidates(activityId, alreadyRead);
+  }
   sleepBatch(runId?: string, cursor?: string) {
     this.authorize();
     this.memory.barrier();
@@ -918,6 +932,7 @@ export class Core {
   ) {
     const snapshots = new Set([
       "map",
+      "sleepCandidates",
       "focus",
       "snapshot",
       "diagnostics",

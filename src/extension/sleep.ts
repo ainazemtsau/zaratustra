@@ -50,7 +50,10 @@ export interface SleepExtensionDependencies {
   runtimeState?(runtimeId: string): "alive" | "dead" | "unknown";
   agentDir?(): string;
   modelRuntime?: CreateAgentSessionOptions["modelRuntime"];
-  candidates?(activityId: string | null): AddressedRow[];
+  candidates?(
+    activityId: string | null,
+    alreadyRead?: readonly SleepRef[],
+  ): AddressedRow[];
   validateProposal?(
     proposal: SleepProposal,
     state: SleepState,
@@ -295,30 +298,11 @@ export function registerSleep(
       read: (p) =>
         core.read(p.id, "revision" in p ? p.revision : undefined)
           .data as AddressedRow,
-      candidates: (activity) =>
+      candidates: (activity, alreadyRead) =>
         dependencies.candidates
-          ? dependencies.candidates(activity)
-          : core.storage
-              .all<{
-                json: string;
-              }>(
-                "SELECT json FROM addressed_current WHERE kind IN ('signal','work','knowledge','run') ORDER BY json_extract(json,'$.updated_at') DESC LIMIT 200",
-              )
-              .flatMap((r) => {
-                const row = JSON.parse(r.json) as AddressedRow;
-                try {
-                  return [core.read(row.id).data as AddressedRow];
-                } catch (error) {
-                  if (
-                    error instanceof CoreError &&
-                    ["PERMISSION_DENIED", "REFERENCE_NOT_FOUND"].includes(
-                      error.code,
-                    )
-                  )
-                    return [];
-                  throw error;
-                }
-              }),
+          ? dependencies.candidates(activity, alreadyRead)
+          : core.sleepCandidates(activity, alreadyRead),
+      candidatesScoped: !dependencies.candidates,
       runtimeState: dependencies.runtimeState,
       validateProposal: dependencies.validateProposal,
     });

@@ -509,3 +509,112 @@ test("explicit deferred candidates expire, account encoded bytes, and preserve o
     "lower-scope sweep cannot erase newly restricted data",
   );
 });
+
+test("Sleep routes active authorized current cases before bounds, including typed subjects and completed-version exclusions", () => {
+  const f = new Fixture();
+  try {
+    f.exec(
+      "CREATE TABLE corpus_entries(id TEXT NOT NULL,revision INTEGER NOT NULL,contour TEXT NOT NULL,PRIMARY KEY(id,revision));",
+    );
+    const put = (
+      id: string,
+      kind: string,
+      data: Record<string, unknown>,
+      visibility = "workspace",
+    ) => {
+      f.put(id, 1, visibility, data);
+      const row = JSON.parse(
+        f.get<{ json: string }>("SELECT json FROM records WHERE id=?", id)!
+          .json,
+      );
+      row.kind = kind;
+      row.updated_at = "2026-10-29T00:00:00Z";
+      const json = JSON.stringify(row);
+      f.run("UPDATE records SET kind=?,json=? WHERE id=?", kind, json, id);
+      f.run("UPDATE revisions SET json=? WHERE id=?", json, id);
+    };
+    put("activity", "activity", { purpose: "A", status: "active" });
+    put("other", "activity", { purpose: "B", status: "active" });
+    put("work", "work", { status: "waiting", activity_id: { id: "activity" } });
+    for (let i = 0; i < 220; i++) {
+      put("legacy-" + i, "run", {
+        execution: "failed",
+        mode: "work",
+        work_ref: { id: "work", revision: 1 },
+      });
+      f.run("INSERT INTO corpus_entries VALUES(?,1,'legacy')", "legacy-" + i);
+      put("unrelated-" + i, "work", {
+        status: "waiting",
+        activity_id: { id: "other" },
+      });
+      put("closed-" + i, "work", {
+        status: "done",
+        activity_id: { id: "activity" },
+      });
+    }
+    put(
+      "hidden",
+      "work",
+      { status: "waiting", activity_id: { id: "activity" } },
+      "restricted",
+    );
+    put("reviewed", "work", {
+      status: "waiting",
+      activity_id: { id: "activity" },
+    });
+    const signal = {
+      id: "signal",
+      kind: "signal",
+      revision: 1,
+      visibility: "workspace",
+      storage: "live",
+      title: "Open question",
+      body: null,
+      concept_ids: [],
+      origin_activity_id: null,
+      updated_at: "2026-10-29T00:00:00Z",
+      data: {
+        problem_state: "open",
+        subject_refs: [{ id: "work", revision: 1 }],
+      },
+    };
+    f.run(
+      "INSERT INTO experience_rows(id,kind,json) VALUES(?,?,?)",
+      signal.id,
+      signal.kind,
+      JSON.stringify(signal),
+    );
+    f.run(
+      "INSERT INTO experience_versions VALUES(?,?,?)",
+      signal.id,
+      1,
+      JSON.stringify(signal),
+    );
+    refreshMemory(f, true);
+    const memory = f.memory();
+    const candidates = memory.sleepCandidates("activity", [
+      { id: "reviewed", revision: 1 },
+    ]);
+    assert.deepEqual(
+      candidates.map((r) => r.id),
+      ["signal", "work"],
+    );
+    assert.ok(
+      memory
+        .sleepCandidates("activity", [{ id: "reviewed", revision: 2 }])
+        .some((r) => r.id === "reviewed"),
+    );
+    const global = memory.sleepCandidates(null);
+    assert.equal(global.length, 200);
+    assert.ok(
+      global.every(
+        (r) =>
+          !r.id.startsWith("legacy-") &&
+          !r.id.startsWith("closed-") &&
+          r.id !== "hidden",
+      ),
+    );
+  } finally {
+    f.db.close();
+  }
+});

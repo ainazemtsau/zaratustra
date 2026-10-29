@@ -1485,3 +1485,144 @@ test("Sleep source reads reach a retained Unicode tail and forward page locator 
   assert(f.controller.status(s.id)!.read_refs.some((r) => r.id === "long"));
   f.db.close();
 });
+
+test("Default Sleep selection delegates scope, access and legacy filtering before its limit", async () => {
+  const f = fixture();
+  f.rows.set(
+    "activity-A",
+    row("activity-A", "activity", { status: "active", contract: {} }),
+  );
+  const legacyRuns = Array.from({ length: 220 }, (_, i) => ({
+    ...row("legacy-ended-" + i, "run", { mode: "work", execution: "failed" }),
+    updated_at: "2026-10-29T12:00:00Z",
+    origin_activity_id: { id: "activity-A" },
+  }));
+  const unrelated = Array.from({ length: 220 }, (_, i) => ({
+    ...row("other-activity-" + i, "work", {
+      status: "blocked",
+      activity_id: { id: "activity-B" },
+    }),
+    updated_at: "2026-10-29T13:00:00Z",
+  }));
+  for (const r of [...legacyRuns, ...unrelated]) f.rows.set(r.id, r);
+  const question = row("active-scoped-question", "signal", {
+    problem_state: "open",
+    subject_refs: [{ id: "active-work", revision: 1 }],
+  });
+  f.rows.set(question.id, question);
+  const all = f.storage.all;
+  let rawReads = 0;
+  f.storage.all = <T>(sql: string, ...params: (string | number | null)[]) => {
+    if (sql.includes("FROM addressed_current")) {
+      rawReads++;
+      return [...unrelated, ...legacyRuns]
+        .slice(0, 200)
+        .map((r) => ({ json: JSON.stringify(r) })) as T[];
+    }
+    return all<T>(sql, ...params);
+  };
+  const explicitReads: string[] = [];
+  const providerCalls: {
+    activityId: string | null | undefined;
+    alreadyRead: readonly SleepRef[] | undefined;
+  }[] = [];
+  const core = {
+    storage: f.storage,
+    context: f.context,
+    read: (id: string) => {
+      explicitReads.push(id);
+      return { data: f.read({ id }) };
+    },
+    sleepCandidates: (
+      activityId?: string | null,
+      alreadyRead?: readonly SleepRef[],
+    ) => {
+      providerCalls.push({ activityId, alreadyRead });
+      return [question];
+    },
+  } as unknown as Core;
+  let action:
+    | ((params: Record<string, unknown>, ctx: ExtensionContext) => unknown)
+    | undefined;
+  const ctx = {
+    cwd: f.home,
+    model: { api: "openai-responses", provider: model.provider, id: model.id },
+    thinkingLevel: "medium",
+  } as ExtensionContext;
+  const runtime = registerSleep(
+    (name, _d, _s, handler) => {
+      if (name === "zara_sleep") action = handler;
+    },
+    {
+      sendMessage: () => {},
+      registerCommand: () => {},
+    } as unknown as ExtensionAPI,
+    {
+      core: () => core,
+      withOperation: async (_kind, callback) => callback(),
+      createSession: async (options) => ({
+        session: {
+          model: ctx.model,
+          thinkingLevel: "medium",
+          agent: {
+            streamFunction: () => createAssistantMessageEventStream(),
+            toolExecution: "sequential",
+          },
+          prompt: async () => {},
+          abort: async () => {},
+          dispose: () => {},
+        } as never,
+        extensionsResult: options!.resourceLoader!.getExtensions(),
+      }),
+    },
+  );
+  const result = (await action!(
+    { action: "start", activity_id: "activity-A" },
+    ctx,
+  )) as { review: { cases: SleepRef[] } };
+  await runtime.shutdown();
+  assert.deepEqual(result.review.cases, [{ id: question.id, revision: 1 }]);
+  assert.equal(rawReads, 0);
+  assert.deepEqual(providerCalls, [
+    { activityId: "activity-A", alreadyRead: [] },
+  ]);
+  assert(
+    !explicitReads.some(
+      (id) =>
+        id.startsWith("legacy-ended-") || id.startsWith("other-activity-"),
+    ),
+  );
+  f.db.close();
+});
+test("Completed exact versions reach the trusted candidate provider before its bound", () => {
+  const f = fixture();
+  const old = row("already-reviewed", "signal", { problem_state: "open" }),
+    fresh = row("unseen-question", "signal", { problem_state: "open" });
+  f.rows.set(old.id, old);
+  f.rows.set(fresh.id, fresh);
+  const received: SleepRef[][] = [];
+  const controller = new SleepV2(f.storage, f.context, {
+    ...f.bind,
+    candidatesScoped: true,
+    candidates: (_activity, alreadyRead) => {
+      received.push([...(alreadyRead ?? [])]);
+      return alreadyRead?.some((r) => r.id === old.id && r.revision === 1)
+        ? [fresh]
+        : [old];
+    },
+  });
+  const first = controller.start(null, model);
+  controller.read(first.id, { id: old.id });
+  controller.analyze(first.id, {
+    question: "Is this selected issue actionable?",
+    observations: "Current grounds do not yet support a change.",
+    hypothesis: null,
+    counterexamples: [],
+    grounds: [{ id: old.id, revision: 1 }],
+  });
+  controller.finish(first.id, "no_change", "No useful change yet.");
+  const next = controller.start(null, model);
+  assert.deepEqual(next.cases, [{ id: fresh.id, revision: 1 }]);
+  assert.deepEqual(received, [[], [{ id: old.id, revision: 1 }]]);
+  f.db.close();
+});
