@@ -76,3 +76,9 @@ Canonical inventory and its workspace revision are frozen together in a bounded 
 A successfully completed native add is settled outside the gate if its later admission check expires: exact HEAD/branch/index must still match before commit. Ambiguous staging is preserved. An additional precommit tree check refuses a new manual staging change before creating a commit. Git tools do not request another Git checkpoint merely by returning status, and a clean already-confirmed close does not repeat full capture.
 
 Focused gate-depth, frozen-metadata, revision/epoch, manual-staging and index-settlement controls pass along with earlier affected races. No local admission or native-command timeout was raised. These changes preserve format1, schema10 and control3; no model calls were needed.
+
+## 0.7.4 runtime watcher noise
+
+Existing runtime-root and ancestor directory notifications no longer request a working checkpoint merely because SQLite journal/control bookkeeping changed their mtimes. UUID temporary siblings are excluded only when their base path is already excluded by the exact runtime policy. Normal working files, Activity directories, runtime-root child data directories and deletion events remain meaningful; polling remains enabled. A successfully confirmed clean checkpoint also records its current polling signature, so its own new commit cannot produce a redundant periodic checkpoint.
+
+A real filesystem-watcher fixture qualifies noise rejection and ordinary change/deletion handling. No broad memory, Activity or .local exclusion was introduced. Core, corpus format, schema and control protocol are unchanged; no model calls were needed.

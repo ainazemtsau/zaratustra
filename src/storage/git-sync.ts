@@ -286,14 +286,39 @@ export class GitSynchronizer {
   }
   private excluded(path: string) {
     const p = slash(path).replace(/^\.\//, "");
-    return (
-      p === ".git" ||
-      p.startsWith(".git/") ||
-      p.split("/").includes("node_modules") ||
+    const policy = (value: string) =>
+      value === ".git" ||
+      value.startsWith(".git/") ||
+      value.split("/").includes("node_modules") ||
       this.exclusions.some((x) =>
-        x.endsWith("/") ? p === x.slice(0, -1) || p.startsWith(x) : p === x,
-      )
-    );
+        x.endsWith("/")
+          ? value === x.slice(0, -1) || value.startsWith(x)
+          : value === x,
+      );
+    if (policy(p)) return true;
+    const temporary =
+      /^(.*)\.[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.tmp$/i.exec(
+        p,
+      );
+    return !!temporary && policy(temporary[1]);
+  }
+  private meaningfulWatchEvent(path: string) {
+    if (this.excluded(path)) return false;
+    const absolute = resolve(this.projectRoot, path),
+      rel = relative(this.projectRoot, absolute);
+    if (rel.startsWith("..") || isAbsolute(rel)) return true;
+    const toRuntime = relative(absolute, this.runtimeRoot);
+    if (
+      toRuntime === "" ||
+      (!toRuntime.startsWith("..") && !isAbsolute(toRuntime))
+    ) {
+      try {
+        if (lstatSync(absolute).isDirectory()) return false;
+      } catch {
+        /* Deletion remains meaningful. */
+      }
+    }
+    return true;
   }
   private assertLocalDeadline() {
     if (this.localDeadline && Date.now() >= this.localDeadline)
@@ -1309,7 +1334,7 @@ export class GitSynchronizer {
         this.projectRoot,
         { recursive: true },
         (_event, name) => {
-          if (name && !this.excluded(name.toString()))
+          if (name && this.meaningfulWatchEvent(name.toString()))
             this.request("working_file_changed");
         },
       );
@@ -1456,20 +1481,25 @@ export class GitSynchronizer {
       for (const [path, digest] of captured!.requests)
         if (existsSync(path) && hash(readFileSync(path)) === digest)
           unlinkSync(path);
-      const clean = this.visibleStatus().length === 0;
-      return this.publish({
+      const workingStatus = this.visibleStatus(),
+        head = this.git(["rev-parse", "HEAD"]).trim(),
+        branch = this.git(["branch", "--show-current"]).trim();
+      const status = this.publish({
         code: "REMOTE_CONFIRMED",
         pending:
-          this.git(["rev-parse", "HEAD"]).trim() !== commit ||
-          this.git(["branch", "--show-current"]).trim() !==
-            this.binding.branch ||
-          !clean ||
+          head !== commit ||
+          branch !== this.binding.branch ||
+          workingStatus.length > 0 ||
           !equalRevision(captured!.revision, now) ||
           this.requests().size > 0,
         workspace: captured!.revision,
         commit,
         remoteCommit: confirmed,
       });
+      if (!status.pending)
+        this.lastSignature =
+          workingStatus + head + branch + JSON.stringify(now);
+      return status;
     } catch (error) {
       const code = error instanceof SyncFailure ? error.code : "GIT_ERROR";
       return this.publish({

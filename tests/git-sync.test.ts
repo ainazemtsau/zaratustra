@@ -13,6 +13,8 @@ import {
   renameSync,
   unlinkSync,
   symlinkSync,
+  readdirSync,
+  rmdirSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -1161,7 +1163,7 @@ test("successful delta add settles outside an expired gate without stranding its
   }
 });
 
-test("clean close preserves remote confirmation without another capture commit or push", async () => {
+test("confirmed polling and clean close preserve remote confirmation without another capture commit or push", async () => {
   const f = fixture();
   writeFileSync(join(f.work, "document.md"), "Confirmed before closing\n");
   f.advance();
@@ -1169,13 +1171,34 @@ test("clean close preserves remote confirmation without another capture commit o
   const observed: string[][] = commands as string[][];
   const sync = new GitSynchronizer({
     ...f.options,
+    debounceMs: 60000,
+    pollIntervalMs: 100,
     onGitCommand: (args) => observed.push([...args]),
   });
+  sync.start();
   const confirmed = await sync.flush();
   assert.equal(confirmed.code, "REMOTE_CONFIRMED", confirmed.message);
   assert.equal(confirmed.pending, false);
   observed.length = 0;
-  const closed = await sync.close();
+  try {
+    for (let i = 0; i < 100; i++) {
+      if (observed.filter((args) => args[0] === "branch").length >= 2) break;
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+    }
+    assert.ok(
+      observed.filter((args) => args[0] === "branch").length >= 2,
+      "The real poll interval must scan the confirmed checkpoint",
+    );
+    assert.equal(
+      readdirSync(join(f.options.runtimeRoot, "git-sync", "requests")).length,
+      0,
+      "The synchronizer's own confirmed commit must not enqueue another scan",
+    );
+    assert.equal(sync.status().pending, false);
+  } finally {
+    await sync.close();
+  }
+  const closed = sync.status();
   assert.equal(closed.code, "REMOTE_CONFIRMED");
   assert.equal(closed.pending, false);
   assert.equal(closed.commit, confirmed.commit);
@@ -1190,4 +1213,79 @@ test("clean close preserves remote confirmation without another capture commit o
     git(f.remote, ["show", "main:document.md"]),
     "Confirmed before closing",
   );
+});
+
+test("real watcher ignores runtime journals and owned temporary siblings but retains working file changes and deletion", async () => {
+  const f = fixture(),
+    queue = join(f.options.runtimeRoot, "git-sync", "requests");
+  const sync = new GitSynchronizer({
+    ...f.options,
+    debounceMs: 60000,
+    pollIntervalMs: 60000,
+  });
+  const requests = () =>
+    readdirSync(queue).filter((name) => name.endsWith(".json"));
+  const pause = (ms: number) =>
+    new Promise<void>((resolve) => setTimeout(resolve, ms));
+  const wait = async (check: () => boolean) => {
+    for (let i = 0; i < 50; i++) {
+      if (check()) return;
+      await pause(20);
+    }
+    assert.fail("Expected watcher request was not observed");
+  };
+  try {
+    sync.start();
+    const initial = await sync.flush();
+    assert.equal(initial.code, "REMOTE_CONFIRMED", initial.message);
+    await pause(100);
+    assert.equal(requests().length, 0);
+    const journal = join(f.options.runtimeRoot, "coordination.sqlite-journal"),
+      tmp = join(
+        f.options.runtimeRoot,
+        "workspace.json.12345678-1234-4234-8234-123456789abc.tmp",
+      );
+    writeFileSync(journal, "runtime journal");
+    writeFileSync(tmp, "atomic runtime control");
+    await pause(100);
+    unlinkSync(journal);
+    unlinkSync(tmp);
+    await pause(150);
+    assert.equal(
+      requests().length,
+      0,
+      "runtime events must not enqueue another checkpoint",
+    );
+    assert.equal(sync.status().pending, false);
+    const activity = join(f.work, "Activity");
+    mkdirSync(activity);
+    await wait(() => requests().length > 0);
+    const request = join(queue, requests()[0]);
+    assert.ok(readFileSync(request, "utf8").includes("working_file_changed"));
+    const expectRequest = async (change: () => void) => {
+      const before = readFileSync(request, "utf8");
+      await pause(20);
+      change();
+      await wait(() => readFileSync(request, "utf8") !== before);
+    };
+    const note = join(activity, "working-note.md"),
+      workingTemp =
+        join(f.work, "working-note.md") +
+        ".12345678-1234-4234-8234-123456789abc.tmp",
+      notes = join(f.options.runtimeRoot, "ordinary-notes");
+    await expectRequest(() => writeFileSync(note, "Ordinary working file\n"));
+    await expectRequest(() => unlinkSync(note));
+    await expectRequest(() => rmdirSync(activity));
+    await expectRequest(() =>
+      writeFileSync(workingTemp, "Meaningful temporary file"),
+    );
+    await expectRequest(() => unlinkSync(workingTemp));
+    await expectRequest(() => mkdirSync(notes));
+    await expectRequest(() => rmdirSync(notes));
+    const settled = await sync.flush();
+    assert.equal(settled.code, "REMOTE_CONFIRMED", settled.message);
+    assert.equal(settled.pending, false);
+  } finally {
+    await sync.close();
+  }
 });
