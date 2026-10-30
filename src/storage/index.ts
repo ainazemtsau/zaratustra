@@ -8,7 +8,7 @@ import type { CorpusStatus } from "./corpus.ts";
 import { createProjectionSchema } from "./projection.ts";
 import { validateProjection } from "./administration.ts";
 export { FileCorpus, registerCorpusCollection } from "./corpus.ts";
-export type { CorpusStatus } from "./corpus.ts";
+export type { CorpusStatus, CorpusInventory } from "./corpus.ts";
 import {
   Coordination,
   type CommandKind,
@@ -651,6 +651,9 @@ export class DiskStorage implements StoragePort {
   }
   corpusCheckpoint() {
     return this.withCommandSync(() => this.corpus?.checkpoint(), "read");
+  }
+  corpusInventory() {
+    return this.withCommandSync(() => this.corpus?.inventory(), "read");
   }
   private projectionPath() {
     return join(this.home, "zara.sqlite");

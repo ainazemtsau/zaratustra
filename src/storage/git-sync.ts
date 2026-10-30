@@ -104,6 +104,10 @@ export interface SyncOptions {
   commandTimeoutMs?: number;
   maxBlobBytes?: number;
   requiredPaths?: () => readonly string[];
+  canonicalSnapshot?: () => {
+    root: string;
+    files: readonly { path: string; sha256: string }[];
+  };
   pollIntervalMs?: number;
   retryBaseMs?: number;
   localPhaseTimeoutMs?: number;
@@ -681,6 +685,14 @@ export class GitSynchronizer {
   }
   private capture(): Capture {
     const head = this.preflight();
+    const canonicalSnapshot = this.options.canonicalSnapshot?.();
+    const canonicalDirectories = new Set<string>();
+    if (this.options.canonicalSnapshot)
+      this.assertCanonicalSnapshot(
+        undefined,
+        canonicalSnapshot,
+        canonicalDirectories,
+      );
     const names = [
       ...new Set(
         this.git([
@@ -768,14 +780,25 @@ export class GitSynchronizer {
         files.get(p)!.hash = values[i];
       });
     }
-    const requiredPaths = (this.options.requiredPaths?.() ?? []).map(
-      (required) =>
-        slash(
-          isAbsolute(required)
-            ? relative(this.projectRoot, required)
-            : required,
+    const canonicalPaths = this.options.canonicalSnapshot
+      ? this.assertCanonicalSnapshot(
+          files,
+          canonicalSnapshot,
+          canonicalDirectories,
+        )
+      : [];
+    const requiredPaths = [
+      ...new Set([
+        ...canonicalPaths,
+        ...(this.options.requiredPaths?.() ?? []).map((required) =>
+          slash(
+            isAbsolute(required)
+              ? relative(this.projectRoot, required)
+              : required,
+          ),
         ),
-    );
+      ]),
+    ];
     for (const path of requiredPaths) {
       if (!files.has(path))
         throw new SyncFailure(
@@ -792,6 +815,114 @@ export class GitSynchronizer {
       requests: this.requests(),
       stagePaths: names,
     };
+  }
+  /** The authoritative inventory is cached by storage, never reparsed here. */
+  private assertCanonicalSnapshot(
+    files: Capture["files"] | undefined,
+    snapshot:
+      | ReturnType<NonNullable<SyncOptions["canonicalSnapshot"]>>
+      | undefined,
+    directories: Set<string>,
+  ): string[] {
+    const refuse = (): never => {
+      throw new SyncFailure(
+        "CHECKPOINT_MISMATCH",
+        "Canonical inventory, captured bytes or exact corpus membership differ; no checkpoint was published.",
+      );
+    };
+    if (
+      !snapshot ||
+      typeof snapshot.root !== "string" ||
+      !isAbsolute(snapshot.root) ||
+      !Array.isArray(snapshot.files as unknown)
+    )
+      return refuse();
+    const root = resolve(snapshot.root),
+      rootRelative = relative(this.projectRoot, root);
+    if (
+      !rootRelative ||
+      rootRelative.startsWith("..") ||
+      isAbsolute(rootRelative) ||
+      !existsSync(root)
+    )
+      refuse();
+    const actualRoot = realpathSync(root),
+      actualRelative = relative(this.projectRoot, actualRoot);
+    if (
+      !actualRelative ||
+      actualRelative.startsWith("..") ||
+      isAbsolute(actualRelative) ||
+      actualRoot !== root ||
+      !lstatSync(root).isDirectory()
+    )
+      refuse();
+    directories.add(root);
+    const inspectDirectory = (path: string): void => {
+      if (directories.has(path)) return;
+      const rel = relative(root, path);
+      if (!rel || rel.startsWith("..") || isAbsolute(rel)) refuse();
+      inspectDirectory(dirname(path));
+      try {
+        const stat = lstatSync(path),
+          actual = realpathSync(path),
+          physical = relative(root, actual);
+        if (
+          !stat.isDirectory() ||
+          stat.isSymbolicLink() ||
+          physical.startsWith("..") ||
+          isAbsolute(physical)
+        )
+          refuse();
+      } catch {
+        refuse();
+      }
+      directories.add(path);
+    };
+    const prefix = slash(rootRelative) + "/",
+      expected = new Map<string, string>();
+    for (const file of snapshot.files) {
+      this.assertLocalDeadline();
+      if (
+        !file.path ||
+        isAbsolute(file.path) ||
+        file.path.includes("\\") ||
+        /[\0\r\n]/.test(file.path) ||
+        file.path
+          .split("/")
+          .some((part) => !part || part === "." || part === "..") ||
+        !/^[a-f0-9]{64}$/.test(file.sha256)
+      )
+        refuse();
+      inspectDirectory(dirname(resolve(root, file.path)));
+      const path = prefix + file.path;
+      if (
+        expected.has(path) ||
+        this.excluded(path) ||
+        (files && files.get(path)?.rawHash !== file.sha256)
+      )
+        refuse();
+      expected.set(path, file.sha256);
+    }
+    if (!files) return [...expected.keys()];
+    for (const path of files.keys())
+      if (path.startsWith(prefix) && !expected.has(path)) refuse();
+    // Git's ordinary candidate set omits ignored extras; they are not allowed to
+    // silently become another corpus contour. Declared runtime exclusions remain OK.
+    const ignored = this.git([
+      "ls-files",
+      "-z",
+      "--others",
+      "--ignored",
+      "--directory",
+      "--no-empty-directory",
+      "--exclude-standard",
+      "--",
+      ":(top,literal)" + slash(rootRelative),
+    ])
+      .split("\0")
+      .filter(Boolean);
+    for (const path of ignored) if (!this.excluded(path)) refuse();
+    return [...expected.keys()];
   }
   /** Canonical hash manifests require clone-stable raw bytes, not text normalization. */
   private assertCanonicalAttributes(paths: string[], files: Capture["files"]) {

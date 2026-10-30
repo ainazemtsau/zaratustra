@@ -14,7 +14,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { readFileSync, realpathSync } from "node:fs";
-import { dirname, isAbsolute, resolve, relative } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   Core,
@@ -567,19 +567,14 @@ export default function extension(pi: ExtensionAPI) {
               revision: status.revision,
             };
           },
-          requiredPaths: () => {
-            const checkpoint = currentDisk.corpusCheckpoint();
+          canonicalSnapshot: () => {
+            const inventory = currentDisk.corpusInventory();
             requireThat(
-              checkpoint,
+              inventory,
               "STORE_UNAVAILABLE",
               "Portable corpus inventory unavailable.",
             );
-            return checkpoint.files.map((file) =>
-              relative(ctx.cwd, resolve(checkpoint.root, file.path)).replaceAll(
-                "\\",
-                "/",
-              ),
-            );
+            return inventory;
           },
           withSnapshot: (callback) =>
             currentDisk.withOperation("read", callback),

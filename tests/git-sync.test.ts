@@ -1,4 +1,5 @@
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { FileCorpus } from "../src/storage/index.ts";
 import assert from "node:assert/strict";
@@ -10,6 +11,8 @@ import {
   readFileSync,
   existsSync,
   renameSync,
+  unlinkSync,
+  symlinkSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -720,4 +723,124 @@ test("canonical corpus refuses autocrlf normalization then clones and rebuilds e
     corpus.close();
     db.close();
   }
+});
+
+test("cached canonical inventory validates raw bytes exact membership and exclusions without a history scan", async () => {
+  const f = fixture(),
+    root = join(f.work, "memory");
+  mkdirSync(root);
+  const original = Buffer.from('{\n  "source": "Canonical α🙂"\n}\n');
+  const file = join(root, "corpus.json");
+  writeFileSync(file, original);
+  writeFileSync(
+    join(f.work, ".gitattributes"),
+    "/memory/** -text -eol -working-tree-encoding -filter\n",
+  );
+  const snapshot = {
+    root,
+    files: [
+      {
+        path: "corpus.json",
+        sha256: createHash("sha256").update(original).digest("hex"),
+      },
+    ],
+  };
+  let inventoryReads = 0;
+  const options = {
+    ...f.options,
+    canonicalSnapshot: () => {
+      inventoryReads++;
+      return snapshot;
+    },
+  };
+  const sync = new GitSynchronizer(options);
+  const saved = await sync.flush();
+  assert.equal(saved.code, "REMOTE_CONFIRMED", saved.message);
+  assert.equal(saved.pending, false);
+  assert.equal(inventoryReads, 1);
+  const before = git(f.work, ["rev-parse", "HEAD"]);
+  const assertRejected = async (active: GitSynchronizer) => {
+    const result = await active.flush();
+    assert.equal(result.code, "CHECKPOINT_MISMATCH", result.message);
+    assert.equal(result.pending, true);
+    assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
+    assert.equal(git(f.work, ["diff", "--cached", "--name-only"]), "");
+    assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+  };
+  unlinkSync(file);
+  await assertRejected(sync);
+  writeFileSync(file, "Changed outside the canonical authority\n");
+  await assertRejected(sync);
+  writeFileSync(file, original);
+  const extra = join(root, "extra.json");
+  writeFileSync(extra, "{}\n");
+  await assertRejected(sync);
+  unlinkSync(extra);
+  writeFileSync(
+    join(f.work, ".gitignore"),
+    "/.local/memory/git-sync/\n/memory/ignored.json\n",
+  );
+  const ignored = join(root, "ignored.json");
+  writeFileSync(ignored, "{}\n");
+  await assertRejected(sync);
+  unlinkSync(ignored);
+  const excludedBytes = Buffer.from("New canonical version\n");
+  writeFileSync(join(root, "new-version.json"), excludedBytes);
+  await assertRejected(
+    new GitSynchronizer({
+      ...options,
+      canonicalSnapshot: () => ({
+        ...snapshot,
+        files: [
+          ...snapshot.files,
+          {
+            path: "new-version.json",
+            sha256: createHash("sha256").update(excludedBytes).digest("hex"),
+          },
+        ],
+      }),
+      exclusions: [".local/memory/git-sync/", "memory/new-version.json"],
+    }),
+  );
+  unlinkSync(join(root, "new-version.json"));
+  await assertRejected(
+    new GitSynchronizer({
+      ...options,
+      canonicalSnapshot: () => ({ ...snapshot, root: f.base }),
+    }),
+  );
+});
+
+test("cached canonical inventory refuses a nested junction with byte-identical outside content", async () => {
+  const f = fixture(),
+    root = join(f.work, "memory"),
+    outside = join(f.base, "outside-copy");
+  mkdirSync(root);
+  mkdirSync(outside);
+  const bytes = Buffer.from("Byte-identical canonical source\n");
+  writeFileSync(join(outside, "corpus.json"), bytes);
+  symlinkSync(outside, join(root, "nested"), "junction");
+  writeFileSync(
+    join(f.work, ".gitattributes"),
+    "/memory/** -text -eol -working-tree-encoding -filter\n",
+  );
+  const before = git(f.work, ["rev-parse", "HEAD"]),
+    index = readFileSync(join(f.work, ".git", "index"));
+  const result = await new GitSynchronizer({
+    ...f.options,
+    canonicalSnapshot: () => ({
+      root,
+      files: [
+        {
+          path: "nested/corpus.json",
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+        },
+      ],
+    }),
+  }).flush();
+  assert.equal(result.code, "CHECKPOINT_MISMATCH", result.message);
+  assert.equal(result.pending, true);
+  assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+  assert.deepEqual(readFileSync(join(f.work, ".git", "index")), index);
 });

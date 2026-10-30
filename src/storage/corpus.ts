@@ -91,6 +91,11 @@ export interface CorpusStatus {
   complete: true;
   last_transaction: string | null;
 }
+export interface CorpusInventory {
+  root: string;
+  revision: number;
+  files: { path: string; sha256: string }[];
+}
 interface Manifest extends Omit<CorpusStatus, "root" | "authority"> {
   collections: string[];
   collection_roots: Record<string, { sha256: string; rows: number }>;
@@ -1385,6 +1390,26 @@ export class FileCorpus {
     this.knownRevision = manifest.revision;
     return this.status();
   }
+  /** Verified inventory, not a new raw-byte snapshot. The caller must compare captured
+   * bytes and exact membership before publishing. DiskStorage calls this under its
+   * whole-command gate after accepting committed cross-process deltas. */
+  inventory(): CorpusInventory {
+    const state = this.status();
+    if (!this.expectedFiles.size || this.knownRevision !== state.revision)
+      this.checkpoint();
+    else this.assertNoDrift();
+    // Watcher notifications are asynchronous. Recheck every path before exposing
+    // cached hashes; shared parents are checked once, leaves remain checked each time.
+    this.beginCommand();
+    for (const path of this.expectedFiles.keys()) this.path(path);
+    return {
+      root: this.root,
+      revision: this.knownRevision,
+      files: [...this.expectedFiles]
+        .map(([path, sha256]) => ({ path, sha256 }))
+        .sort((a, b) => a.path.localeCompare(b.path)),
+    };
+  }
   checkpoint(): CorpusStatus & {
     files: { path: string; sha256: string; length: number }[];
   } {
@@ -1440,7 +1465,9 @@ export class FileCorpus {
     const walk = (dir: string) => {
       for (const e of readdirSync(dir, { withFileTypes: true })) {
         if ([".pending", ".garbage"].includes(e.name)) continue;
-        const p = safePath(this.root, join(dir, e.name));
+        const p = this.path(
+          relative(this.root, join(dir, e.name)).replaceAll("\\", "/"),
+        );
         if (e.isDirectory()) walk(p);
         else {
           requireThat(

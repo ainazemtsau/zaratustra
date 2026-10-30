@@ -10,6 +10,8 @@ import {
   readdirSync,
   unlinkSync,
   cpSync,
+  renameSync,
+  symlinkSync,
   existsSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -525,6 +527,110 @@ test("canonical restore works with a corrupt primary projection", async () => {
   }
 });
 
+test("canonical inventory uses verified hashes and falls back for empty or stale state", () => {
+  const f = fixture();
+  const probe = new FileCorpus(f.corpus.root);
+  const rows = probe.rows;
+  let scans = 0;
+  probe.rows = function () {
+    scans++;
+    return rows.call(this);
+  };
+  try {
+    const first = probe.inventory();
+    assert.equal(
+      scans,
+      1,
+      "uninitialized inventory requires full verification",
+    );
+    assert.deepEqual(
+      first.files,
+      f.corpus.checkpoint().files.map(({ path, sha256 }) => ({ path, sha256 })),
+    );
+    first.files[0].sha256 = "caller mutation";
+    assert.notEqual(probe.inventory().files[0].sha256, "caller mutation");
+    assert.equal(scans, 1, "same verified revision does not rescan history");
+    put(f, "inventory-change", "new exact bytes");
+    f.corpus.publish(f.db, f.home);
+    const next = probe.inventory();
+    assert.equal(
+      scans,
+      1,
+      "managed publication updates the verified inventory",
+    );
+    assert.equal(next.revision, f.corpus.status().revision);
+    assert.ok(
+      next.files.every(
+        (file) =>
+          bytesHash(readFileSync(join(next.root, file.path))) === file.sha256,
+      ),
+    );
+    probe.close(); // Stop observing the next publication to exercise guarded stale fallback.
+    put(f, "inventory-change", "later exact bytes", 2);
+    f.corpus.publish(f.db, f.home);
+    const stale = probe.inventory();
+    assert.equal(scans, 2, "stale inventory requires a verified checkpoint");
+    assert.equal(stale.revision, f.corpus.status().revision);
+  } finally {
+    probe.close();
+    f.corpus.close();
+    f.db.close();
+  }
+});
+
+test("canonical inventory rejects changed manifest and verifies offline source on first use", () => {
+  const f = fixture();
+  try {
+    put(f, "inventory-source", "retained exact source");
+    f.corpus.publish(f.db, f.home);
+    const inventory = f.corpus.checkpoint();
+    const manifestPath = join(f.corpus.root, "corpus.json");
+    const manifest = readFileSync(manifestPath);
+    writeFileSync(manifestPath, Buffer.concat([manifest, Buffer.from(" ")]));
+    assert.throws(() => f.corpus.inventory(), { code: "STORE_UNAVAILABLE" });
+    writeFileSync(manifestPath, manifest);
+    const source = inventory.files.find((file) =>
+      file.path.startsWith("objects/records/"),
+    )!;
+    writeFileSync(join(f.corpus.root, source.path), "damaged offline source");
+    const fresh = new FileCorpus(f.corpus.root);
+    try {
+      assert.throws(() => fresh.inventory(), { code: "STORE_UNAVAILABLE" });
+    } finally {
+      fresh.close();
+    }
+  } finally {
+    f.corpus.close();
+    f.db.close();
+  }
+});
+
+test("cached canonical inventory immediately rejects a byte-identical nested junction", () => {
+  const f = fixture();
+  try {
+    put(f, "junction-source", "exact bytes outside authority");
+    f.corpus.publish(f.db, f.home);
+    const inventory = f.corpus.inventory();
+    const records = join(f.corpus.root, "objects", "records");
+    const outside = join(f.root, "outside-records");
+    cpSync(records, outside, { recursive: true });
+    renameSync(records, join(f.root, "preserved-records"));
+    symlinkSync(outside, records, "junction");
+    assert.ok(
+      inventory.files.every(
+        (file) =>
+          bytesHash(readFileSync(join(inventory.root, file.path))) ===
+          file.sha256,
+      ),
+    );
+    // No await/event-loop turn: the watcher has not invalidated cached parents.
+    assert.throws(() => f.corpus.inventory(), { code: "PERMISSION_DENIED" });
+  } finally {
+    f.corpus.close();
+    f.db.close();
+  }
+});
+
 test("peer publication verifies only changed canonical files rather than rescanning history", () => {
   const root = mkdtempSync(join(tmpdir(), "zara-peer-delta-")),
     home = join(root, "runtime");
@@ -637,6 +743,15 @@ test("cross-process publication consumes bounded deltas without a full corpus sc
     FileCorpus.prototype.rows = function () {
       throw new Error("unexpected full corpus scan");
     };
+    const inventory = disk.corpusInventory()!;
+    assert.equal(inventory.revision, disk.corpusStatus()!.revision);
+    assert.ok(
+      inventory.files.every(
+        (file) =>
+          bytesHash(readFileSync(join(inventory.root, file.path))) ===
+          file.sha256,
+      ),
+    );
     assert.equal(
       disk.get<{ json: string }>(
         "SELECT json FROM focus WHERE session_id='cross-process'",
