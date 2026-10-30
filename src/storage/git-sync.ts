@@ -113,11 +113,17 @@ export interface SyncOptions {
   localPhaseTimeoutMs?: number;
   /** Synthetic fault/race injection; no tool argument exposes it. */
   onPhase?: (phase: string) => void | Promise<void>;
+  onGitCommand?: (args: readonly string[], input?: string) => void;
 }
 interface Result {
   code: number;
   stdout: string;
   stderr: string;
+}
+interface FrozenWorkspace {
+  revision: SyncRevision;
+  canonicalSnapshot?: ReturnType<NonNullable<SyncOptions["canonicalSnapshot"]>>;
+  requiredPaths: readonly string[];
 }
 interface Capture {
   revision: SyncRevision;
@@ -233,6 +239,8 @@ export class GitSynchronizer {
   private failures = 0;
   private localDeadline = 0;
   private localGateMs = 0;
+  private metadataDepth = 0;
+  private stageDepth = 0;
   constructor(private readonly options: SyncOptions) {
     this.projectRoot = realpathSync(resolve(options.projectRoot));
     this.runtimeRoot = resolve(options.runtimeRoot);
@@ -295,6 +303,12 @@ export class GitSynchronizer {
       );
   }
   private sync(args: string[], input?: string): Result {
+    if (this.metadataDepth && !this.stageDepth)
+      throw new SyncFailure(
+        "GIT_ERROR",
+        "Native Git cannot execute inside the memory snapshot gate.",
+      );
+    this.options.onGitCommand?.(args, input);
     this.assertLocalDeadline();
     const r = spawnSync("git", ["-C", this.projectRoot, ...args], {
       encoding: "utf8",
@@ -324,6 +338,12 @@ export class GitSynchronizer {
     return r.stdout;
   }
   private async command(command: string, args: string[]): Promise<Result> {
+    if (this.metadataDepth && !this.stageDepth)
+      throw new SyncFailure(
+        "GIT_ERROR",
+        "Native processes cannot execute inside the memory snapshot gate.",
+      );
+    if (command === "git") this.options.onGitCommand?.(args);
     return await new Promise((resolveResult, reject) => {
       const child = spawn(command, args, {
         cwd: this.projectRoot,
@@ -683,9 +703,64 @@ export class GitSynchronizer {
         }),
     );
   }
-  private capture(): Capture {
+  private async withMemoryGate<T>(
+    callback: () => T,
+    stage = false,
+  ): Promise<T> {
+    const local = () => {
+      const started = Date.now();
+      this.localDeadline =
+        started + (this.options.localPhaseTimeoutMs ?? 10_000);
+      this.metadataDepth++;
+      if (stage) this.stageDepth++;
+      try {
+        const result = callback();
+        this.assertLocalDeadline();
+        return result;
+      } finally {
+        this.localGateMs = Math.max(this.localGateMs, Date.now() - started);
+        this.metadataDepth--;
+        if (stage) this.stageDepth--;
+        this.localDeadline = 0;
+      }
+    };
+    return await (this.options.withSnapshot
+      ? this.options.withSnapshot(local)
+      : local());
+  }
+  private async freezeWorkspace(): Promise<FrozenWorkspace> {
+    return await this.withMemoryGate(() => {
+      const original = this.options.canonicalSnapshot?.();
+      if (this.options.canonicalSnapshot && !original)
+        throw new SyncFailure(
+          "CHECKPOINT_MISMATCH",
+          "Canonical inventory is unavailable.",
+        );
+      const canonicalSnapshot = original
+        ? Object.freeze({
+            root: original.root,
+            files: Object.freeze(
+              original.files.map((file) =>
+                Object.freeze({ path: file.path, sha256: file.sha256 }),
+              ),
+            ),
+          })
+        : undefined;
+      return Object.freeze({
+        revision: Object.freeze({ ...this.options.getRevision() }),
+        canonicalSnapshot,
+        requiredPaths: Object.freeze([
+          ...(this.options.requiredPaths?.() ?? []),
+        ]),
+      });
+    });
+  }
+  private async currentRevision() {
+    return await this.withMemoryGate(() => ({ ...this.options.getRevision() }));
+  }
+  private capture(frozen: FrozenWorkspace): Capture {
     const head = this.preflight();
-    const canonicalSnapshot = this.options.canonicalSnapshot?.();
+    const canonicalSnapshot = frozen.canonicalSnapshot;
     const canonicalDirectories = new Set<string>();
     if (this.options.canonicalSnapshot)
       this.assertCanonicalSnapshot(
@@ -790,7 +865,7 @@ export class GitSynchronizer {
     const requiredPaths = [
       ...new Set([
         ...canonicalPaths,
-        ...(this.options.requiredPaths?.() ?? []).map((required) =>
+        ...frozen.requiredPaths.map((required) =>
           slash(
             isAbsolute(required)
               ? relative(this.projectRoot, required)
@@ -811,9 +886,9 @@ export class GitSynchronizer {
     return {
       head,
       files,
-      revision: this.options.getRevision(),
+      revision: frozen.revision,
       requests: this.requests(),
-      stagePaths: names,
+      stagePaths: this.deltaPaths(head, files),
     };
   }
   /** The authoritative inventory is cached by storage, never reparsed here. */
@@ -1038,26 +1113,22 @@ export class GitSynchronizer {
     }
     return map;
   }
-  private localCommit(capture: Capture) {
+  private deltaPaths(head: string, files: Capture["files"]) {
+    const tree = this.committedFiles(head);
+    return [...new Set([...tree.keys(), ...files.keys()])]
+      .filter((path) => {
+        const current = files.get(path);
+        return (
+          tree.get(path) !==
+          (current ? current.mode + " " + current.hash : undefined)
+        );
+      })
+      .sort();
+  }
+  private async localCommit(capture: Capture) {
     this.preflight(capture.head);
     this.assertBytes(capture.files);
-    if (capture.stagePaths.length)
-      this.git(
-        ["add", "--all", "--pathspec-from-file=-", "--pathspec-file-nul"],
-        capture.stagePaths.map((p) => ":(top,literal)" + p).join("\0") + "\0",
-      );
-    if (!this.matches(this.indexFiles(), capture.files))
-      throw new SyncFailure(
-        "CHECKPOINT_MISMATCH",
-        "Actual staged tree differs from capture; index is preserved for inspection.",
-      );
-    this.assertBytes(capture.files);
-    if (!equalRevision(capture.revision, this.options.getRevision()))
-      throw new SyncFailure(
-        "WORKTREE_CHANGED",
-        "Workspace generation changed during capture.",
-      );
-    const changes = this.sync(["diff", "--cached", "--quiet", "--exit-code"]);
+    await this.options.onPhase?.("before_stage");
     const assertHead = () => {
       if (
         this.git(["branch", "--show-current"]).trim() !== this.binding.branch ||
@@ -1068,7 +1139,53 @@ export class GitSynchronizer {
           "Branch or HEAD changed before local commit; index is preserved.",
         );
     };
+    let stageWritten = false;
+    try {
+      await this.withMemoryGate(() => {
+        if (!equalRevision(capture.revision, { ...this.options.getRevision() }))
+          throw new SyncFailure(
+            "WORKTREE_CHANGED",
+            "Workspace revision changed before staging; recapture is required.",
+          );
+        this.preflight(capture.head);
+        if (capture.stagePaths.length) {
+          this.git(
+            ["add", "--all", "--pathspec-from-file=-", "--pathspec-file-nul"],
+            capture.stagePaths.map((p) => ":(top,literal)" + p).join("\0") +
+              "\0",
+          );
+          stageWritten = true;
+        }
+        if (!this.matches(this.indexFiles(), capture.files))
+          throw new SyncFailure(
+            "CHECKPOINT_MISMATCH",
+            "Actual staged tree differs from capture; index is preserved for inspection.",
+          );
+      }, true);
+    } catch (error) {
+      if (
+        !(error instanceof SyncFailure) ||
+        error.code !== "GIT_BUSY" ||
+        !stageWritten
+      )
+        throw error;
+      // The gate is released. Settle only a known successful native add whose
+      // complete index still proves the exact frozen tree; never clear staging.
+      assertHead();
+      if (!this.matches(this.indexFiles(), capture.files))
+        throw new SyncFailure(
+          "CHECKPOINT_MISMATCH",
+          "Expired stage admission left an ambiguous index; index and HEAD are preserved.",
+        );
+    }
+    await this.options.onPhase?.("after_stage");
+    const changes = this.sync(["diff", "--cached", "--quiet", "--exit-code"]);
     assertHead();
+    if (!this.matches(this.indexFiles(), capture.files))
+      throw new SyncFailure(
+        "CHECKPOINT_MISMATCH",
+        "Staging changed after checkpoint preparation; index and HEAD are preserved.",
+      );
     if (changes.code === 1) {
       this.git(["commit", "-m", "Save Zaratustra workspace"]);
     } else if (changes.code !== 0)
@@ -1241,6 +1358,7 @@ export class GitSynchronizer {
   }
   private async checkpoint(): Promise<SyncStatus> {
     let captured: Capture | undefined, commit: string | undefined;
+    this.localGateMs = 0;
     let lease: DatabaseSync | undefined;
     try {
       lease = this.lease();
@@ -1271,21 +1389,11 @@ export class GitSynchronizer {
       this.checkOutgoing(before, remote);
       await this.options.onPhase?.("before_capture");
       this.assertNoLocalPrograms();
-      const local = () => {
-        const started = Date.now();
-        this.localDeadline =
-          started + (this.options.localPhaseTimeoutMs ?? 10_000);
-        try {
-          captured = this.capture();
-          commit = this.localCommit(captured);
-        } finally {
-          this.localGateMs = Date.now() - started;
-          this.localDeadline = 0;
-        }
-      };
-      await (this.options.withSnapshot
-        ? this.options.withSnapshot(local)
-        : local());
+      const frozen = await this.freezeWorkspace();
+      await this.options.onPhase?.("after_snapshot");
+      captured = this.capture(frozen);
+      await this.options.onPhase?.("after_capture");
+      commit = await this.localCommit(captured);
       this.publish({
         code: "LOCAL_COMMITTED",
         pending: true,
@@ -1296,6 +1404,15 @@ export class GitSynchronizer {
       await this.options.onPhase?.("before_push");
       await this.remoteIdentity();
       this.preflight(commit);
+      const beforePush = await this.currentRevision();
+      if (
+        beforePush.workspaceId !== captured!.revision.workspaceId ||
+        beforePush.epoch !== captured!.revision.epoch
+      )
+        throw new SyncFailure(
+          "WORKTREE_CHANGED",
+          "Workspace epoch changed before push; an older checkpoint cannot confirm the restored state.",
+        );
       const pushed = await this.command("git", [
         "-C",
         this.projectRoot,
@@ -1324,7 +1441,7 @@ export class GitSynchronizer {
           "CHECKPOINT_MISMATCH",
           "Current remote descendant no longer contains the captured checkpoint tree.",
         );
-      const now = this.options.getRevision();
+      const now = await this.currentRevision();
       const sameEpoch =
         now.workspaceId === captured!.revision.workspaceId &&
         now.epoch === captured!.revision.epoch;
@@ -1391,6 +1508,15 @@ export class GitSynchronizer {
     if (this.timer) clearTimeout(this.timer);
     if (this.poll) clearInterval(this.poll);
     this.watcher?.close();
+    if (!this.running) {
+      try {
+        const current = this.status();
+        if (current.code === "REMOTE_CONFIRMED" && !current.pending)
+          return current;
+      } catch {
+        /* Unavailable status still follows the normal pending close path. */
+      }
+    }
     const timer = setTimeout(() => this.controller.abort(), this.timeout);
     try {
       return await this.flush();

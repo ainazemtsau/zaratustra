@@ -402,12 +402,16 @@ test("corrupt checkpoint lease is reported and never reset", async () => {
   assert.equal(readFileSync(file, "utf8"), "Synthetic corrupt lease bytes");
 });
 
-test("a bounded local checkpoint cannot run Git commands beyond its admission window", async () => {
+test("a bounded metadata snapshot cannot exceed its admission window", async () => {
   const f = fixture();
   writeFileSync(join(f.work, "document.md"), "A local result\n");
   const result = await new GitSynchronizer({
     ...f.options,
     localPhaseTimeoutMs: 1,
+    getRevision: () => {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 5);
+      return f.options.getRevision();
+    },
   }).flush();
   assert.notEqual(result.code, "REMOTE_CONFIRMED");
   assert.equal(result.pending, true);
@@ -843,4 +847,347 @@ test("cached canonical inventory refuses a nested junction with byte-identical o
   assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
   assert.equal(git(f.remote, ["rev-parse", "main"]), before);
   assert.deepEqual(readFileSync(join(f.work, ".git", "index")), index);
+});
+
+test("frozen metadata and delta staging use short gates while hashing commit and network stay outside", async () => {
+  const f = fixture(),
+    root = join(f.work, "memory"),
+    file = join(root, "corpus.json");
+  mkdirSync(root);
+  writeFileSync(file, "Original canonical bytes\n");
+  writeFileSync(
+    join(f.work, ".gitattributes"),
+    "/memory/** -text -eol -working-tree-encoding -filter\n",
+  );
+  git(f.work, ["add", "--all"]);
+  git(f.work, ["commit", "-m", "Seed mature synthetic corpus"]);
+  git(f.work, ["push", "origin", "main"]);
+  const bytes = Buffer.from("Updated canonical bytes α🙂\n");
+  writeFileSync(file, bytes);
+  f.advance();
+  const original = {
+    root,
+    files: [
+      {
+        path: "corpus.json",
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      },
+    ],
+  };
+  const required = ["memory/corpus.json"],
+    commands: { gate: number; name: string; input?: string }[] = [];
+  let gate = 0,
+    currentGate = 0,
+    inventoryCalls = 0;
+  const sync = new GitSynchronizer({
+    ...f.options,
+    withSnapshot: <T>(callback: () => T) => {
+      currentGate = ++gate;
+      try {
+        return f.options.withSnapshot(callback);
+      } finally {
+        currentGate = 0;
+      }
+    },
+    canonicalSnapshot: () => {
+      assert.equal(currentGate, 1);
+      assert.equal(f.gate(), true);
+      inventoryCalls++;
+      return original;
+    },
+    requiredPaths: () => {
+      assert.equal(currentGate, 1);
+      return required;
+    },
+    getRevision: () => {
+      assert.equal(f.gate(), true, "revision reads require a short admission");
+      return f.options.getRevision();
+    },
+    onGitCommand: (args, input) => {
+      const name = args[0];
+      commands.push({ gate: currentGate, name, input });
+      if (currentGate) {
+        assert.equal(
+          currentGate,
+          2,
+          "only delta staging may invoke Git in a memory gate",
+        );
+        assert.ok(
+          [
+            "config",
+            "rev-parse",
+            "branch",
+            "diff",
+            "ls-files",
+            "check-attr",
+            "add",
+          ].includes(name),
+          name,
+        );
+      }
+      if (["hash-object", "commit", "push", "fetch"].includes(name))
+        assert.equal(currentGate, 0, name);
+    },
+    onPhase: (phase) => {
+      if (phase === "after_snapshot") {
+        assert.equal(f.gate(), false);
+        original.files[0].sha256 = "0".repeat(64);
+        required.push("memory/absent.json");
+      }
+    },
+  });
+  const result = await sync.flush();
+  assert.equal(result.code, "REMOTE_CONFIRMED", result.message);
+  assert.equal(result.pending, false);
+  assert.equal(inventoryCalls, 1);
+  const staged = commands.filter((entry) => entry.name === "add");
+  assert.equal(staged.length, 1);
+  assert.equal(staged[0].gate, 2);
+  assert.equal(staged[0].input, ":(top,literal)memory/corpus.json\0");
+  assert.ok(
+    commands.some((entry) => entry.name === "hash-object" && entry.gate === 0),
+  );
+  assert.ok(
+    commands.some((entry) => entry.name === "commit" && entry.gate === 0),
+  );
+  assert.equal(
+    commands.some((entry) => entry.gate === 1),
+    false,
+  );
+  assert.ok((result.localGateMs ?? 10000) < 10000);
+  assert.equal(
+    git(f.remote, ["show", "main:memory/corpus.json"]),
+    bytes.toString("utf8").trim(),
+  );
+});
+
+test("a revision change after capture defers before staging the frozen older state", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "Captured result\n");
+  f.advance();
+  const before = git(f.work, ["rev-parse", "HEAD"]);
+  const result = await new GitSynchronizer({
+    ...f.options,
+    onPhase: (phase) => {
+      if (phase === "after_capture") f.advance();
+    },
+  }).flush();
+  assert.equal(result.code, "WORKTREE_CHANGED", result.message);
+  assert.equal(result.workspace?.revision, 2);
+  assert.equal(git(f.work, ["diff", "--cached", "--name-only"]), "");
+  assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+});
+
+test("a coherent staged older tree commits while newer work remains pending for the next pass", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "First coherent result\n");
+  f.advance();
+  let changed = false,
+    pushes = 0;
+  const confirmed: {
+    revision: number | string | undefined;
+    pending: boolean;
+  }[] = [];
+  const result = await new GitSynchronizer({
+    ...f.options,
+    notify: (status) => {
+      if (status.code === "REMOTE_CONFIRMED")
+        confirmed.push({
+          revision: status.workspace?.revision,
+          pending: status.pending,
+        });
+    },
+    onPhase: (phase) => {
+      if (phase === "after_stage" && !changed) {
+        assert.equal(f.gate(), false);
+        changed = true;
+        writeFileSync(join(f.work, "document.md"), "Newer ongoing work\n");
+        f.advance();
+      }
+      if (phase === "after_push" && ++pushes === 1)
+        assert.equal(
+          git(f.remote, ["show", "main:document.md"]),
+          "First coherent result",
+        );
+    },
+  }).flush();
+  assert.equal(result.code, "REMOTE_CONFIRMED", result.message);
+  assert.equal(result.pending, false);
+  assert.deepEqual(confirmed, [
+    { revision: 2, pending: true },
+    { revision: 3, pending: false },
+  ]);
+  assert.equal(
+    git(f.remote, ["show", "main:document.md"]),
+    "Newer ongoing work",
+  );
+  assert.equal(git(f.work, ["diff", "--cached", "--name-only"]), "");
+});
+
+test("an epoch change before push preserves the local checkpoint without confirming the restored workspace", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "Older epoch checkpoint\n");
+  f.advance();
+  const before = git(f.remote, ["rev-parse", "main"]);
+  const result = await new GitSynchronizer({
+    ...f.options,
+    onPhase: (phase) => {
+      if (phase === "before_push") f.epoch();
+    },
+  }).flush();
+  assert.equal(result.code, "WORKTREE_CHANGED", result.message);
+  assert.equal(result.pending, true);
+  assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+  assert.equal(
+    git(f.work, ["show", "HEAD:document.md"]),
+    "Older epoch checkpoint",
+  );
+});
+
+test("an uncoordinated file change during delta add preserves ambiguous staging and reports its pending reason", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "Captured working result\n");
+  f.advance();
+  const before = git(f.work, ["rev-parse", "HEAD"]);
+  let changed = false;
+  const sync = new GitSynchronizer({
+    ...f.options,
+    onGitCommand: (args) => {
+      if (args[0] === "add" && !changed) {
+        assert.equal(f.gate(), true);
+        changed = true;
+        writeFileSync(
+          join(f.work, "document.md"),
+          "Uncoordinated external change\n",
+        );
+      }
+    },
+  });
+  const result = await sync.flush();
+  assert.equal(result.code, "CHECKPOINT_MISMATCH", result.message);
+  assert.equal(result.pending, true);
+  assert.equal(
+    git(f.work, ["show", ":document.md"]),
+    "Uncoordinated external change",
+  );
+  assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+  const retry = await sync.flush();
+  assert.equal(retry.code, "STAGING_CONFLICT");
+  assert.equal(
+    git(f.work, ["show", ":document.md"]),
+    "Uncoordinated external change",
+  );
+});
+
+test("manual staging after the stage gate is preserved and refused before an automatic commit", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "Prepared checkpoint result\n");
+  f.advance();
+  const before = git(f.work, ["rev-parse", "HEAD"]);
+  let manualIndex: Buffer | undefined;
+  const result = await new GitSynchronizer({
+    ...f.options,
+    onPhase: (phase) => {
+      if (phase !== "after_stage") return;
+      assert.equal(f.gate(), false);
+      writeFileSync(
+        join(f.work, "owner-manual.txt"),
+        "Owner staged material\n",
+      );
+      git(f.work, ["add", "owner-manual.txt"]);
+      manualIndex = readFileSync(join(f.work, ".git", "index"));
+    },
+  }).flush();
+  assert.equal(result.code, "CHECKPOINT_MISMATCH", result.message);
+  assert.equal(result.pending, true);
+  assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+  assert.equal(
+    git(f.work, ["show", ":owner-manual.txt"]),
+    "Owner staged material",
+  );
+  assert.equal(
+    git(f.work, ["show", ":document.md"]),
+    "Prepared checkpoint result",
+  );
+  assert.deepEqual(readFileSync(join(f.work, ".git", "index")), manualIndex);
+});
+
+test("successful delta add settles outside an expired gate without stranding its staged checkpoint", async () => {
+  const f = fixture();
+  writeFileSync(
+    join(f.work, "document.md"),
+    "Coherent timeout-settled checkpoint\n",
+  );
+  f.advance();
+  const realNow = Date.now;
+  let offset = 0,
+    addStarted = false,
+    expired = false;
+  Date.now = () => realNow() + offset;
+  try {
+    const result = await new GitSynchronizer({
+      ...f.options,
+      onGitCommand: (args) => {
+        if (args[0] === "add") addStarted = true;
+        if (
+          addStarted &&
+          !expired &&
+          args[0] === "ls-files" &&
+          args.includes("--stage")
+        ) {
+          assert.equal(f.gate(), true);
+          expired = true;
+          offset = 20_000;
+        }
+      },
+    }).flush();
+    assert.equal(expired, true);
+    assert.equal(result.code, "REMOTE_CONFIRMED", result.message);
+    assert.equal(result.pending, false);
+    assert.equal(git(f.work, ["diff", "--cached", "--name-only"]), "");
+    assert.equal(
+      git(f.remote, ["show", "main:document.md"]),
+      "Coherent timeout-settled checkpoint",
+    );
+    assert.equal(
+      git(f.remote, ["rev-parse", "main"]),
+      git(f.work, ["rev-parse", "HEAD"]),
+    );
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test("clean close preserves remote confirmation without another capture commit or push", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "Confirmed before closing\n");
+  f.advance();
+  const commands: readonly string[][] = [];
+  const observed: string[][] = commands as string[][];
+  const sync = new GitSynchronizer({
+    ...f.options,
+    onGitCommand: (args) => observed.push([...args]),
+  });
+  const confirmed = await sync.flush();
+  assert.equal(confirmed.code, "REMOTE_CONFIRMED", confirmed.message);
+  assert.equal(confirmed.pending, false);
+  observed.length = 0;
+  const closed = await sync.close();
+  assert.equal(closed.code, "REMOTE_CONFIRMED");
+  assert.equal(closed.pending, false);
+  assert.equal(closed.commit, confirmed.commit);
+  assert.equal(closed.remoteCommit, confirmed.remoteCommit);
+  assert.ok(
+    observed.every((args) =>
+      ["status", "rev-parse", "branch"].includes(args[0]),
+    ),
+    JSON.stringify(observed),
+  );
+  assert.equal(
+    git(f.remote, ["show", "main:document.md"]),
+    "Confirmed before closing",
+  );
 });

@@ -1014,7 +1014,7 @@ export default function extension(pi: ExtensionAPI) {
                   signal: _signal,
                 }),
           );
-          autosave?.request("tool settled");
+          if (name !== "zara_sync") autosave?.request("tool settled");
           return {
             content: [{ type: "text", text: JSON.stringify(result) }],
             details: result,
