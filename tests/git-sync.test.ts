@@ -24,6 +24,7 @@ import {
   saveSyncBinding,
   type SyncBinding,
   type SyncRevision,
+  type SyncStatus,
 } from "../src/storage/git-sync.ts";
 import { createGitAutosave, publicSyncStatus } from "../src/extension/sync.ts";
 
@@ -987,6 +988,7 @@ test("a coherent staged older tree commits while newer work remains pending for 
   f.advance();
   let changed = false,
     pushes = 0;
+  let priorPending: SyncStatus | undefined;
   const confirmed: {
     revision: number | string | undefined;
     pending: boolean;
@@ -1001,6 +1003,13 @@ test("a coherent staged older tree commits while newer work remains pending for 
         });
     },
     onPhase: (phase) => {
+      if (phase === "before_capture" && pushes === 1)
+        priorPending = JSON.parse(
+          readFileSync(
+            join(f.options.runtimeRoot, "git-sync", "status.json"),
+            "utf8",
+          ),
+        ) as SyncStatus;
       if (phase === "after_stage" && !changed) {
         assert.equal(f.gate(), false);
         changed = true;
@@ -1016,10 +1025,10 @@ test("a coherent staged older tree commits while newer work remains pending for 
   }).flush();
   assert.equal(result.code, "REMOTE_CONFIRMED", result.message);
   assert.equal(result.pending, false);
-  assert.deepEqual(confirmed, [
-    { revision: 2, pending: true },
-    { revision: 3, pending: false },
-  ]);
+  assert.equal(priorPending?.code, "REMOTE_CONFIRMED");
+  assert.equal(priorPending?.workspace?.revision, 2);
+  assert.equal(priorPending?.pending, true);
+  assert.deepEqual(confirmed, [{ revision: 3, pending: false }]);
   assert.equal(
     git(f.remote, ["show", "main:document.md"]),
     "Newer ongoing work",
@@ -1288,4 +1297,174 @@ test("real watcher ignores runtime journals and owned temporary siblings but ret
   } finally {
     await sync.close();
   }
+});
+
+test("notifications emit one settled success per commit across repeated and recreated synchronizers", async () => {
+  const f = fixture(),
+    notices: SyncStatus[] = [];
+  const options = {
+    ...f.options,
+    notify: (status: SyncStatus) => {
+      notices.push(status);
+    },
+  };
+  writeFileSync(join(f.work, "document.md"), "First notification checkpoint\n");
+  const first = new GitSynchronizer(options);
+  const saved = await first.flush();
+  assert.equal(saved.code, "REMOTE_CONFIRMED");
+  assert.deepEqual(
+    notices.map((s) => s.code),
+    ["REMOTE_CONFIRMED"],
+  );
+  await first.flush();
+  await new GitSynchronizer(options).flush();
+  await new GitSynchronizer({
+    ...options,
+    runtimeRoot: join(f.base, "other-runtime"),
+  }).flush();
+  assert.equal(notices.length, 1);
+  writeFileSync(
+    join(f.work, "document.md"),
+    "Second notification checkpoint\n",
+  );
+  const next = await first.flush();
+  assert.equal(next.pending, false);
+  assert.notEqual(next.commit, saved.commit);
+  assert.deepEqual(
+    notices.map((s) => s.commit),
+    [saved.commit, next.commit],
+  );
+});
+
+test("notifications suppress pending confirmations and retain a later settled notice", async () => {
+  const f = fixture(),
+    notices: SyncStatus[] = [];
+  let changed = false;
+  writeFileSync(
+    join(f.work, "document.md"),
+    "Checkpoint with a newer request\n",
+  );
+  const sync = new GitSynchronizer({
+    ...f.options,
+    notify: (status) => {
+      notices.push(status);
+    },
+    onPhase: (phase) => {
+      if (phase === "after_push" && !changed) {
+        changed = true;
+        f.advance();
+      }
+    },
+  });
+  const saved = await sync.flush();
+  assert.equal(saved.code, "REMOTE_CONFIRMED");
+  assert.equal(saved.pending, false);
+  assert.equal(notices.length, 1);
+  assert.equal(notices[0].code, "REMOTE_CONFIRMED");
+  assert.equal(notices[0].pending, false);
+  assert.equal(notices[0].commit, saved.commit);
+});
+
+test("notifications seed an existing settled upgrade baseline without repeating its commit", async () => {
+  const f = fixture();
+  const initial = await new GitSynchronizer(f.options).flush();
+  assert.equal(initial.pending, false);
+  const marker = join(f.work, ".git", "zaratustra-sync", "notification.json");
+  if (existsSync(marker)) unlinkSync(marker);
+  const notices: SyncStatus[] = [];
+  const sync = new GitSynchronizer({
+    ...f.options,
+    notify: (status) => {
+      notices.push(status);
+    },
+  });
+  const same = await sync.flush();
+  assert.equal(same.commit, initial.commit);
+  assert.equal(notices.length, 0);
+  writeFileSync(
+    join(f.work, "document.md"),
+    "A genuinely new upgrade checkpoint\n",
+  );
+  const next = await sync.flush();
+  assert.deepEqual(
+    notices.map((s) => s.commit),
+    [next.commit],
+  );
+});
+
+test("notifications do not consume a success when the host declines or throws", async () => {
+  const f = fixture();
+  writeFileSync(join(f.work, "document.md"), "Pending presentation\n");
+  const declined = await new GitSynchronizer({
+    ...f.options,
+    notify: () => false,
+  }).flush();
+  assert.equal(declined.code, "REMOTE_CONFIRMED");
+  const throwing = await new GitSynchronizer({
+    ...f.options,
+    notify: () => {
+      throw new Error("Synthetic closed host");
+    },
+  }).flush();
+  assert.equal(throwing.code, "REMOTE_CONFIRMED");
+  const notices: SyncStatus[] = [];
+  const next = await new GitSynchronizer({
+    ...f.options,
+    notify: (s) => {
+      notices.push(s);
+    },
+  }).flush();
+  assert.deepEqual(
+    notices.map((s) => s.commit),
+    [next.commit],
+  );
+  await new GitSynchronizer({
+    ...f.options,
+    notify: (s) => {
+      notices.push(s);
+    },
+  }).flush();
+  assert.equal(notices.length, 1);
+});
+
+test("notifications leave offline, staging and live-lease delays visible", async () => {
+  const f = fixture(),
+    notices: SyncStatus[] = [];
+  const sync = new GitSynchronizer({
+    ...f.options,
+    notify: (s) => {
+      notices.push(s);
+    },
+  });
+  const offline = f.remote + ".offline";
+  renameSync(f.remote, offline);
+  try {
+    assert.equal((await sync.flush()).code, "PENDING_OFFLINE");
+    assert.equal(notices.at(-1)?.code, "PENDING_OFFLINE");
+  } finally {
+    renameSync(offline, f.remote);
+  }
+  writeFileSync(join(f.work, "document.md"), "Manually staged content\n");
+  git(f.work, ["add", "document.md"]);
+  assert.equal((await sync.flush()).code, "STAGING_CONFLICT");
+  assert.equal(notices.at(-1)?.code, "STAGING_CONFLICT");
+  git(f.work, ["reset", "--", "document.md"]);
+  assert.equal((await sync.flush()).code, "REMOTE_CONFIRMED");
+  const lease = new DatabaseSync(
+    join(f.work, ".git", "zaratustra-sync", "lease.sqlite"),
+  );
+  lease.exec("BEGIN IMMEDIATE");
+  try {
+    assert.equal((await sync.flush()).code, "GIT_BUSY");
+    assert.equal(notices.at(-1)?.code, "GIT_BUSY");
+  } finally {
+    lease.exec("ROLLBACK");
+    lease.close();
+  }
+  assert.equal(
+    notices.some(
+      (s) => s.code === "LOCAL_COMMITTED" || s.code === "LOCAL_SAVED",
+    ),
+    false,
+  );
 });

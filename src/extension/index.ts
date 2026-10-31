@@ -579,7 +579,7 @@ export default function extension(pi: ExtensionAPI) {
           withSnapshot: (callback) =>
             currentDisk.withOperation("read", callback),
           notify: (status) => {
-            if (disk !== currentDisk || closing) return;
+            if (disk !== currentDisk || closing) return false;
             pi.sendMessage(
               {
                 customType: "zaratustra.sync.status",
@@ -592,6 +592,7 @@ export default function extension(pi: ExtensionAPI) {
               },
               { triggerTurn: false },
             );
+            return true;
           },
         });
         autosave.request("workspace opened");

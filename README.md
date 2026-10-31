@@ -84,6 +84,10 @@ that destination. `zara_sync` reports status or retries pending delivery. With a
 binding, changes across the working repository are coalesced after two seconds;
 startup, agent completion and orderly shutdown also request a checkpoint.
 
+The chat shows one success notice per newly confirmed commit. Rechecking the same
+commit, reopening Pi and intermediate local states do not repeat that success.
+Errors and deferred saves remain visible; tools still return the full sync state.
+
 The checkpoint includes canonical memory, documents, selected sources and other
 working files. Dependencies, derived databases, OS leases and temporary caches are
 excluded precisely. Existing staging, unresolved Git operations, branch changes,

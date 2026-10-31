@@ -98,7 +98,8 @@ export interface SyncOptions {
   getRevision: () => SyncRevision;
   withSnapshot?: <T>(callback: () => T) => T | Promise<T>;
   verifyRemote?: (binding: SyncBinding) => Promise<RemoteIdentity>;
-  notify?: (status: SyncStatus) => void;
+  /** Return false when the host declines presentation (for example during close). */
+  notify?: (status: SyncStatus) => void | boolean;
   exclusions?: readonly string[];
   debounceMs?: number;
   commandTimeoutMs?: number;
@@ -224,6 +225,9 @@ export class GitSynchronizer {
   private readonly root: string;
   private readonly leasePath: string;
   private readonly statePath: string;
+  private readonly notificationPath: string;
+  private readonly notificationBinding: string;
+  private lastNotifiedCommit?: string;
   private readonly requestPath: string;
   private readonly exclusions: readonly string[];
   private readonly limit: number;
@@ -282,6 +286,8 @@ export class GitSynchronizer {
     const leaseRoot = join(common, "zaratustra-sync");
     mkdirSync(leaseRoot, { recursive: true });
     this.leasePath = join(leaseRoot, "lease.sqlite");
+    this.notificationPath = join(leaseRoot, "notification.json");
+    this.notificationBinding = hash(JSON.stringify(this.binding));
     mkdirSync(join(this.root, "requests"), { recursive: true });
   }
   private excluded(path: string) {
@@ -1240,6 +1246,74 @@ export class GitSynchronizer {
       );
     return commit;
   }
+  /** Presentation state is repository-wide and protected by the checkpoint lease. */
+  private notificationState() {
+    try {
+      const value = readJSON<{
+        format: number;
+        binding: string;
+        commit?: string;
+      }>(this.notificationPath);
+      return value?.format === 1 && value.binding === this.notificationBinding
+        ? value
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  private initializeNotificationBaseline(remote: string | undefined) {
+    if (this.notificationState()) return;
+    try {
+      const previous = !existsSync(this.notificationPath)
+        ? readJSON<SyncStatus>(this.statePath)
+        : undefined;
+      const current = this.options.getRevision();
+      const commit =
+        previous?.code === "REMOTE_CONFIRMED" &&
+        !previous.pending &&
+        previous.commit === remote &&
+        previous.workspace?.workspaceId === current.workspaceId &&
+        previous.workspace.epoch === current.epoch
+          ? previous.commit
+          : undefined;
+      atomic(this.notificationPath, {
+        format: 1,
+        binding: this.notificationBinding,
+        commit,
+      });
+    } catch {
+      /* Presentation bookkeeping must never change checkpoint durability. */
+    }
+  }
+  private notify(status: SyncStatus) {
+    if (
+      !this.options.notify ||
+      status.code === "LOCAL_SAVED" ||
+      status.code === "LOCAL_COMMITTED"
+    )
+      return;
+    try {
+      if (status.code !== "REMOTE_CONFIRMED") {
+        this.options.notify(status);
+        return;
+      }
+      if (status.pending || !status.commit) return;
+      if (
+        this.notificationState()?.commit === status.commit ||
+        this.lastNotifiedCommit === status.commit
+      )
+        return;
+      if (this.options.notify(status) === false) return;
+      this.lastNotifiedCommit = status.commit;
+      atomic(this.notificationPath, {
+        format: 1,
+        binding: this.notificationBinding,
+        commit: status.commit,
+      });
+    } catch {
+      /* Presentation cannot change a durable checkpoint outcome. */
+    }
+  }
   private publish(value: Omit<SyncStatus, "format" | "updatedAt">) {
     const status: SyncStatus = {
       format: 1,
@@ -1261,11 +1335,7 @@ export class GitSynchronizer {
       ).toISOString();
     } else if (status.code === "REMOTE_CONFIRMED") this.failures = 0;
     atomic(this.statePath, status);
-    try {
-      this.options.notify?.(status);
-    } catch {
-      /* Presentation cannot change a durable checkpoint outcome. */
-    }
+    this.notify(status);
     return status;
   }
   status(): SyncStatus {
@@ -1398,17 +1468,23 @@ export class GitSynchronizer {
             : "Checkpoint lease is unavailable; preserve its files.",
       });
     }
-    if (!lease)
-      return {
+    if (!lease) {
+      const status: SyncStatus = {
         ...this.status(),
         code: "GIT_BUSY",
         pending: true,
+        updatedAt: new Date().toISOString(),
         message: "Another live process owns the repository checkpoint lease.",
       };
+      // The owning process retains shared status; this waiting host still reports its delay.
+      this.notify(status);
+      return status;
+    }
     try {
       this.preflight();
       await this.remoteIdentity();
       const remote = await this.fetchRemote();
+      this.initializeNotificationBaseline(remote);
       const before = this.git(["rev-parse", "HEAD"]).trim();
       if (remote) this.assertAncestor(remote, before);
       this.checkOutgoing(before, remote);
