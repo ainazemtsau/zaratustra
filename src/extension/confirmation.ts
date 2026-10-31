@@ -13,7 +13,7 @@ export const approvalText = (s: string) =>
 /** Complete finite projection for the ordinary chat transcript, never a dialog. */
 export const approvalDetails = (p: Proposal) => approvalText(renderApproval(p));
 
-/** The caller first publishes full details in chat and observes Pi's message_end.
+/** The caller first publishes full details and checks delivery to the current chat branch.
  * Choice/custom text is not authority. Only the separate native confirm result
  * may approve; custom text instead declines this immutable proposal.
  */

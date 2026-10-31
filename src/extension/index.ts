@@ -1192,7 +1192,7 @@ export default function extension(pi: ExtensionAPI) {
   );
   register(
     "zara_confirm",
-    "Review one exact immutable proposal in chat, then ask a short native question. In TUI the first call queues full chat text and returns review_in_chat; call again only after that tool turn finishes and Pi displays it. Options include Other answer; custom text declines the old proposal and returns requested_changes, never permission. Only actual native confirmation can approve. No approved flag; refusal/cancel never dispatches. RPC/SDK retain full native presentation.",
+    "Review one exact immutable proposal in chat, then ask a short native question. In TUI the first call queues full chat text and returns review_in_chat; continue on the next tool turn with the same preview_ref once Pi delivers it to chat, without waiting for another user message. Options include Other answer; custom text declines the old proposal and returns requested_changes, never permission. Only actual native confirmation can approve. No approved flag; refusal/cancel never dispatches. RPC/SDK retain full native presentation.",
     z.strictObject({ preview_ref: z.string(), revoke: z.boolean().optional() }),
     async (p, ctx) => {
       const c = core,
@@ -1230,6 +1230,7 @@ export default function extension(pi: ExtensionAPI) {
               approvals,
               review.request_id,
               approvalDetails(review.payload),
+              ctx.sessionManager,
             )
           )
             return {
@@ -1240,7 +1241,7 @@ export default function extension(pi: ExtensionAPI) {
                 preview_ref: review.request_id,
                 permission_granted: false,
                 next_action:
-                  "Read the full visible proposal in chat after this turn, then call zara_confirm again. Do not call again in the same tool turn.",
+                  "The exact proposal is queued for the chat at the end of this tool turn. On your next tool turn, call zara_confirm again with this same preview_ref to open the native question. Do not wait for another user message or call repeatedly in this tool turn.",
               },
             };
         }

@@ -1,50 +1,51 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import { randomUUID } from "node:crypto";
 
 export const PROPOSAL_MESSAGE = "zaratustra.proposal";
 
-/** sendMessage is deferred during a tool turn. Do not open a question until Pi
- * actually emits the matching message in the transcript on a later turn.
- * This is presentation bookkeeping, never consent or execution authority.
+/** Pi defers context-only custom messages until the tool turn ends. Those messages
+ * reach the public UI listeners, but not extension message_end hooks in Pi 1.4.
+ * Match their exact entry in the current session branch before asking a question.
+ * Transcript delivery is presentation bookkeeping, never proof of reading or consent.
  */
 export function chatReview(pi: ExtensionAPI) {
   const entries = new Map<
     string,
-    {
-      owner: object;
-      text: string;
-      nonce: string;
-      displayed: boolean;
-    }
+    { owner: object; text: string; nonce: string }
   >();
-  pi.on("message_end", (event) => {
-    const message = event.message;
-    if (
-      message.role !== "custom" ||
-      message.customType !== PROPOSAL_MESSAGE ||
-      message.display !== true
-    )
-      return;
-    const details = message.details as
-      | { preview?: string; nonce?: string }
-      | undefined;
-    const entry = details?.preview ? entries.get(details.preview) : undefined;
-    if (
-      entry &&
-      entry.nonce === details?.nonce &&
-      message.content === entry.text
-    )
-      entry.displayed = true;
-  });
   pi.on("session_shutdown", () => {
     entries.clear();
   });
+  pi.on("session_tree", () => {
+    entries.clear();
+  });
   return {
-    ensure(owner: object, ref: string, text: string): boolean {
+    ensure(
+      owner: object,
+      ref: string,
+      text: string,
+      session: Pick<ExtensionContext["sessionManager"], "getBranch">,
+    ): boolean {
       const previous = entries.get(ref);
-      if (previous?.owner === owner && previous.text === text)
-        return previous.displayed;
-      const entry = { owner, text, nonce: randomUUID(), displayed: false };
+      if (previous?.owner === owner && previous.text === text) {
+        return session.getBranch().some((entry) => {
+          if (
+            entry.type !== "custom_message" ||
+            entry.customType !== PROPOSAL_MESSAGE ||
+            entry.display !== true ||
+            entry.content !== text
+          )
+            return false;
+          const details = entry.details as
+            | { preview?: string; nonce?: string }
+            | undefined;
+          return details?.preview === ref && details.nonce === previous.nonce;
+        });
+      }
+      const entry = { owner, text, nonce: randomUUID() };
       entries.set(ref, entry);
       try {
         pi.sendMessage(

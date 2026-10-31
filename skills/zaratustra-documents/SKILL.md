@@ -27,6 +27,9 @@ Bind a Work/step when applicable, or use the explicit independent document path.
 The adapter supplies/preserves the single stable ID comment. Normal service metadata
 lives in Core rather than duplicated headers. Explain the change and alternatives,
 obtain existing exact zara_confirm, then zara_document_apply with its preview_ref.
+If zara_confirm first returns review_in_chat, continue on the next tool turn with
+the same preview_ref to open the native question. Do not treat the queued review
+as permission or wait for a new user message merely because the first call queued it.
 The apply tool coordinates Pi's PUBLIC native write engine; do not issue an additional
 write/edit for the same preview. No custom text editor or second executor is installed.
 Only claim saving after committed:true. Saving does not complete Work or prove benefit.

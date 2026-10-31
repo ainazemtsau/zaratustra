@@ -6,7 +6,10 @@ import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
-import { createWriteTool } from "@earendil-works/pi-coding-agent";
+import {
+  createWriteTool,
+  SessionManager,
+} from "@earendil-works/pi-coding-agent";
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -24,6 +27,7 @@ type Adapter = {
   ctx: ExtensionToolContext;
   warnings: string[];
   messages: Parameters<ExtensionAPI["sendMessage"]>[0][];
+  persistProposal: (index?: number) => string;
   emit: (name: string, event?: Record<string, unknown>) => Promise<unknown>;
   call: (
     name: string,
@@ -79,12 +83,13 @@ function fixture() {
       tools = new Map<string, Tool>(),
       warnings: string[] = [];
     const messages: Parameters<ExtensionAPI["sendMessage"]>[0][] = [];
+    const sessionManager = SessionManager.inMemory(cwd);
     const ctx = {
       cwd,
       mode: options.mode ?? "sdk",
       hasUI: true,
       model: { provider: "mechanical", id: "no-provider-dispatch" },
-      sessionManager: { getSessionId: () => "native-test-" + randomUUID() },
+      sessionManager,
       isProjectTrusted: () => true,
       abort() {},
       ui: {
@@ -146,7 +151,26 @@ function fixture() {
       assert.equal(confirmed.code, undefined, JSON.stringify(confirmed));
       return { path, content };
     };
-    const value = { ctx, emit, call, snapshot, prepare, warnings, messages };
+    const persistProposal = (index = messages.length - 1) => {
+      const message = messages[index];
+      assert.ok(message, "a proposal must first be queued by the adapter");
+      return sessionManager.appendCustomMessageEntry(
+        message.customType,
+        message.content,
+        message.display,
+        message.details,
+      );
+    };
+    const value = {
+      ctx,
+      emit,
+      call,
+      snapshot,
+      prepare,
+      warnings,
+      messages,
+      persistProposal,
+    };
     adapters.push(value);
     return value;
   }
@@ -194,6 +218,8 @@ test("TUI proposal goes to chat before a short question; custom answer never gra
     const queued = await a.call("zara_confirm", request);
     assert.equal(queued.status, "review_in_chat");
     assert.equal(queued.permission_granted, false);
+    assert.match(String(queued.next_action), /next tool turn/);
+    assert.match(String(queued.next_action), /same preview_ref/);
     assert.equal(a.messages.length, 1);
     assert.ok(String(a.messages[0].content).includes("FULL CONTENT MARKER"));
     assert.equal(
@@ -206,9 +232,7 @@ test("TUI proposal goes to chat before a short question; custom answer never gra
       "same-turn calls must not duplicate messages or open questions",
     );
     assert.equal(confirmations, 0);
-    await a.emit("message_end", {
-      message: { role: "custom", ...a.messages[0] },
-    });
+    a.persistProposal();
     const answer = await a.call("zara_confirm", request);
     assert.equal(answer.requested_changes, "Поменяй только заголовок");
     assert.equal(answer.permission_granted, false);
@@ -265,9 +289,7 @@ test("TUI choosing Confirm after chat still requires the actual native affirmati
       (await a.call("zara_confirm", request)).status,
       "review_in_chat",
     );
-    await a.emit("message_end", {
-      message: { role: "custom", ...a.messages[0] },
-    });
+    a.persistProposal();
     const answer = await a.call("zara_confirm", request);
     assert.equal(answer.code, undefined);
     assert.equal(confirmations, 1);
@@ -306,9 +328,7 @@ test("TUI visible chat plus actual native Yes approves only that exact proposal 
       (await a.call("zara_confirm", request)).status,
       "review_in_chat",
     );
-    await a.emit("message_end", {
-      message: { role: "custom", ...a.messages[0] },
-    });
+    a.persistProposal();
     const answer = await a.call("zara_confirm", request);
     assert.equal(answer.code, undefined);
     assert.equal(answer.status, "approved-transient");
@@ -318,6 +338,53 @@ test("TUI visible chat plus actual native Yes approves only that exact proposal 
     assert.throws(() => readFileSync(path), { code: "ENOENT" });
   } finally {
     await f.close();
+  }
+});
+
+test("TUI cancellation after transcript delivery never opens native approval or grants permission", async () => {
+  for (const choice of [undefined, "Отмена", "Свой ответ…"]) {
+    const f = fixture();
+    let confirmations = 0;
+    const a = f.adapter(
+      async () => {
+        confirmations++;
+        return true;
+      },
+      { mode: "tui", choice },
+    );
+    try {
+      await a.emit("session_start");
+      const path = join(f.output, "cancelled-not-created.md");
+      const preview = await a.call("zara_file_preview", {
+        request_id: "chat-cancelled",
+        tool: "write",
+        arguments: { path, content: "cancelled bytes" },
+        independent_basis: "Independent mechanical cancellation fixture",
+        consequence: "Create exact fixture bytes",
+        alternatives: "Leave fixture absent",
+      });
+      assert.equal(preview.code, undefined);
+      const request = { preview_ref: preview.request_id };
+      assert.equal(
+        (await a.call("zara_confirm", request)).status,
+        "review_in_chat",
+      );
+      a.persistProposal();
+      const answer = await a.call("zara_confirm", request);
+      assert.equal(answer.status, "declined");
+      assert.equal(
+        (answer.answer as { affirmative: boolean }).affirmative,
+        false,
+      );
+      assert.equal(confirmations, 0);
+      assert.equal(
+        (await a.call("zara_confirm", request)).code,
+        "APPROVAL_STALE",
+      );
+      assert.throws(() => readFileSync(path), { code: "ENOENT" });
+    } finally {
+      await f.close();
+    }
   }
 });
 

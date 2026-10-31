@@ -8,6 +8,7 @@ import {
   CustomMessageComponent,
   ExtensionSelectorComponent,
   initTheme,
+  SessionManager,
 } from "@earendil-works/pi-coding-agent";
 import { stripTerminalSequences, visibleWidth } from "@earendil-works/pi-tui";
 import {
@@ -97,7 +98,7 @@ test("real Pi chat message renders the complete long text rather than a clipped 
   assert.ok(lines.every((line) => visibleWidth(line) <= 60));
 });
 
-function chatFixture() {
+function chatFixture(session = SessionManager.inMemory()) {
   type Message = {
     customType: string;
     content: string;
@@ -116,45 +117,110 @@ function chatFixture() {
       options.push(opts);
     },
   } as unknown as ExtensionAPI);
-  const display = (message = messages.at(-1)) =>
-    hooks.get("message_end")?.({ message: { role: "custom", ...message } });
-  return { gate, hooks, messages, options, display };
+  const persist = (message = messages.at(-1)!) =>
+    session.appendCustomMessageEntry(
+      message.customType,
+      message.content,
+      message.display,
+      message.details,
+    );
+  return { gate, hooks, messages, options, session, persist };
 }
 
-test("queued sendMessage is not treated as displayed; no duplicate message before Pi emits it", () => {
+test("queued sendMessage waits for Pi's public session append without duplicating the proposal", () => {
   const f = chatFixture();
   const owner = {};
-  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT"), false);
-  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT"), false);
+  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT", f.session), false);
+  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT", f.session), false);
   assert.equal(f.messages.length, 1);
   assert.deepEqual(f.options[0], { triggerTurn: false });
   assert.equal(f.messages[0].display, true);
-  f.display();
-  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT"), true);
+  assert.equal(f.session.getBranch().length, 0);
+  f.persist();
+  assert.equal(f.gate.ensure(owner, "p1", "FULL TEXT", f.session), true);
+  assert.equal(f.messages.length, 1);
 });
 
-test("chat acknowledgement binds exact content/nonce/owner; reload and changed text require new display", () => {
+test("only an exact visible proposal entry in the public session acknowledges transcript delivery", () => {
   const f = chatFixture();
   const owner = {};
-  f.gate.ensure(owner, "p1", "original");
+  f.gate.ensure(owner, "p1", "original", f.session);
   const message = f.messages[0];
-  f.display({ ...message, display: false });
+  f.session.appendCustomEntry(PROPOSAL_MESSAGE, message);
+  assert.equal(f.gate.ensure(owner, "p1", "original", f.session), false);
+  for (const mismatch of [
+    { ...message, display: false },
+    { ...message, customType: "unrelated.message" },
+    { ...message, content: "changed" },
+    { ...message, details: { ...message.details, preview: "other-preview" } },
+    { ...message, details: { ...message.details, nonce: "wrong" } },
+  ]) {
+    f.persist(mismatch);
+    assert.equal(f.gate.ensure(owner, "p1", "original", f.session), false);
+  }
+  f.persist(message);
+  assert.equal(f.gate.ensure(owner, "p1", "original", f.session), true);
+  assert.equal(f.messages.length, 1);
+});
+
+test("branch navigation excludes old delivery and requeues one fresh proposal after session_tree", () => {
+  const f = chatFixture();
+  const owner = {};
+  const ancestor = f.session.appendCustomEntry("test.branch-root", {});
+  f.gate.ensure(owner, "p1", "proposal", f.session);
+  const delivered = f.persist();
+  assert.equal(f.gate.ensure(owner, "p1", "proposal", f.session), true);
+  f.session.branch(ancestor);
+  assert.ok(f.session.getEntries().some((entry) => entry.id === delivered));
+  assert.equal(f.gate.ensure(owner, "p1", "proposal", f.session), false);
+  f.hooks.get("session_tree")?.({});
+  assert.equal(f.gate.ensure(owner, "p1", "proposal", f.session), false);
+  assert.equal(f.messages.length, 2);
+  assert.notEqual(f.messages[0].details.nonce, f.messages[1].details.nonce);
+  assert.equal(f.gate.ensure(owner, "p1", "proposal", f.session), false);
+  assert.equal(f.messages.length, 2);
+  f.session.branch(delivered);
   assert.equal(
-    f.gate.ensure(owner, "p1", "original"),
+    f.gate.ensure(owner, "p1", "proposal", f.session),
     false,
-    "hidden messages are not visible review",
+    "the old branch's matching text cannot satisfy the new nonce",
   );
-  f.display({ ...message, content: "changed" });
-  assert.equal(f.gate.ensure(owner, "p1", "original"), false);
-  f.display({ ...message, details: { ...message.details, nonce: "wrong" } });
-  assert.equal(f.gate.ensure(owner, "p1", "original"), false);
-  f.display(message);
-  assert.equal(f.gate.ensure(owner, "p1", "original"), true);
-  assert.equal(f.gate.ensure({}, "p1", "original"), false);
-  assert.equal(f.gate.ensure(owner, "p1", "new text"), false);
-  f.display();
-  f.hooks.get("session_shutdown")?.({});
-  assert.equal(f.gate.ensure(owner, "p1", "new text"), false);
+  f.session.branch(ancestor);
+  f.persist();
+  assert.equal(f.gate.ensure(owner, "p1", "proposal", f.session), true);
+});
+
+test("a changed owner or proposal, extension reload and shutdown require a fresh exact delivery", () => {
+  const f = chatFixture();
+  const owner = {};
+  f.gate.ensure(owner, "p1", "original", f.session);
+  f.persist();
+  assert.equal(f.gate.ensure(owner, "p1", "original", f.session), true);
+  const nextOwner = {};
+  assert.equal(f.gate.ensure(nextOwner, "p1", "original", f.session), false);
+  assert.notEqual(f.messages[0].details.nonce, f.messages[1].details.nonce);
+  f.persist();
+  assert.equal(f.gate.ensure(nextOwner, "p1", "original", f.session), true);
+  assert.equal(f.gate.ensure(nextOwner, "p1", "new text", f.session), false);
+  f.persist();
+  assert.equal(f.gate.ensure(nextOwner, "p1", "new text", f.session), true);
+
+  const reloaded = chatFixture(f.session);
+  assert.equal(
+    reloaded.gate.ensure(nextOwner, "p1", "new text", f.session),
+    false,
+  );
+  reloaded.persist();
+  assert.equal(
+    reloaded.gate.ensure(nextOwner, "p1", "new text", f.session),
+    true,
+  );
+  reloaded.hooks.get("session_shutdown")?.({});
+  assert.equal(
+    reloaded.gate.ensure(nextOwner, "p1", "new text", f.session),
+    false,
+  );
+  assert.equal(reloaded.messages.length, 2);
 });
 
 test("ordinary questions offer real selectable choices plus native custom input", async () => {
