@@ -124,6 +124,194 @@ test("native checkpoint saves the exact full working set; network is outside sna
   assert.equal(git(f.work, ["diff", "--cached", "--name-only"]), "");
 });
 
+test(
+  "checkpoint subprocess stdin failures timeout and abort settle within bounded time",
+  { timeout: 15000 },
+  async (t) => {
+    const f = fixture();
+    const sync = new GitSynchronizer({ ...f.options, commandTimeoutMs: 1500 });
+    const internal = sync as unknown as {
+      command: (
+        command: string,
+        args: string[],
+        input?: string,
+      ) => Promise<{ code: number; stdout: string; stderr: string }>;
+      controller: AbortController;
+    };
+    const command = (script: string, input?: string) =>
+      internal.command(
+        process.execPath,
+        ["--input-type=module", "-e", script],
+        input,
+      );
+    const input = "Synthetic α🙂 checkpoint stdin\n".repeat(100000);
+    await t.test(
+      "multi-MiB stdin arrives byte-exactly",
+      { timeout: 5000 },
+      async () => {
+        const result = await command(
+          'import {createHash} from "node:crypto"; const hash = createHash("sha256"); let bytes = 0; process.stdin.on("data", chunk => { bytes += chunk.length; hash.update(chunk); }); process.stdin.on("end", () => process.stdout.write(bytes + ":" + hash.digest("hex")));',
+          input,
+        );
+        assert.equal(result.code, 0);
+        assert.equal(
+          result.stdout,
+          Buffer.byteLength(input) +
+            ":" +
+            createHash("sha256").update(input).digest("hex"),
+        );
+      },
+    );
+    await t.test(
+      "early child exit or pipe failure settles",
+      { timeout: 5000 },
+      async () => {
+        try {
+          const result = await command("process.exit(0)", input);
+          assert.equal(result.code, 0);
+        } catch (error) {
+          assert.match(String(error), /EPIPE|ECONNRESET|write|pipe/i);
+        }
+      },
+    );
+    await t.test(
+      "timeout terminates and settles the child",
+      { timeout: 5000 },
+      async () => {
+        const result = await command(
+          'process.stdout.write("started"); setTimeout(() => {}, 30000);',
+        );
+        assert.equal(result.code, -1);
+        assert.equal(result.stdout, "started");
+      },
+    );
+    await t.test(
+      "an already-aborted signal settles",
+      { timeout: 5000 },
+      async () => {
+        internal.controller.abort();
+        await assert.rejects(command("setTimeout(() => {}, 30000)", input), {
+          name: "AbortError",
+        });
+      },
+    );
+  },
+);
+
+function bulkCheckpointFixture(count = 2048) {
+  const f = fixture(),
+    root = join(f.work, "bulk");
+  mkdirSync(root);
+  const bytes = "Synthetic checkpoint bytes α🙂\n".repeat(256);
+  for (let i = 0; i < count; i++)
+    writeFileSync(join(root, String(i).padStart(5, "0") + ".md"), bytes);
+  f.advance();
+  return f;
+}
+
+test("large checkpoint services host heartbeats during capture native hashing and both byte checks", async (t) => {
+  const f = bulkCheckpointFixture();
+  const beats = { capture: 0, hash: 0, captureBytes: 0, localBytes: 0 };
+  let phase: keyof typeof beats | undefined,
+    heartbeat: ReturnType<typeof setImmediate> | undefined;
+  const tick = () => {
+    assert.equal(
+      f.gate(),
+      false,
+      "host callbacks must run outside the memory admission",
+    );
+    if (phase) beats[phase]++;
+    heartbeat = setImmediate(tick);
+  };
+  let hashes = 0;
+  const sync = new GitSynchronizer({
+    ...f.options,
+    onGitCommand: (args, input) => {
+      if (args[0] === "hash-object") {
+        hashes++;
+        assert.equal(f.gate(), false);
+        assert.equal(input?.trim().split("\n").length, 2050);
+        phase = "hash";
+      }
+    },
+    onPhase: (value) => {
+      if (value === "after_snapshot") {
+        phase = "capture";
+        heartbeat = setImmediate(tick);
+      }
+      if (value === "after_capture_hash") phase = "captureBytes";
+      if (value === "after_capture") phase = undefined;
+      if (value === "before_local_bytes") phase = "localBytes";
+      if (value === "before_stage") {
+        phase = undefined;
+        if (heartbeat) clearImmediate(heartbeat);
+      }
+    },
+  });
+  try {
+    const result = await sync.flush();
+    assert.equal(result.code, "REMOTE_CONFIRMED", result.message);
+    assert.equal(result.pending, false);
+    assert.equal(
+      hashes,
+      1,
+      "the entire working set uses one native hash process",
+    );
+    assert.ok(beats.capture >= 4, JSON.stringify(beats));
+    assert.ok(beats.hash >= 1, JSON.stringify(beats));
+    assert.ok(beats.captureBytes >= 4, JSON.stringify(beats));
+    assert.ok(beats.localBytes >= 4, JSON.stringify(beats));
+    assert.equal(
+      git(f.remote, ["ls-tree", "-r", "--name-only", "main"]).split("\n")
+        .length,
+      2050,
+    );
+    t.diagnostic("Host heartbeats by bulk phase: " + JSON.stringify(beats));
+  } finally {
+    if (heartbeat) clearImmediate(heartbeat);
+  }
+});
+
+test("host edit during the yielded pre-stage byte recheck defers without staging or committing", async () => {
+  const f = bulkCheckpointFixture(512),
+    before = git(f.work, ["rev-parse", "HEAD"]),
+    target = join(f.work, "bulk", "00511.md");
+  let edit: ReturnType<typeof setImmediate> | undefined,
+    edited = false,
+    staged = false;
+  const result = await new GitSynchronizer({
+    ...f.options,
+    onGitCommand: (args) => {
+      if (args[0] === "add") staged = true;
+    },
+    onPhase: (phase) => {
+      if (phase === "before_local_bytes")
+        edit = setImmediate(() => {
+          assert.equal(f.gate(), false);
+          writeFileSync(target, "A newer host edit must remain local\n");
+          f.advance();
+          edited = true;
+        });
+    },
+  }).flush();
+  if (edit) clearImmediate(edit);
+  assert.equal(
+    edited,
+    true,
+    "the host must run while byte verification is in progress",
+  );
+  assert.equal(result.code, "WORKTREE_CHANGED", result.message);
+  assert.equal(result.pending, true);
+  assert.equal(staged, false);
+  assert.equal(git(f.work, ["rev-parse", "HEAD"]), before);
+  assert.equal(git(f.remote, ["rev-parse", "main"]), before);
+  assert.equal(git(f.work, ["diff", "--cached", "--name-only"]), "");
+  assert.equal(
+    readFileSync(target, "utf8"),
+    "A newer host edit must remain local\n",
+  );
+});
+
 test("manual partial staging is preserved, without creating a commit", async () => {
   const f = fixture();
   writeFileSync(join(f.work, "document.md"), "Staged part\n");

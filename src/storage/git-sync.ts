@@ -144,6 +144,21 @@ class SyncFailure extends Error {
 const slash = (s: string) => s.split(sep).join("/");
 const hash = (s: string | Buffer) =>
   createHash("sha256").update(s).digest("hex");
+/** Bound bulk checks between real event-loop turns; microtasks cannot service UI input. */
+function checkpointYield() {
+  let started = performance.now(),
+    count = 0;
+  return () => {
+    if (++count < 64 && performance.now() - started < 8) return;
+    count = 0;
+    return new Promise<void>((resolveYield) => {
+      setImmediate(() => {
+        started = performance.now();
+        resolveYield();
+      });
+    });
+  };
+}
 const equalRevision = (a: SyncRevision | undefined, b: SyncRevision) =>
   !!a &&
   a.workspaceId === b.workspaceId &&
@@ -368,38 +383,85 @@ export class GitSynchronizer {
       );
     return r.stdout;
   }
-  private async command(command: string, args: string[]): Promise<Result> {
+  private async command(
+    command: string,
+    args: string[],
+    input?: string,
+  ): Promise<Result> {
     if (this.metadataDepth && !this.stageDepth)
       throw new SyncFailure(
         "GIT_ERROR",
         "Native processes cannot execute inside the memory snapshot gate.",
       );
-    if (command === "git") this.options.onGitCommand?.(args);
+    if (command === "git") this.options.onGitCommand?.(args, input);
     return await new Promise((resolveResult, reject) => {
       const child = spawn(command, args, {
         cwd: this.projectRoot,
         windowsHide: true,
-        stdio: ["ignore", "pipe", "pipe"],
+        stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
         signal: this.controller.signal,
       });
       let stdout = "",
-        stderr = "";
-      const timer = setTimeout(() => child.kill(), this.timeout);
-      child.stdout.on("data", (d) => {
-        stdout += String(d);
-      });
-      child.stderr.on("data", (d) => {
-        stderr += String(d);
-      });
-      child.on("error", (e) => {
-        clearTimeout(timer);
-        reject(e);
+        stderr = "",
+        bytes = 0,
+        timedOut = false;
+      let failure: Error | undefined;
+      const stop = (error: Error) => {
+        if (failure) return;
+        failure = error;
+        child.kill();
+      };
+      const timer = setTimeout(() => {
+        timedOut = true;
+        child.kill();
+      }, this.timeout);
+      const collect = (value: string, output: "stdout" | "stderr") => {
+        bytes += Buffer.byteLength(value);
+        if (bytes > 64 * 1024 * 1024) {
+          stop(
+            new SyncFailure(
+              "GIT_ERROR",
+              "Native process output exceeded the bounded checkpoint limit.",
+            ),
+          );
+          return;
+        }
+        if (output === "stdout") stdout += value;
+        else stderr += value;
+      };
+      child
+        .stdout!.setEncoding("utf8")
+        .on("data", (d: string) => collect(d, "stdout"));
+      child
+        .stderr!.setEncoding("utf8")
+        .on("data", (d: string) => collect(d, "stderr"));
+      child.on("error", (error) => {
+        failure ??= error;
       });
       child.on("close", (code) => {
         clearTimeout(timer);
-        resolveResult({ code: code ?? -1, stdout, stderr });
+        if (failure) reject(failure);
+        else
+          resolveResult({ code: timedOut ? -1 : (code ?? -1), stdout, stderr });
       });
+      if (input !== undefined) {
+        child.stdin!.on("error", stop);
+        // end() queues the bounded input and respects the writable stream's backpressure.
+        child.stdin!.end(input, "utf8");
+      }
     });
+  }
+  private async gitAsync(args: string[], input?: string) {
+    this.assertLocalDeadline();
+    const result = await this.command("git", args, input);
+    if (result.code !== 0)
+      throw new SyncFailure(
+        /index\.lock|another git process/i.test(result.stderr)
+          ? "GIT_BUSY"
+          : "GIT_ERROR",
+        "A local Git operation failed; inspect the repository with ordinary Git tools.",
+      );
+    return result.stdout;
   }
   private async remoteIdentity() {
     const b = this.binding;
@@ -789,12 +851,13 @@ export class GitSynchronizer {
   private async currentRevision() {
     return await this.withMemoryGate(() => ({ ...this.options.getRevision() }));
   }
-  private capture(frozen: FrozenWorkspace): Capture {
+  private async capture(frozen: FrozenWorkspace): Promise<Capture> {
+    const yieldIfNeeded = checkpointYield();
     const head = this.preflight();
     const canonicalSnapshot = frozen.canonicalSnapshot;
     const canonicalDirectories = new Set<string>();
     if (this.options.canonicalSnapshot)
-      this.assertCanonicalSnapshot(
+      await this.assertCanonicalSnapshot(
         undefined,
         canonicalSnapshot,
         canonicalDirectories,
@@ -834,6 +897,8 @@ export class GitSynchronizer {
         : process.platform !== "win32";
     const present: string[] = [];
     for (const path of names) {
+      const pause = yieldIfNeeded();
+      if (pause) await pause;
       this.assertLocalDeadline();
       if (/[\r\n]/.test(path))
         throw new SyncFailure(
@@ -871,13 +936,18 @@ export class GitSynchronizer {
       present.push(path);
     }
     if (present.length) {
-      const values = this.git(
-        ["hash-object", "--stdin-paths"],
-        present.map((p) => JSON.stringify(p)).join("\n") + "\n",
+      const values = (
+        await this.gitAsync(
+          ["hash-object", "--stdin-paths"],
+          present.map((p) => JSON.stringify(p)).join("\n") + "\n",
+        )
       )
         .trim()
         .split("\n");
-      if (values.length !== present.length)
+      if (
+        values.length !== present.length ||
+        values.some((value) => !/^[a-f0-9]{40,64}$/.test(value))
+      )
         throw new SyncFailure(
           "CHECKPOINT_MISMATCH",
           "Git normalized content hashes do not cover the captured file set.",
@@ -886,8 +956,9 @@ export class GitSynchronizer {
         files.get(p)!.hash = values[i];
       });
     }
+    await this.options.onPhase?.("after_capture_hash");
     const canonicalPaths = this.options.canonicalSnapshot
-      ? this.assertCanonicalSnapshot(
+      ? await this.assertCanonicalSnapshot(
           files,
           canonicalSnapshot,
           canonicalDirectories,
@@ -906,6 +977,8 @@ export class GitSynchronizer {
       ]),
     ];
     for (const path of requiredPaths) {
+      const pause = yieldIfNeeded();
+      if (pause) await pause;
       if (!files.has(path))
         throw new SyncFailure(
           "CHECKPOINT_MISMATCH",
@@ -913,7 +986,7 @@ export class GitSynchronizer {
         );
     }
     this.assertCanonicalAttributes(requiredPaths, files);
-    this.assertBytes(files);
+    await this.assertBytes(files);
     return {
       head,
       files,
@@ -923,13 +996,14 @@ export class GitSynchronizer {
     };
   }
   /** The authoritative inventory is cached by storage, never reparsed here. */
-  private assertCanonicalSnapshot(
+  private async assertCanonicalSnapshot(
     files: Capture["files"] | undefined,
     snapshot:
       | ReturnType<NonNullable<SyncOptions["canonicalSnapshot"]>>
       | undefined,
     directories: Set<string>,
-  ): string[] {
+  ): Promise<string[]> {
+    const yieldIfNeeded = checkpointYield();
     const refuse = (): never => {
       throw new SyncFailure(
         "CHECKPOINT_MISMATCH",
@@ -987,6 +1061,8 @@ export class GitSynchronizer {
     const prefix = slash(rootRelative) + "/",
       expected = new Map<string, string>();
     for (const file of snapshot.files) {
+      const pause = yieldIfNeeded();
+      if (pause) await pause;
       this.assertLocalDeadline();
       if (
         !file.path ||
@@ -1010,8 +1086,11 @@ export class GitSynchronizer {
       expected.set(path, file.sha256);
     }
     if (!files) return [...expected.keys()];
-    for (const path of files.keys())
+    for (const path of files.keys()) {
+      const pause = yieldIfNeeded();
+      if (pause) await pause;
       if (path.startsWith(prefix) && !expected.has(path)) refuse();
+    }
     // Git's ordinary candidate set omits ignored extras; they are not allowed to
     // silently become another corpus contour. Declared runtime exclusions remain OK.
     const ignored = this.git([
@@ -1027,7 +1106,11 @@ export class GitSynchronizer {
     ])
       .split("\0")
       .filter(Boolean);
-    for (const path of ignored) if (!this.excluded(path)) refuse();
+    for (const path of ignored) {
+      const pause = yieldIfNeeded();
+      if (pause) await pause;
+      if (!this.excluded(path)) refuse();
+    }
     return [...expected.keys()];
   }
   /** Canonical hash manifests require clone-stable raw bytes, not text normalization. */
@@ -1091,8 +1174,11 @@ export class GitSynchronizer {
         refuse();
     }
   }
-  private assertBytes(files: Capture["files"]) {
+  private async assertBytes(files: Capture["files"]) {
+    const yieldIfNeeded = checkpointYield();
     for (const [p, value] of files) {
+      const pause = yieldIfNeeded();
+      if (pause) await pause;
       this.assertLocalDeadline();
       const absolute = join(this.projectRoot, p);
       if (
@@ -1158,7 +1244,8 @@ export class GitSynchronizer {
   }
   private async localCommit(capture: Capture) {
     this.preflight(capture.head);
-    this.assertBytes(capture.files);
+    await this.options.onPhase?.("before_local_bytes");
+    await this.assertBytes(capture.files);
     await this.options.onPhase?.("before_stage");
     const assertHead = () => {
       if (
@@ -1492,7 +1579,7 @@ export class GitSynchronizer {
       this.assertNoLocalPrograms();
       const frozen = await this.freezeWorkspace();
       await this.options.onPhase?.("after_snapshot");
-      captured = this.capture(frozen);
+      captured = await this.capture(frozen);
       await this.options.onPhase?.("after_capture");
       commit = await this.localCommit(captured);
       this.publish({
