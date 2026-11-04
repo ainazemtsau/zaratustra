@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "1.4.0",
+    "@fission-ai/openspec": "1.16.0",
     "@types/node": "22.18.6",
     "dependency-cruiser": "17.1.0",
     "eslint": "9.38.0",
@@ -51,6 +52,7 @@
     "boundary": "depcruise src --config .dependency-cruiser.cjs",
     "test": "tsx --test tests/*.test.ts",
     "check": "npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test",
-    "deliver": "npm run check && node scripts/deliver.mjs"
+    "deliver": "npm run check && node scripts/deliver.mjs",
+    "openspec": "openspec"
   }
 }

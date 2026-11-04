@@ -7,6 +7,11 @@ The file-primary generation requires **Pi 1.4.0 and Node 24.22.1** on Windows x6
 It preserves the existing product rather than introducing a second planner, server,
 launcher or model. Parallel qualification is limited to ten local processes.
 
+## Product development
+
+The project uses OpenSpec for change proposals, behavior specifications and tasks.
+Read [the development workflow](docs/OPENSPEC.md) before starting a product change.
+
 ## Where data lives
 
 - `memory/corpus.json` identifies the portable corpus, its format and committed revision.
