@@ -204,6 +204,15 @@ export const EntityData = z.strictObject({
   status: z.enum(["active", "merged", "retired"]),
   redirect_to: Ref.optional(),
 });
+export const SkillReferenceSchema = z.strictObject({
+  skill_id: z.string().uuid(),
+  revision: z.number().int().positive().optional(),
+});
+export const SelectedSkillRefSchema = z.strictObject({
+  skill_id: z.string().uuid(),
+  revision: z.number().int().positive(),
+  content_hash: z.string().regex(/^[a-f0-9]{64}$/),
+});
 export const MethodData = z.strictObject({
   applicability: text,
   instructions: z.string().min(1).max(16000),
@@ -220,6 +229,7 @@ export const MethodData = z.strictObject({
     )
     .max(20),
   dependencies: z.array(Ref).max(50),
+  skill_refs: z.array(SkillReferenceSchema).max(30).optional(),
   tool_requirements: z.array(text).max(30),
   content_version: z.number().int().positive(),
   state: z.enum(["candidate", "active", "deprecated"]),
@@ -381,6 +391,7 @@ export const PersistedSupportData = {
     .omit({ op: true, client_ref: true, ref: true })
     .extend({ signal_ref: Ref, recorded_at: z.iso.datetime() }),
   invocation: ExperienceOps[4].omit({ op: true, client_ref: true }).extend({
+    selected_skill_versions: z.array(SelectedSkillRefSchema).max(30).optional(),
     selected_at: z.iso.datetime(),
     reported_application:
       ExperienceOps[5].shape.reported_application.nullable(),
@@ -814,7 +825,7 @@ export interface StoragePort {
         workspace_id: string;
         epoch: string;
         revision: number;
-        schema: 10;
+        schema: 10 | 11;
         complete: true;
         last_transaction: string | null;
       }
@@ -830,6 +841,10 @@ export interface StoragePort {
   all<T>(sql: string, ...params: (string | number | null)[]): T[];
   run(sql: string, ...params: (string | number | null)[]): void;
   readMaterial(hash: string): string;
+  readMaterialBytes?(hash: string): Uint8Array;
+  writeMaterialBytes?(bytes: Uint8Array): string;
+  inspectSkillBundle?(path: string): { content_hash: string };
+  skillBundlePath?(path: string): string;
   assertActive?(epoch: string, write?: boolean): void;
   pinSource?(key: string, hashes: string[]): void;
   unpinSource?(key: string): void;

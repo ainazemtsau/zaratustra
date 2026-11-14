@@ -31,6 +31,8 @@ import {
   memoryIndexReady,
   refreshMemoryIndex,
   unknownSleepPreparation,
+  skillReferenceIds,
+  skillAccessRestrictedSQL,
 } from "./memory-index.ts";
 export {
   MemoryIndexSchemaSQL,
@@ -542,7 +544,7 @@ export class Memory {
   technicalSQL(alias: string) {
     if (this.restricted) return "1";
     const denied = (json: string) =>
-      `(EXISTS(SELECT 1 FROM json_tree(${json}) secret WHERE secret.key='visibility' AND secret.atom='restricted') OR EXISTS(SELECT 1 FROM (${addressedIdsSQL(json)}) refs JOIN ${this.accessDocsSQL()} d ON d.id=refs.id WHERE d.restricted=1))`;
+      `(EXISTS(SELECT 1 FROM json_tree(${json}) secret WHERE secret.key='visibility' AND secret.atom='restricted') OR EXISTS(SELECT 1 FROM (${addressedIdsSQL(json)}) refs JOIN ${this.accessDocsSQL()} d ON d.id=refs.id WHERE d.restricted=1)${this.db.workspace.schema_version >= 11 ? " OR " + skillAccessRestrictedSQL(json) : ""})`;
     // Only one linked-intent hop; request IDs are not domain-record IDs.
     return `NOT ${unknownSleepPreparation(`${alias}.json`)} AND NOT ${denied(`${alias}.json`)} AND NOT EXISTS(SELECT 1 FROM intents linked WHERE linked.request_id IN (json_extract(${alias}.json,'$.request_id'),json_extract(${alias}.json,'$.transaction_id')) AND (${unknownSleepPreparation("linked.json")} OR ${denied("linked.json")}))`;
   }
@@ -572,6 +574,15 @@ export class Memory {
         )
           return false;
         if (/"visibility"\s*:\s*"restricted"/.test(JSON.stringify(item)))
+          return false;
+        if (
+          this.db.workspace.schema_version >= 11 &&
+          skillReferenceIds(item).length &&
+          this.db.get(
+            `SELECT 1 FROM (SELECT ? AS json) candidate WHERE ${skillAccessRestrictedSQL("candidate.json")}`,
+            JSON.stringify(item ?? null),
+          )
+        )
           return false;
         return addressedIds(item, true).every(
           (id) =>
@@ -1040,13 +1051,16 @@ export class Memory {
     };
     const serialized = JSON.stringify(input),
       bounded =
-        Buffer.byteLength(serialized) <= 2048
-          ? input
-          : {
-              input_sha256: hash(input),
-              input_bytes: Buffer.byteLength(serialized),
-              truncated: true,
-            };
+        error instanceof CoreError &&
+        ["REFERENCE_NOT_FOUND", "PERMISSION_DENIED"].includes(error.code)
+          ? { unavailable: true }
+          : Buffer.byteLength(serialized) <= 2048
+            ? input
+            : {
+                input_sha256: hash(input),
+                input_bytes: Buffer.byteLength(serialized),
+                truncated: true,
+              };
     const refs = data?.id
       ? [{ id: data.id, revision: data.revision }]
       : data?.ref

@@ -9,6 +9,7 @@ import type {
   StoragePort,
   SupportingRow,
 } from "./contracts.ts";
+import type { SelectedSkillVersion } from "./skills.ts";
 
 export const ExperienceSchemaSQL = `
  CREATE TABLE experience_rows(id TEXT PRIMARY KEY,kind TEXT NOT NULL CHECK(kind IN ('evaluation','signal','signal_review','invocation','environment')),owner_id TEXT,json TEXT NOT NULL);
@@ -148,6 +149,10 @@ export class ExperienceTransaction {
     private get: Get,
     private stage: (r: RecordRow, data: JsonObject) => void,
     private now: string,
+    private selectSkills?: (methods: RecordRow[]) => {
+      versions: SelectedSkillVersion[];
+      visibility: "workspace" | "restricted";
+    },
   ) {}
   private support(ref: unknown, kind?: SupportingRow["kind"]): SupportingRow {
     const p = object(ref),
@@ -439,6 +444,7 @@ export class ExperienceTransaction {
     if (op.op === "invoke_method") {
       const run = this.run(op.run_ref),
         selected = methodClosure(op.method_ref, this.get, op.selected_versions);
+      const skills = this.selectSkills?.(selected);
       requireThat(
         run.data.mode !== "sleep",
         "INVALID_TRANSITION",
@@ -514,6 +520,15 @@ export class ExperienceTransaction {
           invocation_key: op.invocation_key,
           method_ref: exactRef(root),
           selected_versions: selected.map(exactRef),
+          ...(skills?.versions.length
+            ? {
+                selected_skill_versions: skills.versions.map((version) => ({
+                  skill_id: version.skill_id,
+                  revision: version.revision,
+                  content_hash: version.content_hash,
+                })),
+              }
+            : {}),
           input_refs: inputs,
           context_refs: op.context_refs.map((ref) => this.pin(ref)),
           bindings: op.bindings,
@@ -525,6 +540,7 @@ export class ExperienceTransaction {
           reported_at: null,
         },
         "Selected Method application",
+        skills?.visibility,
       );
       return true;
     }

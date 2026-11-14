@@ -17,6 +17,11 @@ import type {
 } from "./contracts.ts";
 import { DocumentPath, documentText, managedDocument } from "./documents.ts";
 import type { FileEffect, EffectRow } from "./effects.ts";
+import {
+  BundleManifestSchema,
+  BundlePathSchema,
+  SkillLocalGuardSchema,
+} from "./skills.ts";
 
 export const SLEEP_LIMITS = Object.freeze({
   cases: 10,
@@ -56,6 +61,68 @@ export const SleepDocumentChangeSchema = z
     "Document change requires exact replacement content or target path.",
   );
 export type SleepDocumentChange = z.infer<typeof SleepDocumentChangeSchema>;
+const sha256 = z.string().regex(/^[a-f0-9]{64}$/);
+const skillChangeBody = {
+  after_manifest: BundleManifestSchema,
+  changes: z
+    .array(
+      z.strictObject({
+        path: BundlePathSchema,
+        content: z
+          .string()
+          .max(256 * 1024)
+          .refine(
+            (value) => Buffer.byteLength(value) <= 256 * 1024,
+            "Text exceeds bundle file byte limit.",
+          ),
+      }),
+    )
+    .min(1)
+    .max(128),
+};
+export const SleepSkillChangeSchema = z.union([
+  z.strictObject({ guard: SkillLocalGuardSchema, ...skillChangeBody }),
+  z.strictObject({
+    guard: z.null(),
+    selection: z.strictObject({
+      skill_id: z.string().uuid(),
+      revision: z.number().int().positive(),
+      manifest_hash: sha256,
+    }),
+    ...skillChangeBody,
+  }),
+]);
+export type SleepSkillChange = z.infer<typeof SleepSkillChangeSchema>;
+function selectedSkill(change: SleepSkillChange) {
+  return change.guard
+    ? {
+        skill_id: change.guard.skill_id,
+        revision: change.guard.before_revision,
+        manifest_hash: change.guard.before_hash,
+      }
+    : change.selection;
+}
+export interface SleepSkillSource {
+  skill_id: string;
+  revision: number;
+  manifest_hash: string;
+  visibility: "workspace" | "restricted";
+  data: JsonObject;
+}
+export interface SleepSkillReceipt {
+  operation_id: string;
+  skill_id: string;
+  revision: number;
+  manifest_hash: string;
+  result_refs: SleepRef[];
+}
+const SkillReceiptSchema = z.strictObject({
+  operation_id: short,
+  skill_id: short,
+  revision: z.number().int().positive(),
+  manifest_hash: sha256,
+  result_refs: z.array(ref).max(30),
+});
 const phase = z.enum([
   "select",
   "read",
@@ -83,6 +150,7 @@ export const SleepProposalSchema = z.strictObject({
   premises: z.array(ref).min(1).max(30),
   request: CommitSchema.nullable(),
   document_change: SleepDocumentChangeSchema.nullable(),
+  skill_change: SleepSkillChangeSchema.nullable().optional(),
   request_hash: short,
   future_check: z.strictObject({ trigger: short, expected_observation: short }),
   status: z.enum([
@@ -91,12 +159,14 @@ export const SleepProposalSchema = z.strictObject({
     "applying",
     "applied",
     "rejected",
+    "pending_owner_review",
     "unknown",
   ]),
   validation_reason: z.string().max(4000).nullable(),
   result_refs: z.array(ref).max(30),
   applied_at: z.number().int().nonnegative().optional(),
   native_request_id: short.optional(),
+  skill_result: SkillReceiptSchema.optional(),
   check_observation: z
     .strictObject({
       refs: z.array(ref).min(1).max(20),
@@ -130,6 +200,16 @@ const StateSchema = z.strictObject({
   improvements: z.number().int().min(0).max(3),
   cases: z.array(ref).max(10),
   read_refs: z.array(ref).max(100),
+  skill_reads: z
+    .array(
+      z.strictObject({
+        skill_id: z.string().min(1).max(4000),
+        revision: z.number().int().positive(),
+        manifest_hash: sha256,
+      }),
+    )
+    .max(100)
+    .optional(),
   question: z.string().max(4000).nullable(),
   analysis: z
     .strictObject({
@@ -166,6 +246,18 @@ export interface SleepV2Bindings {
     proposal: SleepProposal,
     state: SleepState,
   ): { allowed: boolean; reason: string };
+  validateSkillChange?(
+    change: SleepSkillChange,
+    state: SleepState,
+  ): { allowed: boolean; reason: string; owner_review?: boolean };
+  readSkill?(input: {
+    skill_id: string;
+    revision?: number;
+    path?: string;
+    offset?: number;
+    limit?: number;
+  }): SleepSkillSource;
+  skillReceipt?(operationId: string): SleepSkillReceipt | null;
   now?(): number;
 }
 const hash = (value: unknown) =>
@@ -193,6 +285,7 @@ type Execution = {
   requestHash?: string;
   coreEntered?: boolean;
   documentEffect?: { requestId: string; digest: string };
+  skillEffect?: { requestId: string; digest: string };
 };
 const execution = new AsyncLocalStorage<Execution>();
 export interface PreparedSleepApply {
@@ -254,6 +347,24 @@ export function assertSleepDocumentAllowed(
     "Sleep execution context changed.",
   );
   scope.controller.assertDocumentPermit(scope.runId, effect, scope);
+  return true;
+}
+/** Called by the qualified bundle adapter at exact native admission. */
+export function assertSleepSkillAllowed(
+  db: StoragePort,
+  ctx: CallContext,
+  change: SleepSkillChange,
+  operationId: string,
+): boolean {
+  const scope = execution.getStore();
+  if (!scope) return false;
+  requireThat(
+    scope.controller.storage === db &&
+      scope.controller.contextProfile === profile(ctx),
+    "PERMISSION_DENIED",
+    "Sleep execution context changed.",
+  );
+  scope.controller.assertSkillPermit(scope.runId, change, operationId, scope);
   return true;
 }
 export function sleepDelegationRef(): string | null {
@@ -327,6 +438,12 @@ export function defaultSleepProposalPolicy(
   state: SleepState,
   read: SleepV2Bindings["read"],
 ): { allowed: boolean; reason: string } {
+  if (proposal.skill_change)
+    return {
+      allowed: false,
+      reason:
+        "File skill maintenance requires its qualified delegation adapter.",
+    };
   if (proposal.document_change) {
     const change = proposal.document_change;
     const row = read(change.ref),
@@ -557,6 +674,36 @@ export class SleepV2 {
     );
     if (state.activity_id) ids.add(state.activity_id);
     for (const id of ids) this.bindings.read({ id });
+    const selectedSkills = [
+      ...(state.skill_reads ?? []),
+      ...state.proposals.flatMap((p) =>
+        p.skill_result
+          ? [
+              {
+                skill_id: p.skill_result.skill_id,
+                revision: p.skill_result.revision,
+                manifest_hash: p.skill_result.manifest_hash,
+              },
+            ]
+          : [],
+      ),
+    ];
+    for (const selection of selectedSkills) {
+      requireThat(
+        this.bindings.readSkill,
+        "PERMISSION_DENIED",
+        "Skill access cannot be verified.",
+      );
+      const current = this.bindings.readSkill({
+        skill_id: selection.skill_id,
+        revision: selection.revision,
+      });
+      requireThat(
+        current.manifest_hash === selection.manifest_hash,
+        "SOURCE_MISSING",
+        "Retained skill version changed.",
+      );
+    }
     return state;
   }
   private save(state: SleepState) {
@@ -862,6 +1009,27 @@ export class SleepV2 {
             "RECONCILIATION_REQUIRED",
             "Unresolved applications require trusted scoped reconciliation before cancellation.",
           );
+          if (p.skill_change) {
+            const receipt = p.native_request_id
+              ? this.bindings.skillReceipt?.(p.native_request_id)
+              : null;
+            requireThat(
+              receipt &&
+                receipt.operation_id === p.native_request_id &&
+                receipt.skill_id === selectedSkill(p.skill_change).skill_id &&
+                receipt.manifest_hash ===
+                  p.skill_change.after_manifest.content_hash,
+              "RECONCILIATION_REQUIRED",
+              "Inspect the original skill operation; cancellation cannot dismiss its unknown effect.",
+            );
+            p.skill_result = SkillReceiptSchema.parse(receipt);
+            p.result_refs = receipt.result_refs;
+            p.status = "applied";
+            p.applied_at = this.now();
+            p.skill_change = null;
+            state.improvements++;
+            continue;
+          }
           const requestId = p.native_request_id
             ? p.native_request_id + ":document"
             : p.request?.request_id;
@@ -953,6 +1121,45 @@ export class SleepV2 {
       return row;
     });
   }
+  readSkill(
+    id: string,
+    input: Parameters<NonNullable<SleepV2Bindings["readSkill"]>>[0],
+  ): SleepSkillSource {
+    return this.change(id, (s) => {
+      this.running(s, [
+        "select",
+        "read",
+        "analyze",
+        "propose",
+        "validate",
+        "future_check",
+      ]);
+      requireThat(
+        this.bindings.readSkill,
+        "UNSUPPORTED_OPERATION",
+        "Skill source adapter is unavailable.",
+      );
+      const source = this.bindings.readSkill(input);
+      requireThat(
+        source.skill_id === input.skill_id &&
+          (input.revision === undefined || source.revision === input.revision),
+        "SOURCE_MISSING",
+        "Skill source differs from the requested version.",
+      );
+      sha256.parse(source.manifest_hash);
+      const selected = {
+        skill_id: source.skill_id,
+        revision: source.revision,
+        manifest_hash: source.manifest_hash,
+      };
+      s.skill_reads ??= [];
+      if (!s.skill_reads.some((v) => canonical(v) === canonical(selected)))
+        s.skill_reads.push(selected);
+      if (source.visibility === "restricted") s.visibility = "restricted";
+      if (["select", "read"].includes(s.phase)) s.phase = "read";
+      return source;
+    });
+  }
   analyze(
     id: string,
     input: NonNullable<SleepState["analysis"]> & { question: string },
@@ -1008,7 +1215,9 @@ export class SleepV2 {
       );
       const p = SleepProposalSchema.parse({
         ...input,
-        request_hash: hash(input.request ?? input.document_change),
+        request_hash: hash(
+          input.request ?? input.document_change ?? input.skill_change,
+        ),
         id: "proposal-" + randomUUID(),
         status: "proposed",
         validation_reason: null,
@@ -1020,10 +1229,27 @@ export class SleepV2 {
         "Proposal premises must have been read.",
       );
       requireThat(
-        !!p.request !== !!p.document_change,
+        [p.request, p.document_change, p.skill_change].filter(Boolean)
+          .length === 1,
         "VALIDATION_ERROR",
         "Exactly one proposal payload is required.",
       );
+      if (p.skill_change) {
+        const selected = selectedSkill(p.skill_change);
+        requireThat(
+          (!p.skill_change.guard ||
+            p.skill_change.guard.activity_id === s.activity_id) &&
+            p.skill_change.after_manifest.skill_id === selected.skill_id &&
+            s.skill_reads?.some(
+              (v) =>
+                v.skill_id === selected.skill_id &&
+                v.revision === selected.revision &&
+                v.manifest_hash === selected.manifest_hash,
+            ),
+          "SOURCE_MISSING",
+          "A skill proposal needs the exact selected bundle in this Activity.",
+        );
+      }
       for (const op of p.request?.ops ?? [])
         if ("ref" in op && "id" in op.ref)
           requireThat(
@@ -1064,10 +1290,20 @@ export class SleepV2 {
           "REVISION_CONFLICT",
           "A proposal target changed; read and rebuild it.",
         );
-      const result = this.bindings.validateProposal
-        ? this.bindings.validateProposal(p, s)
-        : defaultSleepProposalPolicy(p, s, this.bindings.read);
-      p.status = result.allowed ? "validated" : "rejected";
+      const result: {
+        allowed: boolean;
+        reason: string;
+        owner_review?: boolean;
+      } = p.skill_change
+        ? this.skillPolicy(p.skill_change, s)
+        : this.bindings.validateProposal
+          ? this.bindings.validateProposal(p, s)
+          : defaultSleepProposalPolicy(p, s, this.bindings.read);
+      p.status = result.allowed
+        ? "validated"
+        : result.owner_review
+          ? "pending_owner_review"
+          : "rejected";
       p.validation_reason = result.reason;
       s.phase = "validate";
       return p;
@@ -1099,6 +1335,10 @@ export class SleepV2 {
           "REVISION_CONFLICT",
           "Validated payload is stale.",
         );
+      if (p.skill_change) {
+        const checked = this.skillPolicy(p.skill_change, s);
+        requireThat(checked.allowed, "APPROVAL_STALE", checked.reason);
+      }
       p.status = "applying";
       s.phase = "apply";
       return p;
@@ -1144,6 +1384,7 @@ export class SleepV2 {
     const reject = (error: unknown): never => {
       if (
         (p.document_change && !scope.documentEffect) ||
+        (p.skill_change && !scope.skillEffect) ||
         (p.request && !scope.coreEntered)
       )
         throw new SleepNotDispatched(
@@ -1216,6 +1457,7 @@ export class SleepV2 {
         error instanceof Error ? error.message : String(error);
       p.request = null;
       p.document_change = null;
+      p.skill_change = null;
       s.phase = "analyze";
       return s;
     });
@@ -1263,6 +1505,34 @@ export class SleepV2 {
       "PERMISSION_DENIED",
       "Sleep cannot bypass its exact validated proposal.",
     );
+  }
+  assertSkillPermit(
+    id: string,
+    change: SleepSkillChange,
+    operationId: string,
+    scope: Execution,
+  ) {
+    const s = this.status(id)!;
+    this.running(s, ["apply"]);
+    const p = this.proposal(s, scope.proposalId ?? "");
+    requireThat(
+      change.guard &&
+        p.status === "applying" &&
+        p.skill_change &&
+        scope.requestHash === p.request_hash &&
+        hash(change) === p.request_hash &&
+        !scope.skillEffect,
+      "PERMISSION_DENIED",
+      "Sleep has no unused exact skill publication permit.",
+    );
+    const checked = this.skillPolicy(change, s);
+    requireThat(checked.allowed, "APPROVAL_STALE", checked.reason);
+    scope.skillEffect = {
+      requestId: short.parse(operationId),
+      digest: hash(change),
+    };
+    p.native_request_id = operationId;
+    this.save(s);
   }
   assertDocumentPermit(id: string, effect: FileEffect, scope: Execution) {
     const s = this.status(id)!;
@@ -1404,6 +1674,38 @@ export class SleepV2 {
     for (const p of state.proposals.filter((p) =>
       ["applying", "unknown"].includes(p.status),
     )) {
+      if (p.skill_change) {
+        if (!p.native_request_id && deadOwner) {
+          this.change(id, (s) => {
+            const pending = this.proposal(s, p.id);
+            requireThat(
+              !pending.native_request_id,
+              "RECONCILIATION_REQUIRED",
+              "Skill admission changed during recovery.",
+            );
+            pending.status = "rejected";
+            pending.validation_reason =
+              "Prior runtime ended before skill file admission; no write is replayed.";
+            pending.skill_change = null;
+            s.phase = "analyze";
+            if (s.status === "blocked") s.status = "paused";
+          });
+          continue;
+        }
+        requireThat(
+          p.native_request_id,
+          "RECONCILIATION_REQUIRED",
+          "Inspect the original skill operation before retrying.",
+        );
+        const receipt = this.bindings.skillReceipt?.(p.native_request_id);
+        requireThat(
+          receipt,
+          "RECONCILIATION_REQUIRED",
+          "Skill publication remains unresolved; never repeat its write.",
+        );
+        this.settleSkill(id, p.id, receipt);
+        continue;
+      }
       if (p.document_change) {
         if (!p.native_request_id && deadOwner) {
           // Native dispatch requires this canonical marker and effect intent in one transaction.
@@ -1778,6 +2080,108 @@ export class SleepV2 {
       return s;
     });
   }
+  settleSkill(
+    id: string,
+    proposalId: string,
+    result: SleepSkillReceipt,
+  ): SleepState {
+    return this.change(id, (s) => {
+      const p = this.proposal(s, proposalId);
+      requireThat(
+        p.skill_change?.guard && ["applying", "unknown"].includes(p.status),
+        "INVALID_TRANSITION",
+        "No admitted skill change.",
+      );
+      const receipt = this.bindings.skillReceipt?.(result.operation_id);
+      requireThat(
+        receipt &&
+          canonical(receipt) === canonical(SkillReceiptSchema.parse(result)) &&
+          receipt.operation_id === p.native_request_id &&
+          receipt.skill_id === p.skill_change.guard.skill_id &&
+          receipt.revision > p.skill_change.guard.before_revision &&
+          receipt.manifest_hash === p.skill_change.after_manifest.content_hash,
+        "RECONCILIATION_REQUIRED",
+        "No exact durable activation receipt for the skill proposal.",
+      );
+      p.skill_result = receipt;
+      p.result_refs = receipt.result_refs;
+      p.status = "applied";
+      p.applied_at = this.now();
+      p.skill_change = null;
+      s.improvements++;
+      s.phase = "future_check";
+      if (s.status === "blocked")
+        s.status =
+          this.now() >= s.deadline_at ||
+          s.generations >= SLEEP_LIMITS.generations
+            ? "budget_exhausted"
+            : "paused";
+      return s;
+    });
+  }
+  private skillPolicy(
+    change: SleepSkillChange,
+    state: SleepState,
+  ): { allowed: boolean; reason: string; owner_review?: boolean } {
+    const paths = new Set<string>();
+    let changedBytes = 0;
+    for (const file of change.changes) {
+      const target = change.after_manifest.files.find(
+        (v) => v.path === file.path,
+      );
+      const length = Buffer.byteLength(file.content);
+      changedBytes += length;
+      if (
+        paths.has(file.path) ||
+        !target ||
+        length !== target.length ||
+        createHash("sha256").update(file.content).digest("hex") !==
+          target.sha256
+      )
+        return {
+          allowed: false,
+          reason:
+            "Skill replacement bytes differ from its exact proposed manifest.",
+        };
+      if (
+        change.guard &&
+        (!change.guard.allowed_paths.includes(file.path) ||
+          file.path === "bundle.json" ||
+          file.path.startsWith("scripts/") ||
+          !["text", "support"].includes(target.role))
+      )
+        return {
+          allowed: false,
+          owner_review: true,
+          reason:
+            "Skill change exceeds delegated text paths or executable boundaries.",
+        };
+      paths.add(file.path);
+    }
+    if (!change.guard)
+      return {
+        allowed: false,
+        owner_review: true,
+        reason: "This exact selected skill proposal requires owner review.",
+      };
+    if (
+      changedBytes > change.guard.max_bytes ||
+      state.activity_id !== change.guard.activity_id
+    )
+      return {
+        allowed: false,
+        owner_review: true,
+        reason: "Skill change exceeds its Activity delegation or byte limit.",
+      };
+    return (
+      this.bindings.validateSkillChange?.(change, state) ?? {
+        allowed: false,
+        owner_review: true,
+        reason:
+          "A qualified skill delegation adapter must validate this proposal.",
+      }
+    );
+  }
   private guards(p: SleepProposal) {
     return (
       p.request?.guards ??
@@ -1788,7 +2192,14 @@ export class SleepV2 {
               expected_revision: p.document_change.ref.revision,
             },
           ]
-        : [])
+        : p.skill_change?.guard
+          ? [
+              {
+                ref: { id: p.skill_change.guard.activity_id },
+                expected_revision: p.skill_change.guard.activity_revision,
+              },
+            ]
+          : [])
     );
   }
   private proposal(state: SleepState, id: string) {

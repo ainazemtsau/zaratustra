@@ -3,9 +3,11 @@ schema: spec-driven
 context: |
   Zaratustra is an existing TypeScript/ESM product with a portable Core,
   file-primary memory, a rebuildable SQLite projection and a Pi adapter.
-  Qualified runtime is Windows x64, Node 24.22.1 and Pi 1.4.0.
-  The current shipped generation is corpus format 1, projection schema 10,
-  control format 3. Inspect source and tests for each behavior being changed.
+  Qualified storage runtime is Windows x64 with Node 24.22.1.
+  Pi 1.4.0 is the pinned development SDK. Record the actual installed Pi version and
+  operations exercised in adapter compatibility checks.
+  The current generation is corpus format 1, projection schema 11 and control
+  format 4. Inspect source and tests for each behavior being changed.
   The owner communicates in Russian. Write canonical artifacts in English
   and retain the OpenSpec structural headings and SHALL/MUST keywords.
   Public code and specifications live in ainazemtsau/zaratustra.

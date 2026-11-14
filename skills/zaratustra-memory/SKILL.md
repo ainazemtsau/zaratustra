@@ -3,6 +3,23 @@ name: zaratustra-memory
 description: Discover shared resources and constraints across activities, search English memory, read grounds and correct facts/identities with history.
 ---
 
+## Portable file workflow
+
+Read root and owner guidance, then locate the selected Activity's existing notes,
+documents and source links. Read the relevant original context before using a fact.
+Keep observations, owner statements and hypotheses distinguishable. Preserve exact
+selected source bytes and dates. Retain a useful note only for a concrete future
+purpose and link it to the source available in this workspace.
+
+With ordinary file access, update the Activity's documented notes or prepare a
+small ordinary Markdown note at an agreed working path. Explain which files were
+read and written. Managed record history and access checks require the registered
+Core tools below. A file-only edit to a managed document needs later inspection
+and reconciliation through a qualified adapter. Canonical corpus envelopes are
+never edited directly.
+
+## Managed Core workflow
+
 Before personalized advice, inspect relevant shared memory without waiting for a reminder.
 Use zara_map then zara_browse resources/people/topics/entities/unfiled or activities/work/
 knowledge/materials. Topics starts with actual root Concepts; browse its record_id to find

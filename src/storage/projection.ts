@@ -5,6 +5,7 @@ import {
   ApprovalSchemaSQL,
   LifecycleSchemaSQL,
   SleepSchemaSQL,
+  SkillsSchemaSQL,
 } from "../core/index.ts";
 import { BaseIndexesSQL } from "./indexes.ts";
 import { ConcurrencySchemaSQL } from "./schema.ts";
@@ -35,10 +36,11 @@ export function createProjectionSchema(
  ${ConcurrencySchemaSQL}
  ${CorpusMetadataSQL}
  ${SleepCycleSQL}
+ ${workspace.schema_version >= 11 ? SkillsSchemaSQL : ""}
  CREATE TABLE corpus_dirty(collection TEXT NOT NULL,identity TEXT NOT NULL,PRIMARY KEY(collection,identity));
  CREATE TABLE corpus_projection(singleton INTEGER PRIMARY KEY CHECK(singleton=1),revision INTEGER NOT NULL);
  INSERT INTO corpus_projection VALUES(1,0);
- PRAGMA user_version=10;`);
+ PRAGMA user_version=${workspace.schema_version};`);
   db.prepare("INSERT INTO meta VALUES(?)").run(JSON.stringify(workspace));
   db.exec("COMMIT");
 }

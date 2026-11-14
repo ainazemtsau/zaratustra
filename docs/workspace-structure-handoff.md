@@ -6,9 +6,9 @@ The owner wants an installed Zaratustra workspace that carries enough visible,
 portable instructions and skills for assistants to understand and continue work.
 A workspace can support long-lived Activities and additional assistant adapters.
 
-This document carries the discussion into a fresh product chat. OpenSpec tooling
-is installed. The next step is exploration and a proposed change. The portable
-workspace behavior described below has not been implemented or released.
+This document records the discussion before implementation. The completed design
+and task record are in `openspec/changes/archive/2026-11-14-portable-workspace/`.
+See `docs/PORTABLE-WORKSPACE.md` for current behavior.
 
 The product starting point is 0.7.7, commit
 `73572ee2041aecf47d01e5dd352f370d37fa50d8`. It uses a portable Core, Pi extension,

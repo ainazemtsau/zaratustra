@@ -68,14 +68,36 @@ change because `openspec update` uses the machine's selected global profile.
 
 ## Current starting point
 
-The first planned topic is the portable assistant-facing workspace described in
-[the handoff](workspace-structure-handoff.md). Setup has created no completed
-capability specifications. The next chat prepares the proposal and resolves its
-remaining design choices before implementation.
+The portable assistant-facing workspace described in
+[the handoff](workspace-structure-handoff.md) has its implementation and
+verification record in `openspec/changes/archive/2026-11-14-portable-workspace/`.
+The synchronized capability specifications are in `openspec/specs/`.
 
 Focused product checks are `npm run types`, `npm run lint`, `npm run boundary`,
 `npm run build` and the tests relevant to a change. The historical `check` and
 `deliver` commands run broader suites and are used only when justified.
+
+## Defects found during acceptance
+
+Reproduce the reported behavior on the actual installed artifact and record the
+Node and assistant versions. If an accepted requirement is still failing, reopen
+its task in the active change and add a regression at the failing boundary. A
+successful module import does not establish clean discovery or a usable session.
+
+Repair product code, specifications and tests in this repository. For packaging
+or startup discovery, run `npm run test:package` in addition to the affected
+tests, types, lint and dependency checks. Inspect native extension, skill, prompt
+and theme diagnostics and the effective routes. Preserve genuine owner conflicts.
+The full `check` pipeline also includes this installed-archive acceptance check.
+Use synthetic fixtures with model calls disabled; compare personal data before
+an authorized rollout. Update the tracked task only when its behavioral checks
+pass, then request independent review of the resulting change.
+
+Commit the implementation, regression and OpenSpec artifacts together on the
+product branch. A private workspace checkpoint publishes that workspace's data
+and configuration; it does not publish its ignored runtime or release the public
+product. Review and qualify a public release separately. The structural OpenSpec
+validator and the legacy `deliver` report checker are not runtime acceptance.
 
 Official references are the [OpenSpec project](https://github.com/Fission-AI/OpenSpec/tree/v1.16.0)
 and its [getting started guide](https://github.com/Fission-AI/OpenSpec/blob/v1.16.0/docs/getting-started.md).

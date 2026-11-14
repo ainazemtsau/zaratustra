@@ -3,6 +3,73 @@ import { existsSync, lstatSync, mkdirSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { requireThat } from "../core/index.ts";
 import { resolvedLocation, safePath, within } from "../storage/index.ts";
+import {
+  loadWorkspaceGuidance,
+  readWorkspaceManifest,
+} from "../workspace/index.ts";
+
+export const PORTABLE_GUIDANCE_SECTIONS = [
+  "zaratustra_system",
+  "zaratustra_workspace",
+  "zaratustra_activity",
+] as const;
+
+export function assertPortableRevision(project: string, revision: string) {
+  const manifest = readWorkspaceManifest(project);
+  requireThat(
+    !manifest || manifest.product.revision === revision,
+    "PRODUCT_VERSION_MISMATCH",
+    "Installed workspace guidance and the active Pi extension have different product revisions. Inspect the workspace update or attach the matching package before managed processing.",
+  );
+  if (manifest) loadWorkspaceGuidance(project, { product_revision: revision });
+}
+
+/** Only explicit owner guidance is loaded here. Core snapshots remain data. */
+export function portableGuidance(
+  ctx: Pick<ExtensionContext, "cwd" | "isProjectTrusted">,
+  productRevision: string,
+  activityId?: string,
+) {
+  if (!ctx.isProjectTrusted()) return { sections: {}, warnings: [], files: [] };
+  const guidance = loadWorkspaceGuidance(ctx.cwd, {
+    core_activity_id: activityId,
+    product_revision: productRevision,
+  });
+  if (!guidance) return { sections: {}, warnings: [], files: [] };
+  const sections: Record<string, string> = {};
+  const files: { path: string; sha256: string }[] = [];
+  for (const [section, file] of [
+    ["zaratustra_system", guidance.system],
+    ["zaratustra_workspace", guidance.workspace],
+    ["zaratustra_activity", guidance.activity],
+  ] as const) {
+    if (!file) continue;
+    sections[section] =
+      `<${section}>\nCurrent guidance from ${file.path}\nSHA-256 ${file.sha256}\n${file.text}\n</${section}>`;
+    files.push({ path: file.path, sha256: file.sha256 });
+  }
+  if (guidance.warnings.length)
+    sections.zaratustra_activity = `<zaratustra_activity>\nActivity guidance is unresolved. ${guidance.warnings.join(" ")}\n</zaratustra_activity>`;
+  return { sections, warnings: guidance.warnings, files };
+}
+
+/** Section patches leave every host and foreign extension message intact. */
+export function replacePortableGuidance<T extends { role: string }>(
+  messages: T[],
+  sections: Record<string, string>,
+) {
+  return [
+    ...messages,
+    {
+      role: "system" as const,
+      content: "",
+      sections: Object.fromEntries(
+        PORTABLE_GUIDANCE_SECTIONS.map((key) => [key, sections[key] ?? null]),
+      ),
+      timestamp: Date.now(),
+    },
+  ];
+}
 
 /** Native cwd and trust choose defaults; model arguments never select memory. */
 export function workspacePaths(

@@ -122,6 +122,22 @@ export function renderApproval(b: {
     }
     return text;
   });
+  if (
+    ["skill_activation", "skill_delegation", "skill_compensation"].includes(
+      b.action,
+    )
+  ) {
+    const request = (e.request ?? e) as JsonObject;
+    const metadata = request.metadata as JsonObject | undefined;
+    const bundlePreview = (e.bundle_preview ?? []) as JsonObject[];
+    const detail =
+      b.action === "skill_activation"
+        ? `Activate personal skill “${metadata?.name ?? "Selected skill"}”.\nWorkspace bundle ${request.path}. Previous registered revision ${request.before_revision ?? "none"}.\nWhole resulting manifest ${((request.manifest ?? {}) as JsonObject).content_hash}.\nActivity bindings ${value(request.activity_ids)}. General discovery ${request.general_exposure ? "shared" : "Activity-scoped"}.\n${request.adopt_export ? `Adopt the selected Method export into this personal bundle. Original export regeneration ${(request.adopt_export as JsonObject).retire_original ? "will be retired by this decision" : "keeps its existing source authority at its separate path"}.\n` : ""}Complete resulting inventory and source preview\n${bundlePreview.map((file) => `${file.path} — ${file.role}, ${file.length} bytes, SHA-256 ${file.sha256}\n${file.text === null ? "Binary material is bound by its exact length and hash." : String(file.text)}${file.text_complete === false ? "\nSOURCE PREVIEW INCOMPLETE. Read the retained file in bounded chunks before deciding." : ""}`).join("\n\n")}\nBundle scripts are retained. This activation grants no script execution permission.`
+        : b.action === "skill_delegation"
+          ? `Change Sleep delegation for personal skill ${request.skill_id}.\nActivity ${request.activity_id}. Delegation ${request.enabled ? "enabled" : "withdrawn"}.\nAllowed text paths ${value(request.allowed_paths)}. Changed-byte limit ${request.max_bytes}.\nShared or executable changes require their own exact owner decision.`
+          : `Compensate the original personal bundle publication ${request.operation_id}.\nRestore only its retained pre-publication working bytes, SHA-256 ${request.expected_working_hash ?? "expected absent"}.\nLater owner edits or a changed registered version stop this operation. Existing committed bundle history is preserved.`;
+    return `${b.consequence}\n\nAlternatives\n${b.alternatives}\n\n${detail}\n\nExpires ${b.expires_at}. Changed material conditions require a new decision.`;
+  }
   const exact =
     b.action === "restore"
       ? `Restore backup: ${e.backup}\nBackup identity: ${e.backup_identity}\nCaptured sequence: ${e.captured_seq}.\nVerified destination: ${e.destination}\nRebuilt and verified derived query indexes: ${(e.rebuilt_indexes as string[]).join(", ") || "none required"}.\nCoverage: ${e.coverage}\nLoss/switch consequences: ${e.loss}\nOriginal generation remains retained; restored authority does not revive.`

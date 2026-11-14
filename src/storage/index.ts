@@ -20,6 +20,15 @@ export { Coordination } from "./coordination.ts";
 export type { CommandKind, OperationOptions } from "./coordination.ts";
 export { verifyRuntime } from "./runtime.ts";
 export { DocumentFiles } from "./documents.ts";
+import { SkillBundleFiles } from "./skill-bundles.ts";
+export { SkillBundleFiles, skillBundleSnapshot } from "./skill-bundles.ts";
+export type {
+  SkillBundleSnapshot,
+  BundleVersionView,
+  BundleFileReceipt,
+  BundlePublication,
+  BundlePublicationHooks,
+} from "./skill-bundles.ts";
 import {
   activeLocation,
   adoptInitializationMaintenance,
@@ -75,6 +84,7 @@ import {
   MemoryIndexSchemaSQL,
   validateMemory,
   validateWorks,
+  SkillsSchemaSQL,
 } from "../core/index.ts";
 import type { RecordRow } from "../core/index.ts";
 import { extract } from "./extract.ts";
@@ -126,6 +136,7 @@ export class DiskStorage implements StoragePort {
   private transientCleanupDeferred = false;
   private transientCleanupRetry = 0;
   private initializationFence?: string;
+  private targetSchema: 10 | 11;
   constructor(
     public home: string,
     private migrationFault?: (point: string) => void,
@@ -136,6 +147,8 @@ export class DiskStorage implements StoragePort {
       projectRoot?: string;
       corpus?: "create" | "require" | "legacy";
       corpusFault?: (point: string) => void;
+      /** Explicit predecessor access is reserved for verified quarantine tooling. */
+      generation?: 10 | 11;
     } = {},
   ) {
     verifyRuntime();
@@ -149,6 +162,7 @@ export class DiskStorage implements StoragePort {
     this.corpusRoot = join(this.projectRoot, "memory");
     this.corpusMode = options.corpus ?? "create";
     this.corpusFault = options.corpusFault;
+    this.targetSchema = options.generation ?? 11;
     this.readonly = options.readOnly ?? false;
     const control = readControl(this.controlHome);
     this.ownsCoordination = !options.coordination;
@@ -168,7 +182,7 @@ export class DiskStorage implements StoragePort {
         this.commandResult(() => this.maybeReclaimTransientImports());
         if (this.initializationFence) {
           requireThat(
-            readControl(this.controlHome)?.format === 3,
+            (readControl(this.controlHome)?.format ?? 0) >= 3,
             "STORE_UNAVAILABLE",
             "Initialization did not reach file authority; retain its fence.",
           );
@@ -177,6 +191,12 @@ export class DiskStorage implements StoragePort {
             this.coordination.endMaintenance(this.initializationFence);
           this.initializationFence = undefined;
         }
+        const generation = this.portableGenerationPath();
+        if (
+          existsSync(generation) &&
+          readControl(this.controlHome)?.format === 4
+        )
+          unlinkSync(generation);
       });
       const bootstrap = join(this.controlHome, "corpus-bootstrap.json");
       if (existsSync(bootstrap))
@@ -213,19 +233,29 @@ export class DiskStorage implements StoragePort {
     const hadManifest = existsSync(manifest);
     const hadDb = existsSync(dbPath);
     const initialControl = readControl(this.controlHome);
+    this.resumePortableGeneration();
     this.resumeCorpusRestore();
     if (existsSync(this.activationPath())) {
       this.resumeCorpusActivation();
       this.initializing = false;
       return;
     }
-    if (FileCorpus.exists(this.corpusRoot) || initialControl?.format === 3) {
+    if (
+      FileCorpus.exists(this.corpusRoot) ||
+      (initialControl?.format ?? 0) >= 3
+    ) {
       requireThat(
         FileCorpus.exists(this.corpusRoot),
         "STORE_UNAVAILABLE",
         "Known canonical corpus is missing; never create replacement memory.",
       );
+      this.corpus?.close();
       this.corpus = new FileCorpus(this.corpusRoot, this.corpusFault);
+      requireThat(
+        this.corpus.status().schema >= this.targetSchema,
+        "MIGRATION_REQUIRED",
+        "Existing schema-10 corpus requires an explicit verified portable-workspace transition; preserve the source generation.",
+      );
       if (this.readonly)
         requireThat(
           !this.corpus.recoveryNeeded(),
@@ -564,6 +594,8 @@ export class DiskStorage implements StoragePort {
         "doctor",
         "pinSource",
         "unpinSource",
+        "writeMaterialBytes",
+        "readMaterialBytes",
       ] as const) {
         const original = this[name].bind(this) as (...args: never[]) => unknown;
         Object.defineProperty(this, name, {
@@ -671,7 +703,7 @@ export class DiskStorage implements StoragePort {
     this.workspace = {
       workspace_id: state.workspace_id,
       epoch: state.epoch,
-      schema_version: 10,
+      schema_version: state.schema,
     };
     const control = readControl(this.controlHome);
     requireThat(
@@ -700,7 +732,7 @@ export class DiskStorage implements StoragePort {
           !!this.db.prepare("SELECT 1 FROM corpus_dirty LIMIT 1").get() ||
           Number(value?.revision) !== state.revision ||
           Number(this.db.prepare("PRAGMA user_version").get()!.user_version) !==
-            10;
+            state.schema;
       } catch {
         rebuild = true;
       }
@@ -738,7 +770,8 @@ export class DiskStorage implements StoragePort {
       );
       atomicJSON(join(this.home, "workspace.json"), this.workspace);
     }
-    if (!control || control.format !== 3) {
+    const expectedFormat = state.schema >= 11 ? 4 : 3;
+    if (!control || control.format !== expectedFormat) {
       requireThat(
         !this.readonly,
         "INDEX_UNAVAILABLE",
@@ -746,7 +779,7 @@ export class DiskStorage implements StoragePort {
       );
       writeControl(this.controlHome, {
         ...(control ?? { generation: ".", restoration: null }),
-        format: 3,
+        format: expectedFormat,
         corpus_root: this.corpusRoot,
         coordination_id: this.coordination.identity,
         coordination_protocol: 1,
@@ -788,7 +821,7 @@ export class DiskStorage implements StoragePort {
     this.workspace = {
       workspace_id: state.workspace_id,
       epoch: state.epoch,
-      schema_version: 10,
+      schema_version: state.schema,
     };
     const path = join(
       this.home,
@@ -887,7 +920,7 @@ export class DiskStorage implements StoragePort {
         JSON.stringify({
           workspace_id: state.workspace_id,
           epoch: state.epoch,
-          schema_version: 10,
+          schema_version: state.schema,
         })
     ) {
       requireThat(
@@ -1050,6 +1083,151 @@ export class DiskStorage implements StoragePort {
       this.activateCorpus(true),
     );
   }
+  private portableGenerationPath() {
+    return join(this.controlHome, "portable-generation.json");
+  }
+  /** Called only by the explicit verified-quarantine transition entry point. */
+  enablePortableGeneration() {
+    return this.coordination.sync("maintenance", () => {
+      requireThat(
+        !this.readonly && this.workspace.schema_version === 10 && this.corpus,
+        "MIGRATION_REQUIRED",
+        "Portable transition requires a writable verified schema-10 corpus copy.",
+      );
+      const before = { ...this.workspace };
+      const token = this.coordination.beginMaintenance(
+        "portable-generation",
+        before.epoch,
+      );
+      let prepared = false;
+      try {
+        requireThat(
+          this.coordination.drainMaintenance().pending === 0,
+          "STORE_BUSY",
+          "Let admitted operations settle before the portable transition.",
+        );
+        this.coordination.exclusiveMaintenance(token);
+        const backup = join(
+          this.home,
+          "pre-portable-" + randomUUID() + ".sqlite",
+        );
+        this.db.prepare("VACUUM INTO ?").run(backup);
+        const check = new DatabaseSync(backup, { readOnly: true });
+        try {
+          requireThat(
+            check.prepare("PRAGMA integrity_check").get()!.integrity_check ===
+              "ok",
+            "STORE_UNAVAILABLE",
+            "Portable transition backup failed verification.",
+          );
+        } finally {
+          check.close();
+        }
+        atomicJSON(this.portableGenerationPath(), {
+          format: 1,
+          operation_id: "portable-" + randomUUID(),
+          coordination_id: this.coordination.identity,
+          before,
+          after: { ...before, epoch: randomUUID(), schema_version: 11 },
+          home: this.home,
+          corpus_root: this.corpusRoot,
+          backup,
+          backup_sha256: bytesHash(readFileSync(backup)),
+        });
+        prepared = true;
+        this.corpusFault?.("portable_generation_prepared");
+        this.resumePortableGeneration();
+        const state = this.corpus!.status();
+        this.coordination.endMaintenance(token);
+        unlinkSync(this.portableGenerationPath());
+        return state;
+      } catch (error) {
+        if (!prepared) this.coordination.endMaintenance(token);
+        throw error;
+      }
+    });
+  }
+  private resumePortableGeneration() {
+    const path = this.portableGenerationPath();
+    if (!existsSync(path)) return;
+    requireThat(
+      !this.readonly,
+      "MIGRATION_REQUIRED",
+      "Interrupted portable transition requires writable recovery.",
+    );
+    const intent = JSON.parse(
+      readFileSync(safePath(this.controlHome, path), "utf8"),
+    );
+    requireThat(
+      intent.format === 1 &&
+        intent.coordination_id === this.coordination.identity &&
+        intent.home === this.home &&
+        intent.corpus_root === this.corpusRoot &&
+        intent.before?.schema_version === 10 &&
+        intent.after?.schema_version === 11 &&
+        intent.before.workspace_id === intent.after.workspace_id &&
+        typeof intent.after.epoch === "string" &&
+        intent.after.epoch !== intent.before.epoch &&
+        bytesHash(readFileSync(safePath(this.home, intent.backup))) ===
+          intent.backup_sha256,
+      "STORE_UNAVAILABLE",
+      "Portable transition descriptor or verified predecessor backup differs; preserve the fence.",
+    );
+    const reopening = !this.db || this.connectionClosed;
+    if (reopening) {
+      this.db = new DatabaseSync(this.projectionPath());
+      this.connectionClosed = false;
+    }
+    const meta = JSON.parse(
+      String(this.db.prepare("SELECT json FROM meta").get()!.json),
+    );
+    requireThat(
+      JSON.stringify(meta) === JSON.stringify(intent.before) ||
+        JSON.stringify(meta) === JSON.stringify(intent.after),
+      "STORE_UNAVAILABLE",
+      "Portable transition projection differs from the recorded generation.",
+    );
+    if (meta.schema_version === 10) {
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(SkillsSchemaSQL);
+        this.db
+          .prepare("UPDATE meta SET json=?")
+          .run(JSON.stringify(intent.after));
+        this.db.exec("PRAGMA user_version=11; COMMIT");
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+      this.corpusFault?.("portable_generation_sql_committed");
+    }
+    this.workspace = intent.after;
+    this.corpus ??= new FileCorpus(this.corpusRoot, this.corpusFault);
+    this.corpus.recover();
+    this.captureRuntimeOperations();
+    this.corpus.publish(this.db, this.home, true);
+    this.corpusFault?.("portable_generation_corpus_committed");
+    this.replaceManifest(JSON.stringify(this.workspace));
+    const control = readControl(this.controlHome);
+    writeControl(this.controlHome, {
+      ...(control ?? { generation: ".", restoration: null }),
+      format: 4,
+      corpus_root: this.corpusRoot,
+      coordination_id: this.coordination.identity,
+      coordination_protocol: 1,
+      workspace_id: this.workspace.workspace_id,
+      epoch: this.workspace.epoch,
+    });
+    this.checkedPhase = undefined;
+    atomicJSON(this.projectionTokenPath(), { token: randomUUID() });
+    this.projectionInstance = readFileSync(this.projectionTokenPath(), "utf8");
+    this.configureFileConnection();
+    this.corpusFault?.("portable_generation_control_committed");
+    if (reopening) {
+      this.db.close();
+      this.connectionClosed = true;
+    }
+  }
   private resumeCorpusRestore() {
     const path = join(this.controlHome, "corpus-restore.json");
     if (!existsSync(path)) return;
@@ -1063,7 +1241,7 @@ export class DiskStorage implements StoragePort {
       intention.format === 1 &&
         intention.corpus_root === this.corpusRoot &&
         intention.previous_epoch &&
-        intention.next_control?.format === 3,
+        [3, 4].includes(intention.next_control?.format),
       "STORE_UNAVAILABLE",
       "Unknown canonical restore intention.",
     );
@@ -1094,7 +1272,7 @@ export class DiskStorage implements StoragePort {
     const control = readControl(this.controlHome);
     writeControl(this.controlHome, {
       ...(control ?? { generation: ".", restoration: null }),
-      format: 3,
+      format: this.workspace.schema_version >= 11 ? 4 : 3,
       corpus_root: this.corpusRoot,
       coordination_id: this.coordination.identity,
       coordination_protocol: 1,
@@ -1116,7 +1294,7 @@ export class DiskStorage implements StoragePort {
       intent.format === 1 &&
         intent.corpus_root === this.corpusRoot &&
         intent.home === this.home &&
-        intent.after?.schema_version === 10 &&
+        [10, 11].includes(intent.after?.schema_version) &&
         intent.before?.workspace_id === intent.after.workspace_id &&
         intent.before?.epoch === intent.after.epoch,
       "STORE_UNAVAILABLE",
@@ -1135,7 +1313,7 @@ export class DiskStorage implements StoragePort {
     requireThat(
       (version === 9 &&
         JSON.stringify(meta) === JSON.stringify(intent.before)) ||
-        (version === 10 &&
+        ([10, 11].includes(version) &&
           JSON.stringify(meta) === JSON.stringify(intent.after)),
       "STORE_UNAVAILABLE",
       "File activation projection differs from its exact intention.",
@@ -1162,7 +1340,10 @@ export class DiskStorage implements StoragePort {
     );
     if (this.corpus) return this.corpus.status();
     const before = { ...this.workspace },
-      after = { ...this.workspace, schema_version: 10 };
+      after = {
+        ...this.workspace,
+        schema_version: legacy ? 10 : this.targetSchema,
+      };
     let maintenance: string | undefined;
     try {
       if (legacy) {
@@ -1207,10 +1388,11 @@ export class DiskStorage implements StoragePort {
       this.db.exec("BEGIN IMMEDIATE");
       try {
         this.db.exec(CorpusMetadataSQL + SleepCycleSQL);
+        if (after.schema_version >= 11) this.db.exec(SkillsSchemaSQL);
         if (legacy) this.classifyLegacyCorpus();
         this.workspace = after;
         this.db.prepare("UPDATE meta SET json=?").run(JSON.stringify(after));
-        this.db.exec("PRAGMA user_version=10; COMMIT");
+        this.db.exec(`PRAGMA user_version=${after.schema_version}; COMMIT`);
       } catch (error) {
         this.db.exec("ROLLBACK");
         this.workspace = before;
@@ -2174,6 +2356,32 @@ export class DiskStorage implements StoragePort {
     );
     return bytes;
   }
+  writeMaterialBytes(bytes: Uint8Array) {
+    return this.withCommandSync(() => {
+      this.assertActive(this.workspace.epoch, true);
+      requireThat(
+        bytes.byteLength <= 1024 * 1024,
+        "VALIDATION_ERROR",
+        "Bundle material exceeds the one MiB retention bound.",
+      );
+      return this.retain(bytes);
+    });
+  }
+  readMaterialBytes(hash: string): Uint8Array {
+    return this.withCommandSync(() => this.readBlob(hash), "read");
+  }
+  inspectSkillBundle(path: string) {
+    return this.withCommandSync(
+      () => ({
+        content_hash: new SkillBundleFiles(this.projectRoot).snapshot(path)
+          .manifest.content_hash,
+      }),
+      "read",
+    );
+  }
+  skillBundlePath(path: string) {
+    return new SkillBundleFiles(this.projectRoot).path(path);
+  }
   readMaterial(hash: string) {
     requireThat(
       /^[0-9a-f]{64}$/.test(hash),
@@ -2269,3 +2477,5 @@ export type {
 
 export { migrateQuarantinedStore } from "./migration.ts";
 export type { MigrationReport } from "./migration.ts";
+export { migratePortableWorkspace } from "./portable-migration.ts";
+export type { PortableMigrationReport } from "./portable-migration.ts";

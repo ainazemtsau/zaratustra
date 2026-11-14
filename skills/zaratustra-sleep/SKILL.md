@@ -31,6 +31,28 @@ does not grant ownership. Goals, significant commitments, rights, identity merge
 purges, code installation and external effects require their actual existing authority. Never
 simulate a native human confirmation, change provider or bypass refusal via shell.
 
+For a personal file skill, use the bounded `sleep_read` skill selector to read the exact
+registered manifest and necessary text files. A `skill_change` contains the current local
+guard, complete proposed manifest and exact replacement text for permitted paths. The host
+rechecks the Activity, delegation, complete working bytes, consumers and discovery exposure.
+Only an explicitly delegated local bundle with at most one live Method consumer can receive
+automatic text maintenance. Shared skills, scripts, execution inputs, metadata and permission
+changes become pending owner-review proposals. The native owner review happens through the
+ordinary qualified adapter after this bounded session.
+For a skill already shared or lacking local delegation, use `guard: null` and an exact
+`selection` with its skill ID, revision and manifest hash. This form records a grounded
+owner-review candidate and can never receive an automatic application permit.
+
+Each applied bundle consumes one improvement slot. Before and after complete versions are
+retained. Rollback publishes the old content as a new guarded revision and stops on later
+owner edits. A lost publication reply keeps the original operation unresolved until its
+actual files and activation receipt are inspected. Never dispatch it again under another ID.
+Installation and publication require a single-writer window for external editors. A successful
+activation records application, while future usefulness still needs a later real observation.
+
+Without a qualified Core adapter, this file explains the review workflow. Bounded `zara_sleep`
+execution, durable exact application and managed benefit tracking require that adapter.
+
 Budget: up to10 cases,3 logical improvements,20 logical model generations or15 minutes,
 whichever comes first. The native stream delegate is gated before invocation. No transcript
 is durably saved. Restart does not reset budget; after exhaustion only an explicit new cycle

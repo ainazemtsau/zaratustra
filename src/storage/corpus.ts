@@ -17,6 +17,8 @@ import {
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { canonical, requireThat } from "../core/contracts.ts";
 import { bytesHash, durableNew, safePath } from "./control.ts";
+import { SkillsCollections } from "../core/index.ts";
+import { skillMaterialHashes } from "./skill-materials.ts";
 
 export const CORPUS_FORMAT = 1;
 export const SEMANTIC_FILE_LIMIT = 256 * 1024;
@@ -80,6 +82,8 @@ export function registerCorpusCollection(collection: CorpusCollection) {
   );
   registry.set(collection.table, collection);
 }
+for (const collection of SkillsCollections)
+  registerCorpusCollection(collection);
 export interface CorpusStatus {
   format: 1;
   authority: "files";
@@ -87,7 +91,7 @@ export interface CorpusStatus {
   workspace_id: string;
   epoch: string;
   revision: number;
-  schema: 10;
+  schema: 10 | 11;
   complete: true;
   last_transaction: string | null;
 }
@@ -140,7 +144,7 @@ function manifestValue(value: unknown): Manifest {
   requireThat(
     m &&
       m.format === 1 &&
-      m.schema === 10 &&
+      (m.schema === 10 || m.schema === 11) &&
       m.complete === true &&
       typeof m.workspace_id === "string" &&
       typeof m.epoch === "string" &&
@@ -479,7 +483,7 @@ export class FileCorpus {
       workspace_id: m.workspace_id,
       epoch: m.epoch,
       revision: m.revision,
-      schema: 10,
+      schema: m.schema,
       complete: true,
       last_transaction: m.last_transaction,
     };
@@ -591,6 +595,7 @@ export class FileCorpus {
     row: Row,
     home: string,
     mutations: Map<string, Buffer | null>,
+    collection?: string,
   ) {
     if (typeof row.json !== "string") return;
     const hashes = new Set<string>();
@@ -610,7 +615,10 @@ export class FileCorpus {
         else if (x && typeof x === "object") walk(x);
       }
     };
-    walk(JSON.parse(row.json));
+    const value = JSON.parse(row.json);
+    walk(value);
+    for (const hash of skillMaterialHashes(collection ?? "", value))
+      hashes.add(hash);
     for (const hash of hashes) {
       const path = `materials/${hash}.json`;
       if (existsSync(this.path(path))) {
@@ -695,7 +703,7 @@ export class FileCorpus {
           (spec.table === "lifecycle_pins" &&
             JSON.parse(String(row.json)).kind === "source"));
       if (row && !transientCandidate) {
-        this.retainMaterials(row, home, mutations);
+        this.retainMaterials(row, home, mutations, spec.table);
         const bytes = this.envelope(spec, key, row, mutations);
         if (
           !existsSync(this.path(path)) ||
@@ -727,7 +735,7 @@ export class FileCorpus {
     );
     const next: Manifest = {
       format: 1,
-      schema: 10,
+      schema: workspace.schema_version,
       complete: true,
       workspace_id: workspace.workspace_id,
       epoch: workspace.epoch,
@@ -1437,9 +1445,14 @@ export class FileCorpus {
         } else if (item && typeof item === "object") collect(item);
       }
     };
-    for (const items of rows.values())
+    for (const [collection, items] of rows)
       for (const { row } of items)
-        if (typeof row.json === "string") collect(JSON.parse(row.json));
+        if (typeof row.json === "string") {
+          const value = JSON.parse(row.json);
+          collect(value);
+          for (const hash of skillMaterialHashes(collection, value))
+            required.add(hash);
+        }
     for (const [path, expected] of Object.entries(
       this.manifest().auxiliary ?? {},
     )) {

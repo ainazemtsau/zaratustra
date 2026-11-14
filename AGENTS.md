@@ -20,16 +20,20 @@ runtime behavior and docs/OPENSPEC.md for the development workflow.
   an explicitly authorized migration with a verified backup and comparison.
 - Preserve IDs, revisions, selected source bytes, documents, access boundaries
   and UNKNOWN effects. Run Core behind its portable storage boundary.
-- The qualified runtime is Windows x64, Node 24.22.1 and Pi 1.4.0. Canonical corpus
-  format is 1, projection schema is 10 and control format is 3.
+- The qualified storage runtime is Windows x64 with Node 24.22.1. Pi 1.4.0
+  is the pinned development SDK. Record installed Pi compatibility by scenario.
+  Managed corpus format is 1, projection schema is 11 and control format is 4.
+  Populated schema 10 requires the explicit verified quarantine transition.
 - Run focused mechanical tests and relevant types, lint, dependency boundaries
-  and build. Use at most ten processes. Paid model calls, long conversations and
+  and build. Packaged startup/discovery changes also require `npm run test:package`
+  and recording the actual client version and native diagnostics. Use at most ten
+  processes. Paid model calls, long conversations and
   full historical qualification require a concrete authorized need.
 - Give the owner concise Russian explanations. Keep canonical OpenSpec artifacts
   in English. Report actual checks, limitations and pending work.
 
-Start a successor chat by reading docs/workspace-structure-handoff.md. It records
-an upcoming architecture discussion. Product implementation requires the agreed
-OpenSpec change and owner approval.
+The portable workspace design and task record are in
+openspec/changes/archive/2026-11-14-portable-workspace. The original discussion
+is in docs/workspace-structure-handoff.md.
 
 END_OF_FILE: AGENTS.md
