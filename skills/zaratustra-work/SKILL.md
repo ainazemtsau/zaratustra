@@ -3,6 +3,24 @@ name: zaratustra-work
 description: Continue durable work; discover and apply versioned textual Methods, retain Runs, separate assessments and open problems.
 ---
 
+## Portable file workflow
+
+Read the workspace root `AGENTS.md`, owner guidance and the selected Activity's
+mapped guidance. Reuse its existing purpose, current work, documents and procedures.
+Choose the smallest useful next action, read the named skill and the supporting
+files it actually requires, then place the result at the Activity's documented path.
+Keep unresolved questions and source limitations visible in the result. Preserve
+existing document paths and authentic names. Ordinary files can carry the work's
+purpose, next action and open waits when Core tools are unavailable.
+
+Use the managed workflow below when the `zara_` tools are registered. A file-only
+assistant records ordinary file edits and their observed outcome. It describes
+managed history as pending until a qualified adapter inspects and reconciles those
+files. Canonical corpus envelopes are read through Core and are never edited as
+ordinary working files.
+
+## Managed Core workflow
+
 Inspect current catalog and read candidate Work before creating replacements. The model
 understands goals, decomposes plans, judges grounds and picks the next action. Core checks
 structure. Speak the user's language; canonical records/plans are English. Preserve original

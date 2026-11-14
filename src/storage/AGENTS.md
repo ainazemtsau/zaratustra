@@ -4,7 +4,8 @@ Public API: index.ts. Own node:sqlite, workspace identity, WAL, stable coordinat
 and OS-backed runtime leases, immutable bytes and addressed extracted text. No Pi imports.
 One local workspace admits short complete commands; no lifetime database owner or TTL
 lease stealing. Reserve async resources durably and keep the runtime OS lease through
-all callbacks. Never reset damaged storage. Schema 9/control 2 fence predecessor writers.
+all callbacks. Never reset damaged storage. Projection schema 11/control 4 fence predecessor writers.
+Populated schema 10 requires an explicit verified quarantine transition.
 E3 owns consistent backup/raw bytes, pinned imports and quarantine generations. Runtime
 lease files and coordination identity stay outside replaceable generations. Preserve
 unknown resource barriers across restore; control pointer is the switch commit point.

@@ -2,8 +2,17 @@ import { registerSleep } from "./sleep.ts";
 import { createGitAutosave, SyncToolSchema, publicSyncStatus } from "./sync.ts";
 import type { GitAutosave } from "./sync.ts";
 import { registerDocuments } from "./documents.ts";
+import { registerSkillBundles } from "./skill-bundles.ts";
 import { registerAdministration } from "./administration.ts";
-import { workspacePaths } from "./workspace.ts";
+import {
+  workspacePaths,
+  assertPortableRevision,
+  portableGuidance,
+  PORTABLE_GUIDANCE_SECTIONS,
+  replacePortableGuidance,
+} from "./workspace.ts";
+import { getWorkspaceProduct } from "../workspace/index.ts";
+import { readDependencyLock } from "./resources.ts";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import type {
   ExtensionAPI,
@@ -126,12 +135,17 @@ const productInputs = [
 const resourceHashes = Object.fromEntries(
   productInputs.map((path) => [
     path,
-    digest(readFileSync(resolve(root, path))),
+    digest(
+      path === "package-lock.json"
+        ? readDependencyLock(root)
+        : readFileSync(resolve(root, path)),
+    ),
   ]),
 );
 const packageInfo = JSON.parse(
   readFileSync(resolve(root, "package.json"), "utf8"),
 );
+const workspaceProduct = getWorkspaceProduct(root, { runtime: "source" });
 export default function extension(pi: ExtensionAPI) {
   const proposalChat = chatReview(pi);
   let autosave: GitAutosave | undefined;
@@ -294,6 +308,8 @@ export default function extension(pi: ExtensionAPI) {
   };
   let importAbort = new AbortController();
   const get = () => {
+    if (workspaceContext)
+      assertPortableRevision(workspaceContext.cwd, workspaceProduct.revision);
     if (!core)
       throw (
         unavailable ??
@@ -368,6 +384,7 @@ export default function extension(pi: ExtensionAPI) {
       importAbort = new AbortController();
       try {
         verifyRuntime();
+        assertPortableRevision(ctx.cwd, workspaceProduct.revision);
         const scopes = z
           .array(z.enum(["restricted:read", "restricted:write"]))
           .parse(JSON.parse(process.env.ZARATUSTRA_SCOPES ?? "[]"));
@@ -514,6 +531,7 @@ export default function extension(pi: ExtensionAPI) {
                     name: packageInfo.name,
                     version: packageInfo.version,
                     resource_hashes: resourceHashes,
+                    portable_product_revision: workspaceProduct.revision,
                   },
                   bootstrap: {
                     sha256: resourceHashes["instructions/bootstrap.md"],
@@ -546,6 +564,7 @@ export default function extension(pi: ExtensionAPI) {
             core!.sweepTemporaryMemory(),
           );
         workspaceContext = ctx;
+        bundles.bind(ctx);
         sleepRuntime.open();
         autosave = createGitAutosave({
           projectRoot: ctx.cwd,
@@ -884,9 +903,45 @@ export default function extension(pi: ExtensionAPI) {
       changed();
     }, true),
   );
-  pi.on("before_agent_start", (event) => {
-    event.systemPromptOptions.sections.zaratustra = bootstrap;
-  });
+  const currentPortableGuidance = async (ctx: ExtensionContext) => {
+    if (!recipientAllowed) return { sections: {}, warnings: [], files: [] };
+    let activityId: string | undefined;
+    if (core)
+      activityId = await withOperation(
+        "read",
+        () => (core!.focus()?.activity_ref as { id?: string } | null)?.id,
+      );
+    return portableGuidance(ctx, workspaceProduct.revision, activityId);
+  };
+  pi.on("before_agent_start", (event, ctx) =>
+    tracked(async () => {
+      event.systemPromptOptions.sections.zaratustra = bootstrap;
+      for (const key of PORTABLE_GUIDANCE_SECTIONS)
+        delete event.systemPromptOptions.sections[key];
+      try {
+        const guidance = await currentPortableGuidance(ctx);
+        Object.assign(event.systemPromptOptions.sections, guidance.sections);
+      } catch (error) {
+        event.systemPromptOptions.sections.zaratustra_activity = `Portable workspace guidance unavailable. ${failure(error).message}`;
+      }
+    }),
+  );
+  pi.on("context_with_system", (event, ctx) =>
+    tracked(async () => {
+      try {
+        const guidance = await currentPortableGuidance(ctx);
+        return {
+          messages: replacePortableGuidance(event.messages, guidance.sections),
+        };
+      } catch (error) {
+        return {
+          messages: replacePortableGuidance(event.messages, {
+            zaratustra_activity: `Portable workspace guidance unavailable. ${failure(error).message}`,
+          }),
+        };
+      }
+    }),
+  );
   pi.on("model_select", (event, ctx) =>
     tracked(async () => {
       const identity = `${event.model.provider}/${event.model.id}`;
@@ -913,10 +968,11 @@ export default function extension(pi: ExtensionAPI) {
       }
     }),
   );
-  pi.on("context", (event) =>
+  pi.on("context", (event, ctx) =>
     tracked(async () => {
       let data: unknown;
       try {
+        const guidance = await currentPortableGuidance(ctx);
         data = await withOperation("mutate", () => {
           if (core?.context.environment)
             core.context.environment.settings = {
@@ -930,6 +986,10 @@ export default function extension(pi: ExtensionAPI) {
                 null,
             ),
             captured_sources: currentSources,
+            workspace_guidance: {
+              files: guidance.files,
+              warnings: guidance.warnings,
+            },
             provider_model: selected,
             recipient_authority: recipientAuthority,
             managed_output_root: outputBoundary?.root ?? null,
@@ -1049,6 +1109,19 @@ export default function extension(pi: ExtensionAPI) {
       if (readyFile?.effect.request_id === requestId) readyFile = undefined;
     },
   });
+  const bundles = registerSkillBundles(registerOrchestrator, {
+    core: get,
+    disk: () => {
+      requireThat(disk, "STORE_UNAVAILABLE", "Bundle storage unavailable.");
+      return disk;
+    },
+    begin: () => {
+      activeDocumentActions++;
+      return () => {
+        activeDocumentActions--;
+      };
+    },
+  });
   const sleepRuntime = registerSleep(registerOrchestrator, pi, {
     track: (callback) => tracked(callback),
     core: get,
@@ -1074,6 +1147,25 @@ export default function extension(pi: ExtensionAPI) {
         "Document context unavailable.",
       );
       return documents.applySleep(change, proposal, cycle, workspaceContext);
+    },
+    validateSkillChange: (change, cycle) =>
+      bundles.validateSleep(change, cycle),
+    readSkill: (input) => {
+      requireThat(
+        workspaceContext,
+        "STORE_UNAVAILABLE",
+        "Bundle context unavailable.",
+      );
+      return bundles.readSleep(input, workspaceContext);
+    },
+    skillReceipt: (operationId) => bundles.receipt(operationId),
+    applySkill: (change, proposal, cycle) => {
+      requireThat(
+        workspaceContext,
+        "STORE_UNAVAILABLE",
+        "Bundle context unavailable.",
+      );
+      return bundles.applySleep(change, proposal, cycle, workspaceContext);
     },
     onState: () => autosave?.request("Sleep state saved"),
   });

@@ -1,0 +1,45 @@
+schema: spec-driven
+
+context: |
+  Zaratustra is an existing TypeScript/ESM product with a portable Core,
+  file-primary memory, a rebuildable SQLite projection and a Pi adapter.
+  Qualified storage runtime is Windows x64 with Node 24.22.1.
+  Pi 1.4.0 is the pinned development SDK. Record the actual installed Pi version and
+  operations exercised in adapter compatibility checks.
+  The current generation is corpus format 1, projection schema 11 and control
+  format 4. Inspect source and tests for each behavior being changed.
+  The owner communicates in Russian. Write canonical artifacts in English
+  and retain the OpenSpec structural headings and SHALL/MUST keywords.
+  Public code and specifications live in ainazemtsau/zaratustra.
+  Private user workspaces and Health data are separate from this repository.
+  Read docs/workspace-structure-handoff.md for the next proposed change.
+
+rules:
+  proposal:
+    - Describe the user outcome, affected capabilities and migration impact.
+    - Separate shipped behavior, accepted direction and unresolved decisions.
+    - State the boundaries of the change without claiming unimplemented work.
+  specs:
+    - Use testable requirements and scenarios for observable behavior.
+    - Cover existing data and relevant denial, conflict and recovery paths.
+    - Preserve exact identities, selected versions, sources and access boundaries.
+  design:
+    - Identify authoritative files, ownership, update rules and recovery behavior.
+    - Reuse existing Core, adapter and storage mechanisms when they fit.
+    - Resolve decisions that change task scope before producing execution tasks.
+  tasks:
+    - Group work into bounded outcomes with focused verification in each group.
+    - Identify dependencies, shared interfaces and responsibility for integration.
+    - Make data migration and release checks explicit when applicable.
+
+operations:
+  apply:
+    guidance:
+      - Obtain owner approval of the change scope before implementing behavior.
+      - Reuse explicit approval already given for that scope.
+      - Use focused mechanical checks and isolated synthetic workspaces.
+      - Keep actual user workspaces untouched during development.
+  archive:
+    guidance:
+      - Check implementation and verification before syncing shipped specs.
+      - Report unresolved requirements and actual verification limits.

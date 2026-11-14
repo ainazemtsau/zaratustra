@@ -27,3 +27,11 @@ docs/e2-install-readback/
 
 docs/E2-*-094c0df4.md
 docs/e3-evidence/
+
+# Generated upstream OpenSpec integrations
+.agents/skills/openspec-*/
+.pi/skills/openspec-*/
+.pi/prompts/opsx-*.md
+
+# Preserve sealed raw concurrency evidence
+docs/concurrency-evidence/

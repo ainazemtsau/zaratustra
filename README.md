@@ -1,11 +1,18 @@
 # Zaratustra
 
-Persistent Activity, work, selected memory and bounded improvement reviews for Pi.
-The owner works through chat; agents use typed operations and exact sources.
+Portable Activity instructions, skills, work and selected memory. File-capable
+assistants use the workspace directly. The Pi adapter connects typed Core
+operations, exact sources and bounded improvement reviews.
 
-The file-primary generation requires **Pi 1.4.0 and Node 24.22.1** on Windows x64.
-It preserves the existing product rather than introducing a second planner, server,
-launcher or model. Parallel qualification is limited to ten local processes.
+The qualified storage runtime is **Node 24.22.1 on Windows x64**. Pi attachment
+uses the installed Pi CLI. See [the compatibility checks](docs/PORTABLE-WORKSPACE-RESULT.md)
+for the adapter operations verified on each Pi version. Parallel qualification is
+limited to ten local processes.
+
+## Product development
+
+The project uses OpenSpec for change proposals, behavior specifications and tasks.
+Read [the development workflow](docs/OPENSPEC.md) before starting a product change.
 
 ## Where data lives
 
@@ -32,14 +39,30 @@ requiring ChatGPT Web to understand SQLite. The agent maintains this structure.
 
 ## Ordinary use
 
-Install the exact published commit, accept native Pi project trust, and run Pi in
-the project root. Existing schema-9 workspaces require the explicit safe migration;
-installing new code must not silently migrate a live personal database.
+Build a local product checkout and initialize a separate workspace. Initialization
+creates a short `AGENTS.md`, system and owner guidance, skills and adapter routes.
+The command works with Pi absent.
 
 ```powershell
-pi install --local git:github.com/ainazemtsau/zaratustra@<exact-public-commit>
-pi
+npm ci
+npm run build
+node .\dist\cli\index.js workspace init --path C:\path\to\workspace
 ```
+
+Open that workspace in a file-capable assistant and read its root instructions.
+Activity guidance maps explicit identities to paths, so the current directory
+can stay at the workspace root. Personal skills keep their editable originals
+under `skills/personal/`. Ordinary file workflows can produce working documents
+before a managed adapter is attached.
+
+Use the explicit Pi attachment described in the workspace guide, accept native
+project trust and run Pi in the workspace root. The adapter enforces Core access,
+version and confirmation requirements. Existing populated managed workspaces need
+the explicit verified storage transition before using the new managed generation.
+
+Read [workspace installation and updates](docs/PORTABLE-WORKSPACE.md),
+[personal bundles and Method references](docs/SKILL-BUNDLES.md) and
+[storage transition and recovery](docs/WORKSPACE-MIGRATION.md).
 
 Ask to continue an Activity, save a useful constraint, correct an interpretation,
 prepare a document, or read its exact source. Conversation and originals keep the
@@ -112,6 +135,6 @@ stay outside real ZT/Health. No personal sources or credentials belong in this
 public repository. Historical qualification reports remain evidence of their
 specified versions, not automatic acceptance of this one.
 
-This release does not add Codex integration, a standalone server, weight training,
-concurrent multi-computer merge or proof of usefulness over years. Local scopes
-are managed API permissions within a trusted personal process, not OS isolation.
+Codex supports instruction-led workspace use in this generation. Its managed
+Core adapter needs separate qualification. Local scopes are managed API permissions
+within a trusted personal process. File access also depends on OS permissions.

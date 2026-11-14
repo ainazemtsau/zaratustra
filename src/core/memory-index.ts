@@ -28,6 +28,9 @@ const tkey = (collection: string, id: string) =>
   canonical(["technical", collection, id]);
 const bkey = (collection: string, id: string) =>
   canonical(["technical-body", collection, id]);
+const skillKey = (id: string) => canonical(["skill", id]);
+const skillVersionKey = (id: string, revision: number) =>
+  canonical(["skill-version", id, revision]);
 export const historyIdentity = (id: string, revision: number) =>
   canonical([id, revision]);
 
@@ -49,6 +52,51 @@ const recordKinds = new Set([
 ]);
 const validId = (v: unknown): v is string =>
   typeof v === "string" && v.length > 0 && v.length <= 4000;
+export function skillReferenceIds(value: unknown): string[] {
+  const ids = new Set<string>();
+  const visit = (item: unknown) => {
+    if (Array.isArray(item)) {
+      item.forEach(visit);
+      return;
+    }
+    if (!item || typeof item !== "object") return;
+    const object = item as JsonObject;
+    if (
+      typeof object.skill_id === "string" &&
+      /^[0-9a-f-]{36}$/i.test(object.skill_id)
+    )
+      ids.add(object.skill_id);
+    Object.values(object).forEach(visit);
+  };
+  visit(value);
+  return [...ids];
+}
+export function skillAccessRestrictedSQL(json: string) {
+  return `EXISTS(SELECT 1 FROM json_tree(${json}) skill_ref JOIN skill_bundles skill ON skill.skill_id=skill_ref.atom LEFT JOIN memory_nodes access ON access.node=json_array('skill',skill_ref.atom) LEFT JOIN json_tree(${json}) parent ON parent.id=skill_ref.parent LEFT JOIN memory_nodes version_access ON version_access.node=json_array('skill-version',skill_ref.atom,json_extract(CASE WHEN parent.type='object' THEN parent.value ELSE '{}' END,'$.revision')) WHERE skill_ref.key='skill_id' AND skill_ref.type='text' AND (coalesce(access.restricted,1)=1 OR (json_type(CASE WHEN parent.type='object' THEN parent.value ELSE '{}' END,'$.revision')='integer' AND coalesce(version_access.restricted,1)=1)))`;
+}
+function skillVersionReferences(
+  value: unknown,
+): { skill_id: string; revision: number }[] {
+  const refs: { skill_id: string; revision: number }[] = [];
+  const visit = (item: unknown) => {
+    if (Array.isArray(item)) {
+      item.forEach(visit);
+      return;
+    }
+    if (!item || typeof item !== "object") return;
+    const object = item as JsonObject;
+    if (
+      typeof object.skill_id === "string" &&
+      typeof object.revision === "number" &&
+      Number.isSafeInteger(object.revision) &&
+      object.revision > 0
+    )
+      refs.push({ skill_id: object.skill_id, revision: object.revision });
+    Object.values(object).forEach(visit);
+  };
+  visit(value);
+  return refs;
+}
 const revisionNumber = (v: unknown): v is number =>
   typeof v === "number" && Number.isSafeInteger(v) && v > 0;
 const objectValue = (v: unknown): JsonObject | undefined =>
@@ -216,6 +264,29 @@ export function initializeMemoryIndex(db: StoragePort) {
     db.run("UPDATE memory_index_meta SET format=2,ready=0 WHERE singleton=1");
   }
   if (
+    db.workspace.schema_version >= 11 &&
+    db.get("SELECT name FROM sqlite_schema WHERE name='skill_bundles'")
+  ) {
+    const installed =
+      db.get(
+        "SELECT name FROM sqlite_schema WHERE type='trigger' AND name='memory_dirty_skill_bundles_update'",
+      ) &&
+      db.get(
+        "SELECT name FROM sqlite_schema WHERE type='trigger' AND name='memory_dirty_skill_versions_update'",
+      );
+    for (const event of ["insert", "update", "delete"]) {
+      const row = event === "delete" ? "OLD" : "NEW";
+      db.exec(
+        `CREATE TRIGGER IF NOT EXISTS memory_dirty_skill_bundles_${event} AFTER ${event.toUpperCase()} ON skill_bundles BEGIN INSERT OR IGNORE INTO memory_dirty VALUES('skill',${row}.skill_id,0); END;`,
+      );
+      db.exec(
+        `CREATE TRIGGER IF NOT EXISTS memory_dirty_skill_versions_${event} AFTER ${event.toUpperCase()} ON skill_versions BEGIN INSERT OR IGNORE INTO memory_dirty VALUES('skill_version',${row}.skill_id,${row}.revision); END;`,
+      );
+    }
+    if (!installed)
+      db.run("UPDATE memory_index_meta SET ready=0 WHERE singleton=1");
+  }
+  if (
     db.get(
       "SELECT name FROM sqlite_schema WHERE type='trigger' AND name='memory_dirty_sleep_reviews_delete'",
     )
@@ -365,6 +436,29 @@ export function refreshMemoryIndex(
         r.id,
         r.revision,
       );
+    if (
+      db.workspace.schema_version >= 11 &&
+      db.get("SELECT name FROM sqlite_schema WHERE name='skill_bundles'")
+    )
+      for (const row of db.all<{ skill_id: string }>(
+        "SELECT skill_id FROM skill_bundles",
+      ))
+        db.run(
+          "INSERT OR IGNORE INTO memory_dirty VALUES('skill',?,0)",
+          row.skill_id,
+        );
+    if (
+      db.workspace.schema_version >= 11 &&
+      db.get("SELECT name FROM sqlite_schema WHERE name='skill_versions'")
+    )
+      for (const row of db.all<{ skill_id: string; revision: number }>(
+        "SELECT skill_id,revision FROM skill_versions",
+      ))
+        db.run(
+          "INSERT OR IGNORE INTO memory_dirty VALUES('skill_version',?,?)",
+          row.skill_id,
+          row.revision,
+        );
     for (const [table, key] of Object.entries(tables))
       for (const row of db.all<{ id: string }>(
         `SELECT cast(${key} AS TEXT) AS id FROM ${table}`,
@@ -434,6 +528,41 @@ export function refreshMemoryIndex(
     );
     db.run("DELETE FROM memory_edges WHERE source=? AND origin=''", key);
   };
+  for (const d of dirty.filter((item) => item.kind === "skill")) {
+    const key = skillKey(d.id);
+    const stored = db.get<{ json: string }>(
+      "SELECT json FROM skill_bundles WHERE skill_id=?",
+      d.id,
+    );
+    const bundle = stored
+      ? (JSON.parse(stored.json) as {
+          visibility: string;
+          activity_ids: string[];
+          revision: number;
+        })
+      : undefined;
+    node(key, !bundle || bundle.visibility === "restricted");
+    for (const activityId of bundle?.activity_ids ?? [])
+      edge(key, ckey(activityId));
+    if (bundle) edge(key, skillVersionKey(d.id, bundle.revision));
+  }
+  for (const d of dirty.filter((item) => item.kind === "skill_version")) {
+    const key = skillVersionKey(d.id, d.revision);
+    const stored = db.get<{ json: string }>(
+      "SELECT json FROM skill_versions WHERE skill_id=? AND revision=?",
+      d.id,
+      d.revision,
+    );
+    const version = stored
+      ? (JSON.parse(stored.json) as { visibility?: string })
+      : undefined;
+    node(key, !version || version.visibility === "restricted");
+    edge(key, skillKey(d.id));
+    for (const ref of addressedRefs(version)) {
+      edge(key, ckey(ref.id));
+      edge(key, refNode(db, ref));
+    }
+  }
   for (const d of dirty) {
     if (d.kind === "current" || d.kind === "version") {
       const current = d.kind === "current",
@@ -457,6 +586,11 @@ export function refreshMemoryIndex(
         current ? r.id : historyIdentity(r.id, r.revision),
       );
       for (const id of addressedIds(r)) edge(key, ckey(id));
+      if (db.workspace.schema_version >= 11)
+        for (const id of skillReferenceIds(r.data)) edge(key, skillKey(id));
+      if (db.workspace.schema_version >= 11)
+        for (const ref of skillVersionReferences(r.data))
+          edge(key, skillVersionKey(ref.skill_id, ref.revision));
       if (current) {
         edge(key, vkey(r.id, r.revision));
         db.run("DELETE FROM memberships WHERE record_id=?", r.id);
@@ -552,6 +686,11 @@ export function refreshMemoryIndex(
     }
     ordinal(db, d.kind, d.id);
     for (const id of addressedIds(value, true)) edge(body, hkey(id));
+    if (db.workspace.schema_version >= 11)
+      for (const id of skillReferenceIds(value)) edge(body, skillKey(id));
+    if (db.workspace.schema_version >= 11)
+      for (const ref of skillVersionReferences(value))
+        edge(body, skillVersionKey(ref.skill_id, ref.revision));
     if (value && typeof value === "object") {
       for (const field of ["request_id", "transaction_id"]) {
         const id = (value as JsonObject)[field];

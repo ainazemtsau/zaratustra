@@ -1,4 +1,7 @@
 import { assertSleepMutationAllowed } from "./sleep-v2.ts";
+import { SkillRegistry } from "./skills.ts";
+export * from "./skills.ts";
+export { validateSkills } from "./skill-validation.ts";
 export {
   isSleepNotDispatched,
   SleepV2,
@@ -6,16 +9,21 @@ export {
   SleepV2Collections,
   SleepProposalSchema,
   SleepDocumentChangeSchema,
+  SleepSkillChangeSchema,
   SLEEP_LIMITS,
   assertSleepMutationAllowed,
   selectSleepCases,
   defaultSleepProposalPolicy,
+  assertSleepSkillAllowed,
 } from "./sleep-v2.ts";
 export type {
   SleepState,
   SleepRef,
   SleepProposal,
   SleepDocumentChange,
+  SleepSkillChange,
+  SleepSkillSource,
+  SleepSkillReceipt,
 } from "./sleep-v2.ts";
 import {
   memoryRetention,
@@ -176,6 +184,54 @@ export class Core {
   private documentFinalization: string | null = null;
   private sources = new Map<string, Source>();
   private _approvals?: Approvals;
+  private _skills?: SkillRegistry;
+  get skills() {
+    this.authorize();
+    return (this._skills ??= new SkillRegistry(
+      this.storage,
+      this.context,
+      this.approvals,
+      {
+        authorize: (write) => this.authorize(write),
+        record: (recordId, revision) => this.record(recordId, revision),
+        restricted: (recordId, revision) =>
+          this.memory.isRestricted(recordId, revision),
+        methodClosure: (root, staged = []) => {
+          const overrides = new Map(staged.map((row) => [row.id, row]));
+          return methodClosure(
+            { id: root.id, revision: root.revision },
+            (ref, kind) => {
+              const selected = ref as {
+                id: string;
+                revision?: number;
+                content_version?: number;
+              };
+              const pending = overrides.get(selected.id);
+              const row =
+                pending &&
+                (selected.revision === undefined ||
+                  pending.revision === selected.revision) &&
+                (selected.content_version === undefined ||
+                  pending.data.content_version === selected.content_version)
+                  ? pending
+                  : this.record(
+                      selected.id,
+                      selected.revision,
+                      true,
+                      selected.content_version,
+                    );
+              requireThat(
+                !kind || row.kind === kind,
+                "REFERENCE_TYPE_MISMATCH",
+                "Method consumer dependency is unavailable.",
+              );
+              return row;
+            },
+          );
+        },
+      },
+    ));
+  }
   get approvals() {
     this.authorize();
     return (this._approvals ??= new Approvals(
@@ -331,6 +387,7 @@ export class Core {
   ) {
     this.authorize(true);
     const e = FileEffectSchema.parse(input);
+    if (e.method_export) this.skills.assertExportTarget(e.target);
     requireThat(
       e.work_ref ? !e.independent_basis : !!e.independent_basis,
       "VALIDATION_ERROR",
@@ -633,6 +690,7 @@ export class Core {
   }
   dispatchFile(effect: FileEffect, preview: string, call: string) {
     this.authorize(true);
+    if (effect.method_export) this.skills.assertExportTarget(effect.target);
     if (effect.work_ref)
       this.assertReconciled(effect.work_ref.id, effect.step_id);
     if (effect.document?.state === "removed" && effect.document.ref)
@@ -886,6 +944,7 @@ export class Core {
           canonical(this.record(e.payload.method_export.method_ref.id).data),
         ) !== e.payload.method_export.content_hash,
       export_current:
+        !e.export_retired_by &&
         e.status === "confirmed" &&
         observedHash === e.payload.final_hash &&
         digest(
@@ -1312,6 +1371,11 @@ export class Core {
         this.memory.accessKey,
       )
       .map((r) => JSON.parse(r.json))
+      .map((trace) =>
+        ["REFERENCE_NOT_FOUND", "PERMISSION_DENIED"].includes(trace.error)
+          ? { ...trace, input: { unavailable: true }, refs: [] }
+          : trace,
+      )
       .filter((value) => this.memory.technical(value));
     return this.envelope({
       schema_version: this.storage.workspace.schema_version,
@@ -1705,6 +1769,7 @@ export class Core {
       this.approvals,
       (id, revision) => this.memory.allowed(id, revision),
       (id) => this.memory.isRestricted(id),
+      (rows) => this.skills.assertConsumerMutation(rows),
     ).preview(input, consequence, alternatives);
   }
   applyStorage(ref: string) {
@@ -1717,6 +1782,7 @@ export class Core {
       this.approvals,
       (id, revision) => this.memory.allowed(id, revision),
       (id) => this.memory.isRestricted(id),
+      (rows) => this.skills.assertConsumerMutation(rows),
     ).apply(ref);
     if (result.action === "tombstone") this.expireSources();
     return this.envelope(
@@ -2688,6 +2754,26 @@ export class Core {
         },
         stage,
         now,
+        (methods) => {
+          if (
+            !methods.some(
+              (method) =>
+                (method.data.skill_refs as unknown[] | undefined)?.length,
+            )
+          )
+            return { versions: [], visibility: "workspace" as const };
+          const versions = this.skills.select(methods);
+          return {
+            versions,
+            visibility: versions.some(
+              (version) =>
+                this.skills.inspect(version.skill_id).visibility ===
+                "restricted",
+            )
+              ? ("restricted" as const)
+              : ("workspace" as const),
+          };
+        },
       );
       let focus: unknown = undefined;
       for (const raw of request.ops) {
@@ -3603,6 +3689,14 @@ export class Core {
       }
       validateMemory(final, get);
       validateMethods(final, get);
+      this.skills.assertConsumerMutation([...changed.values()]);
+      for (const method of changed.values())
+        if (method.kind === "method")
+          for (const ref of (method.data.skill_refs ?? []) as {
+            skill_id: string;
+            revision?: number;
+          }[])
+            this.skills.version(ref.skill_id, ref.revision);
       for (const r of changed.values()) {
         if (r.kind === "knowledge") {
           const k = KnowledgeData.parse(r.data);

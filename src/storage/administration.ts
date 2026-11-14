@@ -17,6 +17,7 @@ import type { Operation } from "./coordination.ts";
 import { initializeConcurrencyState } from "./schema.ts";
 import { FileCorpus } from "./corpus.ts";
 import { createProjectionSchema } from "./projection.ts";
+import { skillMaterialHashes } from "./skill-materials.ts";
 import {
   Approvals,
   addressedRefs,
@@ -40,6 +41,8 @@ import {
   MemoryIndexSchemaSQL,
   initializeMemoryIndex,
   validateSleep,
+  SkillsCollections,
+  validateSkills,
 } from "../core/index.ts";
 import type {
   CallContext,
@@ -146,7 +149,7 @@ const CorpusBundleManifest = z.strictObject({
   ),
   coordination: CoordinationSnapshot,
   format: z.literal("zaratustra.corpus.bundle.v1"),
-  schema: z.literal(10),
+  schema: z.union([z.literal(10), z.literal(11)]),
   components: z
     .array(
       z.strictObject({
@@ -175,6 +178,7 @@ type Disk = StoragePort & {
         workspace_id: string;
         epoch: string;
         revision: number;
+        schema: 10 | 11;
         files: { path: string; sha256: string; length: number }[];
       }
     | undefined;
@@ -212,6 +216,8 @@ function port(db: DatabaseSync, home: string): StoragePort {
     },
     readMaterial: (hash) =>
       readFileSync(safePath(home, join(home, "materials", hash)), "utf8"),
+    readMaterialBytes: (hash) =>
+      readFileSync(safePath(home, join(home, "materials", hash))),
   };
 }
 function dbRows(db: DatabaseSync) {
@@ -223,6 +229,9 @@ function dbRows(db: DatabaseSync) {
         : []),
       ...(Number(db.prepare("PRAGMA user_version").get()!.user_version) >= 9
         ? schema9Tables
+        : []),
+      ...(Number(db.prepare("PRAGMA user_version").get()!.user_version) >= 11
+        ? SkillsCollections.map((collection) => collection.table)
         : []),
     ].map((t) => [t, db.prepare(`SELECT * FROM ${t} ORDER BY rowid`).all()]),
   );
@@ -254,7 +263,7 @@ export function validateProjection(
   allowDerivedIndexRepair = false,
 ) {
   requireThat(
-    [6, 7, 8, 9, 10].includes(
+    [6, 7, 8, 9, 10, 11].includes(
       Number(db.prepare("PRAGMA user_version").get()!.user_version),
     ),
     "STORE_UNAVAILABLE",
@@ -442,6 +451,23 @@ export function validateProjection(
     else get(ref);
   });
   if (s.workspace.schema_version >= 7) validateSleep(s, get);
+  validateSkills(s, materials);
+  if (materials && s.workspace.schema_version >= 11)
+    for (const collection of ["skill_versions", "skill_operations", "intents"])
+      for (const row of s.all<{ json: string }>(
+        `SELECT json FROM ${collection}`,
+      ))
+        for (const hash of skillMaterialHashes(
+          collection,
+          JSON.parse(row.json),
+        )) {
+          const bytes = s.readMaterialBytes!(hash);
+          requireThat(
+            bytesHash(bytes) === hash,
+            "STORE_UNAVAILABLE",
+            "Retained skill effect material differs.",
+          );
+        }
   if (materials)
     for (const h of blobs(db)) {
       const p = safePath(home, join(home, "materials", h));
@@ -561,7 +587,7 @@ export class Administration {
   }
   private fileCorpus(): FileCorpus | undefined {
     const control = readControl(this.home);
-    if (control?.format !== 3) return undefined;
+    if (!control || control.format < 3) return undefined;
     requireThat(
       control.corpus_root &&
         resolve(control.corpus_root) === control.corpus_root,
@@ -573,7 +599,7 @@ export class Administration {
   private authorize(write = false) {
     fullAccess(this.context, write);
     const control = readControl(this.home);
-    if (control?.format === 3 && control.corpus_root) {
+    if ((control?.format ?? 0) >= 3 && control?.corpus_root) {
       let epoch: string | undefined;
       const corpus = new FileCorpus(control.corpus_root);
       try {
@@ -860,6 +886,7 @@ export class Administration {
       requireThat(
         checkpoint.workspace_id === manifest.workspace_id &&
           checkpoint.epoch === manifest.captured_epoch &&
+          checkpoint.schema === manifest.schema &&
           canonical(
             checkpoint.files.map((f) => ({ ...f, path: "corpus/" + f.path })),
           ) ===
@@ -911,7 +938,7 @@ export class Administration {
         });
         const manifest: z.infer<typeof CorpusBundleManifest> = {
           format: "zaratustra.corpus.bundle.v1",
-          schema: 10,
+          schema: snapshot.schema,
           workspace_id: snapshot.workspace_id,
           captured_epoch: snapshot.epoch,
           captured_seq: Number(
@@ -1142,7 +1169,12 @@ export class Administration {
     this.authorize(true);
     const b = this.verify(backup);
     requireThat(
-      readControl(this.home)?.format !== 3 ||
+      readControl(this.home)?.format !== 4 || b.manifest.schema >= 11,
+      "MIGRATION_REQUIRED",
+      "Transition a predecessor backup in a verified quarantine before restoring a portable-workspace generation.",
+    );
+    requireThat(
+      (readControl(this.home)?.format ?? 0) < 3 ||
         b.manifest.format === "zaratustra.corpus.bundle.v1",
       "MIGRATION_REQUIRED",
       "Convert this legacy SQLite bundle in a verified quarantine before restoring a file-primary workspace; no source or authority was changed.",
@@ -1172,7 +1204,7 @@ export class Administration {
         createProjectionSchema(projection, {
           workspace_id: status.workspace_id,
           epoch: status.epoch,
-          schema_version: 10,
+          schema_version: status.schema,
         });
         quarantineCorpus.restoreRows(projection);
         const storage = port(projection, quarantine);
@@ -1336,7 +1368,9 @@ export class Administration {
     });
     this.fault?.("restore_after_verify");
     const exact = {
-      ...(quarantineCorpus ? { corpus: true } : {}),
+      ...(quarantineCorpus
+        ? { corpus: true, corpus_schema: b.manifest.schema }
+        : {}),
       rebuilt_indexes,
       quarantine_components,
       backup: b.path,
@@ -1451,7 +1485,7 @@ export class Administration {
         }),
       );
     const nextControl = {
-      format: (e.corpus ? 3 : 2) as 2 | 3,
+      format: (e.corpus ? (e.corpus_schema === 11 ? 4 : 3) : 2) as 2 | 3 | 4,
       coordination_id: c.identity,
       coordination_protocol: 1 as const,
       generation: "generations/" + basename(dest),
@@ -1738,6 +1772,17 @@ export class Administration {
       "A backup capture pins candidate materials; cleanup is unavailable.",
     );
     for (const p of pins) for (const h of p.hashes ?? []) live.add(h);
+    if (disk.workspace.schema_version >= 11)
+      for (const collection of [
+        "skill_versions",
+        "skill_operations",
+        "intents",
+      ])
+        for (const { json } of disk.all<{ json: string }>(
+          `SELECT json FROM ${collection}`,
+        ))
+          for (const hash of skillMaterialHashes(collection, JSON.parse(json)))
+            live.add(hash);
     const candidates: {
       path: string;
       hash: string;
@@ -1785,7 +1830,7 @@ export class Administration {
         total += Number(stat.size);
       }
     return {
-      ...(readControl(this.home)?.format === 3
+      ...((readControl(this.home)?.format ?? 0) >= 3
         ? { runtime_cache_only: true, canonical_materials_retained: true }
         : {}),
       candidates,
@@ -1838,7 +1883,7 @@ export class Administration {
           epoch: this.context.epoch,
           removed: [...removed],
           coverage: exact.coverage,
-          ...(readControl(this.home)?.format === 3
+          ...((readControl(this.home)?.format ?? 0) >= 3
             ? { runtime_cache_only: true, canonical_materials_retained: true }
             : {}),
         };

@@ -27,6 +27,7 @@ import {
   SLEEP_LIMITS,
   SleepV2,
   SleepDocumentChangeSchema,
+  SleepSkillChangeSchema,
   isSleepNotDispatched,
   requireThat,
 } from "../core/index.ts";
@@ -38,6 +39,9 @@ import type {
   SleepProposal,
   SleepRef,
   SleepState,
+  SleepSkillChange,
+  SleepSkillSource,
+  SleepSkillReceipt,
 } from "../core/index.ts";
 
 type StreamFunction = AgentSession["agent"]["streamFunction"];
@@ -64,6 +68,23 @@ export interface SleepExtensionDependencies {
     proposal: SleepProposal,
     state: SleepState,
   ): Promise<SleepRef[]>;
+  applySkill?(
+    change: SleepSkillChange,
+    proposal: SleepProposal,
+    state: SleepState,
+  ): Promise<SleepSkillReceipt>;
+  validateSkillChange?(
+    change: SleepSkillChange,
+    state: SleepState,
+  ): { allowed: boolean; reason: string; owner_review?: boolean };
+  readSkill?(input: {
+    skill_id: string;
+    revision?: number;
+    path?: string;
+    offset?: number;
+    limit?: number;
+  }): SleepSkillSource;
+  skillReceipt?(operationId: string): SleepSkillReceipt | null;
   onState?(state: SleepState): void;
   createSession?: typeof createAgentSession;
   currentModel?():
@@ -115,6 +136,7 @@ const ProposeSchema = z.strictObject({
   premises: z.array(ExactRefSchema).min(1).max(30),
   ops: z.array(z.record(z.string(), z.unknown())).min(1).max(20).optional(),
   document_change: SleepDocumentChangeSchema.optional(),
+  skill_change: SleepSkillChangeSchema.optional(),
   future_check: z.strictObject({ trigger: short, expected_observation: short }),
 });
 const FinishSchema = z.strictObject({
@@ -160,6 +182,11 @@ then sleep_analyze distinguishes observations, causal hypotheses and counterexam
 Use sleep_propose for a small finite change and an observable future check; sleep_apply performs
 host validation and registered application. Do not pretend a method edit proves improvement.
 For document organization propose only exact update/rename of a bound local managed document.
+For file skills read the exact complete selected manifest and necessary text through sleep_read skill.
+Propose one skill_change with an exact guard, complete after_manifest and replacement text paths.
+Only explicitly delegated local text changes can apply automatically. Shared skills, scripts,
+execution inputs and permission changes require owner review outside this bounded session.
+For a shared or undelegated skill use guard:null and its exact read selection to record an owner-review candidate.
 No improvement is required: use sleep_finish no_change or insufficient_evidence when warranted.
 An old version or missing evidence requires rereading or a concrete continuation, never invention.
 Caps: 10 selected cases, 3 proposals/improvements, 20 logical generations, 15 minutes.
@@ -305,6 +332,9 @@ export function registerSleep(
       candidatesScoped: !dependencies.candidates,
       runtimeState: dependencies.runtimeState,
       validateProposal: dependencies.validateProposal,
+      validateSkillChange: dependencies.validateSkillChange,
+      readSkill: dependencies.readSkill,
+      skillReceipt: dependencies.skillReceipt,
     });
   }
   function buildRequest(
@@ -379,7 +409,16 @@ export function registerSleep(
         z.strictObject({
           ref: ReadRefSchema.extend({
             content_version: z.number().int().positive().optional(),
-          }),
+          }).optional(),
+          skill: z
+            .strictObject({
+              skill_id: short,
+              revision: z.number().int().positive().optional(),
+              path: z.string().min(1).max(500).optional(),
+              offset: z.number().int().nonnegative().optional(),
+              limit: z.number().int().positive().max(8000).optional(),
+            })
+            .optional(),
           locator: short.optional(),
           range: z
             .strictObject({
@@ -390,6 +429,22 @@ export function registerSleep(
         }),
         async (p) =>
           op("mutate", () => {
+            requireThat(
+              !!p.ref !== !!p.skill,
+              "VALIDATION_ERROR",
+              "Choose one exact record or skill source.",
+            );
+            if (p.skill) {
+              requireThat(
+                p.locator === undefined && p.range === undefined,
+                "VALIDATION_ERROR",
+                "Skill sources use their own path and range.",
+              );
+              return c.readSkill(
+                runId,
+                p.skill as Parameters<SleepV2["readSkill"]>[1],
+              );
+            }
             return readSleepSource(
               dependencies.core(),
               c,
@@ -409,15 +464,16 @@ export function registerSleep(
       ),
       tool(
         "sleep_propose",
-        "Propose a finite reversible commit OR one local document update/rename. No raw commit tools are exposed.",
+        "Propose one finite reversible commit, local document change or exact delegated file-skill text change.",
         ProposeSchema,
         async (raw) =>
           op("mutate", () => {
             const p = ProposeSchema.parse(raw);
             requireThat(
-              !!p.ops !== !!p.document_change,
+              [p.ops, p.document_change, p.skill_change].filter(Boolean)
+                .length === 1,
               "VALIDATION_ERROR",
-              "Choose one exact commit or document change.",
+              "Choose one exact commit, document change or skill change.",
             );
             return c.propose(runId, {
               reason: p.reason,
@@ -426,6 +482,7 @@ export function registerSleep(
               premises: p.premises,
               request: buildRequest(p, runId),
               document_change: p.document_change ?? null,
+              skill_change: p.skill_change ?? null,
               future_check: p.future_check,
             });
           }),
@@ -450,6 +507,11 @@ export function registerSleep(
             "UNSUPPORTED_OPERATION",
             "Native document adapter is not connected; proposal remains validated and no dispatch occurred.",
           );
+          requireThat(
+            !validated.skill_change || dependencies.applySkill,
+            "UNSUPPORTED_OPERATION",
+            "Qualified skill adapter is not connected; no dispatch occurred.",
+          );
           const { admitted, permit } = await op("mutate", () => {
             const admitted = c.beginApply(runId, proposalId);
             return {
@@ -458,6 +520,18 @@ export function registerSleep(
             };
           });
           try {
+            if (admitted.skill_change) {
+              const receipt = await c.withPreparedApplyPermit(permit, () =>
+                dependencies.applySkill!(
+                  admitted.skill_change!,
+                  admitted,
+                  permit.state,
+                ),
+              );
+              return op("settle", () =>
+                c.settleSkill(runId, proposalId, receipt),
+              );
+            }
             if (admitted.document_change) {
               requireThat(
                 dependencies.applyDocument,

@@ -14,8 +14,11 @@ Do not put long explanations in modal titles, use external preview windows, or d
 Ordinary trusted project startup opens permanent .local/memory and prepares .local/imports,
 .local/output and .local/backups. Read workspace_paths in the current snapshot for the actual
 directories; explicit trusted deployments may use other paths. The same project folder keeps
-its memory across processes; another folder has its own default memory. No launcher or
-additional AGENTS file is needed. Never suggest resetting/moving memory to hide a store error.
+its memory across processes; another folder has its own default memory. Portable
+installations carry a short root AGENTS.md, owner guidance and an explicit Activity map.
+The active Activity guidance is loaded independently of the current directory. Inspect
+workspace_guidance in the current snapshot for exact loaded paths/hashes and warnings.
+Never suggest resetting/moving memory to hide a store error.
 File-primary workspaces keep their authoritative small files in the corpus reported by
 workspace_paths/corpus; SQLite is a rebuildable working projection. Never delete runtime
 coordination while sessions are alive. Necessary historical sources and unknown external
@@ -123,12 +126,21 @@ lists every moved Work (at most ten); for a finite split create the new Activity
 specified Work in one preview-bound commit. Historical Runs/refs never move. Catalog
 reorganization is a finite <=10-target operation, not a staged bulk platform.
 
-Managed textual exports use zara_skill_export_preview, native confirmation and ordinary
+Managed textual Method exports use zara_skill_export_preview, native confirmation and ordinary
 write. Core remains canonical; files carry Method ref/content_version/content hash and
 operations retain the export hash. zara_skill_inspect detects drift. External edits require
 explicit zara_skill_import_preview into a new Method version (retain original bytes) or
 newly confirmed regeneration. Do not silently overwrite drift, execute/install a generated
 script/extension or promote source text to bootstrap/rights.
+Personal file skills have a separate authority contract. Their bundle directory is
+the editable source. Core records verified complete manifests and exact retained
+versions. Use zara_skill_bundle_inspect, preview and apply to register or activate
+an exact bundle through native confirmation. External edits remain pending drift
+until explicit reconciliation. A Method may reference a personal skill using a
+current or pinned verified version. Read the selected invocation version view for
+references and scripts; a live working path cannot substitute for that selection.
+Existing Method exports retain their export contract until explicit adoption into
+a personal bundle. Script presence or registration never grants execution rights.
 Administrative backup/export uses zara_backup: a verified self-contained SQLite snapshot,
 raw managed blobs and versioned JSON. Full backup/export requires preconfigured full-read
 scope; restore requires full-read/write regardless of whether hidden records exist.

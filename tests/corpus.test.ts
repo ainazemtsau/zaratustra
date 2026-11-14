@@ -184,8 +184,8 @@ test("fresh clone opens corpus with new local control and a new reconciliation e
   try {
     assert.equal(clone.workspace.workspace_id, prior.workspace_id);
     assert.notEqual(clone.workspace.epoch, prior.epoch);
-    assert.equal(readControl(clone.controlHome)?.format, 3);
-    assert.equal(clone.workspace.schema_version, 10);
+    assert.equal(readControl(clone.controlHome)?.format, 4);
+    assert.equal(clone.workspace.schema_version, 11);
     clone.corpusCheckpoint();
   } finally {
     clone.close();
@@ -341,7 +341,7 @@ test("file-primary backup restores from corpus without a bundled SQLite and pres
     });
     try {
       assert.notEqual(reopened.workspace.epoch, f.context.epoch);
-      assert.equal(readControl(f.home)?.format, 3);
+      assert.equal(readControl(f.home)?.format, 4);
       reopened.corpusCheckpoint();
     } finally {
       reopened.close();

@@ -3,6 +3,22 @@ name: zaratustra-documents
 description: Create and maintain durable Activity documents, pinned formats and links; inspect external edits, archive/remove/restore, and prepare a verified GitHub view.
 ---
 
+## Portable file workflow
+
+Read root, owner and selected Activity guidance. Discover existing documents and
+their paths before creating a result. Use the Activity's applicable skill and
+format, preserve source links and dates, and edit only the intended ordinary
+working document. Inspect its resulting bytes and report the actual saved path.
+Keep existing document addresses so other readers can continue following links.
+
+The managed workflow below applies when Core tools are available. With ordinary
+file tools, report an ordinary file change. If the file already has a managed
+document identity, preserve it and arrange inspection and explicit reconciliation
+through a qualified adapter before claiming updated managed history. Retained
+versions and corpus envelopes are read through Core.
+
+## Managed Core workflow
+
 Use this process when work needs independently reusable files: plans, menus, recipes,
 instructions, reports or dated journals. Small Work/results may remain in Core. Never
 require the user to invent folder trees, metadata or internal IDs. Reuse existing

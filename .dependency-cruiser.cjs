@@ -6,7 +6,7 @@ module.exports = {
       severity: "error",
       from: { path: "^src/core" },
       to: {
-        path: "^src/(extension|storage)|node_modules/@earendil-works|node_modules/typebox",
+        path: "^src/(extension|storage|workspace|cli)|node_modules/@earendil-works|node_modules/typebox",
       },
     },
     {
@@ -18,9 +18,17 @@ module.exports = {
       },
     },
     {
+      name: "workspace-has-no-pi",
+      severity: "error",
+      from: { path: "^src/(workspace|cli)" },
+      to: {
+        path: "^src/extension|node_modules/@earendil-works|node_modules/typebox",
+      },
+    },
+    {
       name: "public-module-api",
       severity: "error",
-      from: { path: "^src/extension" },
+      from: { path: "^src/(extension|workspace|cli)" },
       to: { path: "^src/(core|storage)/", pathNot: "/index\\.ts$" },
     },
   ],

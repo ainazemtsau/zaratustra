@@ -9,7 +9,7 @@ export function verifyRuntime() {
   if (node[0] !== 24 || node[1] < 22 || (node[1] === 22 && node[2] < 1))
     throw new CoreError(
       "RUNTIME_UNSUPPORTED",
-      "Concurrent Zaratustra requires Node 24.22.1 or newer in the 24.x LTS line; qualified runtime: Node 24.22.1, Pi 1.4.0. Update Node once, then start ordinary Pi again. Personal storage has not been opened.",
+      "Concurrent Zaratustra requires Node 24.22.1 or newer in the 24.x LTS line. Update Node, then restart the client. Personal storage has not been opened.",
     );
   const db = new DatabaseSync(":memory:");
   try {

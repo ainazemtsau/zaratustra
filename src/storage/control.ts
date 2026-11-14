@@ -22,7 +22,7 @@ export const bytesHash = (b: Uint8Array | string) =>
   createHash("sha256").update(b).digest("hex");
 export const ControlSchema = z
   .strictObject({
-    format: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+    format: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     corpus_root: z.string().min(1).optional(),
     coordination_id: z.string().min(1).optional(),
     coordination_protocol: z.literal(1).optional(),
@@ -148,7 +148,9 @@ export function adoptInitializationMaintenance(
   const state = coordination.maintenanceInfo();
   if (
     state.mode === "normal" ||
-    !["corpus-clone", "file-migration"].includes(state.kind ?? "")
+    !["corpus-clone", "file-migration", "portable-generation"].includes(
+      state.kind ?? "",
+    )
   )
     return undefined;
   requireThat(
@@ -160,7 +162,9 @@ export function adoptInitializationMaintenance(
     home,
     state.kind === "corpus-clone"
       ? "corpus-bootstrap.json"
-      : "corpus-activation.json",
+      : state.kind === "portable-generation"
+        ? "portable-generation.json"
+        : "corpus-activation.json",
   );
   requireThat(
     existsSync(path),
@@ -202,7 +206,11 @@ export async function recoverMaintenance(
         "STORE_UNAVAILABLE",
         "Unrecognized maintenance fence; preserve control data.",
       );
-      if (["corpus-clone", "file-migration"].includes(state.kind ?? "")) {
+      if (
+        ["corpus-clone", "file-migration", "portable-generation"].includes(
+          state.kind ?? "",
+        )
+      ) {
         adoptInitializationMaintenance(home, coordination);
         return true;
       }
@@ -212,7 +220,9 @@ export async function recoverMaintenance(
         () => {
           const current = readControl(home);
           requireThat(
-            (current?.format === 2 || current?.format === 3) &&
+            (current?.format === 2 ||
+              current?.format === 3 ||
+              current?.format === 4) &&
               current.coordination_id === coordination.identity,
             "STORE_UNAVAILABLE",
             "Dead maintenance has an unrecognized control identity; preserve the fence.",

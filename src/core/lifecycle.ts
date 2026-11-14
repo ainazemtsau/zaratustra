@@ -91,6 +91,7 @@ export class Lifecycle {
     private approvals: Approvals,
     private allowed: (id: string, revision?: number) => boolean,
     private restricted: (id: string) => boolean,
+    private guardMutation?: (rows: RecordRow[]) => void,
   ) {}
   private writeable(r: RecordRow) {
     requireThat(
@@ -114,6 +115,24 @@ export class Lifecycle {
     };
     add(sleepGrounds(this.db), "pending Sleep batch/deferred check");
     add(candidateGrounds(this.db), "pinned deferred candidate grounds");
+    if (this.db.workspace.schema_version >= 11) {
+      for (const { json } of this.db.all<{ json: string }>(
+        "SELECT json FROM skill_versions",
+      ))
+        add(JSON.parse(json), "retained personal skill lineage");
+      for (const { json } of this.db.all<{ json: string }>(
+        "SELECT json FROM skill_operations",
+      )) {
+        const operation = JSON.parse(json);
+        add(operation, "retained personal skill operation grounds");
+        if (["prepared", "unknown"].includes(operation.status))
+          for (const activityId of operation.request.activity_ids)
+            queue.push({
+              ref: { id: activityId },
+              root: "unresolved personal skill publication",
+            });
+      }
+    }
     for (const r of this.db.all<{ work_id: string }>(
       "SELECT DISTINCT work_id FROM recovery_barriers WHERE json_extract(json,'$.status')='required'",
     ))
@@ -410,6 +429,10 @@ export class Lifecycle {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       this.authorize();
+      if (action.action === "archive" || action.action === "tombstone")
+        this.guardMutation?.(
+          exact.targets.map((target) => this.read(target.id)),
+        );
       this.approvals.consume(ref, "storage", this.exact(action), requestId);
       const changed: Record<string, { before: number; after: number }> = {};
       const redactedIds = new Set(action.targets.map((t) => t.id));

@@ -1,6 +1,6 @@
 {
   "name": "zaratustra",
-  "version": "0.7.7",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "Durable Work and addressed materials for Pi; full R1 remains in development",
@@ -9,6 +9,19 @@
     "node": ">=24.22.1 <25"
   },
   "packageManager": "npm@11.6.2",
+  "bin": {
+    "zaratustra": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "scripts/build-manifest.mjs",
+    "instructions",
+    "skills",
+    "docs/PORTABLE-WORKSPACE.md",
+    "docs/SKILL-BUNDLES.md",
+    "docs/WORKSPACE-MIGRATION.md"
+  ],
   "pi": {
     "extensions": [
       "src/extension/index.ts"
@@ -21,8 +34,16 @@
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=1.4.0 <1.5.0",
+    "@earendil-works/pi-coding-agent": "^1.4.0",
     "typebox": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    },
+    "typebox": {
+      "optional": true
+    }
   },
   "dependencies": {
     "ajv": "8.20.0",
@@ -33,6 +54,7 @@
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "1.4.0",
+    "@fission-ai/openspec": "1.16.0",
     "@types/node": "22.18.6",
     "dependency-cruiser": "17.1.0",
     "eslint": "9.38.0",
@@ -43,14 +65,17 @@
     "typescript-eslint": "8.46.2"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/build-manifest.mjs",
+    "prepack": "npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint src tests scripts",
     "types": "tsc --noEmit",
     "boundary": "depcruise src --config .dependency-cruiser.cjs",
     "test": "tsx --test tests/*.test.ts",
-    "check": "npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test",
-    "deliver": "npm run check && node scripts/deliver.mjs"
+    "test:package": "npm run build && node scripts/packaged-extension-smoke.mjs",
+    "check": "npm run format:check && npm run lint && npm run types && npm run boundary && npm run build && npm test && node scripts/packaged-extension-smoke.mjs",
+    "deliver": "npm run check && node scripts/deliver.mjs",
+    "openspec": "openspec"
   }
 }
